@@ -17,7 +17,9 @@ export interface ExtensionConfig {
     // UI theme preference.
     readonly theme: Theme;
     // Auto loads 1 extra conversation turn when the user scrolls to the top of the chat.
-    readonly autoLoad: boolean; // New addition for auto-load preference
+    readonly autoLoad: boolean;
+    // Weekly request limit shown in the popup counter. 0 = just count, no limit displayed.
+    readonly weeklyRequestLimit: number;
 }
 
 export interface TrackedMessage {
@@ -35,7 +37,10 @@ export enum MessageType {
     TOGGLE_ENABLED = "TOGGLE_ENABLED",
     TOGGLE_STATUS = "TOGGLE_STATUS",
     TOGGLE_FETCH_INTERCEPT = "TOGGLE_FETCH_INTERCEPT",
-    TOGGLE_AUTO_LOAD = "TOGGLE_AUTO_LOAD", // New message type for toggling auto-load
+    TOGGLE_AUTO_LOAD = "TOGGLE_AUTO_LOAD",
+    GET_REQUEST_COUNT = "GET_REQUEST_COUNT",
+    INCREMENT_REQUEST_COUNT = "INCREMENT_REQUEST_COUNT",
+    RESET_REQUEST_COUNT = "RESET_REQUEST_COUNT",
 }
 
 export interface ExtensionMessage {
@@ -70,4 +75,10 @@ export interface ExtensionStatus {
     readonly hiddenMessages: number;
     readonly showStatus: boolean;
     readonly statusPosition: StatusPosition;
+    readonly siteId?: string;
+}
+
+export interface WeeklyRequestCount {
+    readonly count: number;
+    readonly weekStart: number;
 }

@@ -4,6 +4,7 @@ export interface SiteSelectors {
     readonly messageTurn: string;
     readonly scrollContainer: string;
     readonly scrollContainerAlt?: string;
+    readonly userMessageSelector?: string;
 }
 
 export interface StatusAnchors {
