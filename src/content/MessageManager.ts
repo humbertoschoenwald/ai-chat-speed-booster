@@ -69,10 +69,11 @@ export class MessageManager {
         });
     }
 
-    loadMore(): number {
+    loadMore(toLoad?: number): number { // Added optional parameter to specify how many messages to load
         if (!this.config.enabled) return 0;
+        if(this.messages.length === this.visibleCount) return 0; // No hidden messages to load
         const hidden = this.messages.filter((m) => !m.visible);
-        const toReveal = hidden.slice(-this.config.loadMoreBatchSize * 2);
+        const toReveal = hidden.slice(( toLoad ? -toLoad : -this.config.loadMoreBatchSize) * 2);
         for (const msg of toReveal) this.showMessage(msg);
         this.cachedVisibleCount = this.visibleCount; // Preserve currently visible messages when user sends new prompt
         logger.debug(`revealed ${toReveal.length} additional messages`);

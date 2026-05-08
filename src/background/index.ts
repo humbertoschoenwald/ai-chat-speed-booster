@@ -57,6 +57,13 @@ onMessage(async (message): Promise<unknown> => {
             return updated;
         }
 
+        case MessageType.TOGGLE_AUTO_LOAD: {
+            const current = await loadConfig();
+            const updated = await saveConfig({ autoLoad: !current.autoLoad });
+            await broadcastToContentScripts({ type: MessageType.CONFIG_UPDATED, payload: updated });
+            return updated;
+        }
+
         default:
             return undefined;
     }

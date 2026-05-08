@@ -54,24 +54,15 @@ async function bootstrap(): Promise<void> {
         getLastTrackedMessageId: () => messageManager.getLastTrackedMessageId(),
         hasTrackedMessageId: (id: string) =>
             messageManager.hasTrackedMessageId(id),
+        onScrollToTop: loadOneMoreMessage,
     });
 
     domObserver.start();
+    domObserver.SetAutoLoad(config.autoLoad);
     scheduleInitialScan();
     onConfigChanged(handleConfigUpdated);
     onMessage(handleExtensionMessage);
 
-    // Diagnostic: log selector match info to help debug site configs
-    setTimeout(() => {
-        const msgs = domObserver.queryAllMessages();
-        const scrollEl = domObserver.findScrollContainer();
-        console.log(
-            `[AI Chat Speed Booster] Site: ${currentSite.name} | ` +
-            `Selector: "${currentSite.selectors.messageTurn}" → ${msgs.length} match(es) | ` +
-            `Scroll container: ${scrollEl ? "found" : "NOT found"} | ` +
-            `Is Dynamic: ${currentSite.isDynamic ? "Yes" : "No"}`,
-        );
-    }, 3000);
 }
 
 /**
@@ -84,6 +75,17 @@ function scheduleInitialScan(): void {
             messageManager.initialise(existing);
             refreshUI();
             logger.info(`initial scan: ${existing.length} messages`);
+            // Moved the log here so it runs after actually finding messages.
+            setTimeout(() => {
+                const msgs = domObserver.queryAllMessages();
+                const scrollEl = domObserver.findScrollContainer();
+                console.log(
+                    `[AI Chat Speed Booster] Site: ${currentSite.name} | ` +
+                    `Selector: "${currentSite.selectors.messageTurn}" → ${msgs.length} match(es) | ` +
+                    `Scroll container: ${scrollEl ? "found" : "NOT found"} | ` +
+                    `Is Dynamic: ${currentSite.isDynamic ? "Yes" : "No"}`,
+                );
+            }, 100);
             // After hiding old messages, scroll the container to the bottom so
             // the user always sees the most recent turn.  Only needed for sites
             // that don't support CSS scroll anchoring (e.g. Gemini's custom
@@ -191,6 +193,7 @@ function handleMessagesReset(): void {
     loadMoreButton.hide();
     const messages = domObserver.queryAllMessages();
     messageManager.initialise(messages);
+    domObserver.resetAutoLoad(); // Reset auto-load state to prevent it from getting stuck after a reset
     refreshUI();
     // Do NOT scroll here — the user is actively reading a streaming response.
     // Any forced scroll would jump away from the content they are watching.
@@ -215,6 +218,15 @@ function handleLoadMore(): void {
         // Nothing left to reveal from DOM — check if fetch interceptor trimmed
         refreshUI();
     }
+}
+
+/**
+ * Reveals one additional conversation turn, used for auto-loading when the user scrolls to the top.
+ */
+function loadOneMoreMessage(): void {
+    if(!config.autoLoad) return; // Don't auto-load if the user has disabled the feature
+    messageManager.loadMore(1);
+    refreshUI();
 }
 
 /**
@@ -247,7 +259,7 @@ function refreshUI(): void {
             document.documentElement.removeAttribute("data-acsb-trimmed");
         }
 
-        if (status.hiddenMessages > 0 && config.enabled) {
+        if (status.hiddenMessages > 1 && config.enabled) { // changed to 1 since conversations that were aborted will result in 1 turn being added, i.e., the user prompt.
             // Normal Load More mode — there are still hidden DOM elements
             const firstVisible = findFirstVisibleMessage();
             const container = findMessageContainer();
@@ -267,6 +279,9 @@ function refreshUI(): void {
         } else {
             loadMoreButton.hide();
         }
+
+        domObserver.updateMessageStats(Math.floor(status.totalMessages / 2), Math.floor(status.visibleMessages / 2)); // Divide by 2 to convert from turns to conversations
+        domObserver.SetAutoLoad(config.autoLoad); // Update auto-load state in DOM observer based on latest config
 
         if (!config.enabled || !config.showStatus || status.totalMessages === 0) {
             statusIndicator.hide();

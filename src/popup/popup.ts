@@ -14,6 +14,7 @@ const positionButtons = positionPicker.querySelectorAll<HTMLButtonElement>(".pos
 const lightIcon = document.querySelector(".theme-toggle__icon.lucide-sun") as HTMLElement;
 const darkIcon = document.querySelector(".theme-toggle__icon.lucide-moon") as HTMLElement;
 const themeToggle = document.getElementById("theme-toggle") as HTMLButtonElement;
+const toggleAutoLoad = document.getElementById("toggle-auto-load") as HTMLInputElement; // New auto-load toggle element
 
 let saveTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -50,6 +51,7 @@ async function init(): Promise<void> {
 function renderConfig(config: ExtensionConfig): void {
     toggleEnabled.checked = config.enabled;
     toggleStatus.checked = config.showStatus;
+    toggleAutoLoad.checked = config.autoLoad;
     toggleFetchIntercept.checked = config.fetchInterceptEnabled;
     visibleLimitInput.value = String(config.visibleMessageLimit);
     batchSizeInput.value = String(config.loadMoreBatchSize);
@@ -118,6 +120,12 @@ toggleEnabled.addEventListener("change", async () => {
 
 toggleStatus.addEventListener("change", async () => {
     const config = await safeSendMessage<ExtensionConfig>({ type: MessageType.TOGGLE_STATUS });
+    if (config) renderConfig(config);
+    await refreshStatus();
+});
+
+toggleAutoLoad.addEventListener("change", async () => {
+    const config = await safeSendMessage<ExtensionConfig>({ type: MessageType.TOGGLE_AUTO_LOAD });
     if (config) renderConfig(config);
     await refreshStatus();
 });

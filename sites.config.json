@@ -10,7 +10,7 @@
         ],
         "selectors": {
             "messageTurn": "section[data-testid^=\"conversation-turn-\"]",
-            "scrollContainer": "main"
+            "scrollContainer": "div[data-scroll-root]"
         },
         "messageIdAttribute": "data-turn-id",
         "statusAnchors": {
@@ -55,7 +55,8 @@
         ],
         "selectors": {
             "messageTurn": "[data-test-render-count]",
-            "scrollContainer": ".overflow-y-scroll"
+            "scrollContainer": "div[data-autoscroll-container]",
+            "scrollContainerAlt": ".overflow-y-scroll"
         },
         "statusAnchors": {
             "name": "[data-testid=\"chat-title-button\"]",
@@ -95,7 +96,8 @@
         ],
         "selectors": {
             "messageTurn": "user-query, model-response",
-            "scrollContainer": "infinite-scroller.chat-history"
+            "scrollContainer": "infinite-scroller[data-test-id=\"chat-history-container\"]",
+            "scrollContainerAlt": "infinite-scroller.chat-history"
         },
         "statusAnchors": {
             "name": "bard-logo",

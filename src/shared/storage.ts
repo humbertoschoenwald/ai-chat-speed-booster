@@ -26,6 +26,7 @@ function sanitiseConfig(raw: Partial<ExtensionConfig> | undefined): ExtensionCon
             ? base.statusPosition
             : DEFAULT_CONFIG.statusPosition,
         fetchInterceptEnabled: typeof base.fetchInterceptEnabled === "boolean" ? base.fetchInterceptEnabled : DEFAULT_CONFIG.fetchInterceptEnabled,
+        autoLoad: typeof base.autoLoad === "boolean" ? base.autoLoad : DEFAULT_CONFIG.autoLoad, // New addition for auto-load validation
         theme: base.theme === "light" || base.theme === "dark" ? base.theme : DEFAULT_CONFIG.theme, // New addition for theme validation
     };
 }

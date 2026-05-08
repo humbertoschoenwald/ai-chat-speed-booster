@@ -9,6 +9,7 @@ export interface DOMObserverCallbacks {
     onMessagesReset(): void;
     getLastTrackedMessageId(): string | null;
     hasTrackedMessageId(id: string): boolean;
+    onScrollToTop(): void;
 }
 
 export class DOMObserver {
@@ -20,12 +21,17 @@ export class DOMObserver {
     private readonly callbacks: DOMObserverCallbacks;
     private lastUrl = "";
     private urlPollTimer: ReturnType<typeof setInterval> | null = null;
+    private totalMessages = 0;
+    private visibleMessages = 0;
+    private scrollEl: HTMLElement | null = null;
+    private scrollRaf: number | null = null;
+    private autoLoadEnabled = false;
 
     constructor(currentSite: SiteConfig, callbacks: DOMObserverCallbacks) {
         this.currentSite = currentSite;
         this.selectors = currentSite.selectors;
         this.callbacks = callbacks;
-    }
+        this.scrollEl = this.findScrollContainer();    }
 
     start(): void {
         if (this.observer) {
@@ -67,6 +73,51 @@ export class DOMObserver {
 
     queryAllMessages(): HTMLElement[] {
         return Array.from(document.querySelectorAll<HTMLElement>(this.selectors.messageTurn));
+    }
+
+    // Updates internal message counts based on the provided numbers.
+    // Required for gating the scroll listener callback.
+    updateMessageStats(total: number, visible: number): void {
+        this.totalMessages = total;
+        this.visibleMessages = visible;
+    }
+
+    SetAutoLoad(enable: boolean): void {    
+        if(this.autoLoadEnabled === enable) return; // No change in state, do nothing
+        this.autoLoadEnabled = enable;
+
+        if(this.autoLoadEnabled){
+            logger.debug("Auto-load enabled: will load one more message when user scrolls to top");
+            
+            // Attach scroll listener to the resolved scroll container so callers
+            // can react to user scrolling (auto-load, etc.)
+            if (!this.scrollEl) this.scrollEl = this.findScrollContainer();
+            while(!this.scrollEl) {
+                setTimeout(() => {
+                    this.scrollEl = this.findScrollContainer();
+
+                }, 1000); // Keep trying to find a scroll container every second, as some sites load it asynchronously (e.g. Claude)
+                if(this.scrollEl) 
+                    break;    
+            }
+            this.handleScroll(); // Check scroll position immediately in case user is already near top when enabling auto-load
+            if (this.scrollEl) this.scrollEl.addEventListener("scroll", this.handleScroll, { passive: true });
+        }else{
+            logger.debug("Auto-load disabled: will not load more messages on scroll");
+
+            // Detach scroll listener to disable auto-load functionality
+            if (this.scrollEl) this.scrollEl.removeEventListener("scroll", this.handleScroll);
+            if (this.scrollRaf) cancelAnimationFrame(this.scrollRaf);
+            this.scrollRaf = null;
+        }
+    }
+
+    resetAutoLoad(): void {
+        if(this.autoLoadEnabled){
+            logger.debug("Resetting auto-load state: temporarily disabling and re-enabling to reset internal state");
+            this.SetAutoLoad(false);
+            this.SetAutoLoad(true);
+        }
     }
 
     findScrollContainer(): HTMLElement | null {
@@ -155,12 +206,46 @@ export class DOMObserver {
         }
 
         if (removedMessages.length > 0) {
-            logger.debug(`${removedMessages.length} message turn(s) removed`);
+            logger.debug(`${removedMessages.length} message turn(s) removed out of ${this.totalMessages} total tracked messages`);
             this.callbacks.onMessagesRemoved(removedMessages);
+            if(removedMessages.length >= this.totalMessages) {
+                // If all or nearly all messages are removed at once,
+                //  it's likely a conversation reset scenario like the chatgpt + excel scenario,
+                //  the existing message tracking can get out of sync, so we trigger a full reset to be safe
+                // This fixes the issue where the "entire chat disappears," but there's a bug in chatgpt's ui 
+                // which disables the prompt area, after collapsing the excel table, until a page refresh.
+                logger.debug(`Detected ${removedMessages.length} removed messages, triggering full reset`);
+                this.callbacks.onMessagesReset();
+                this.scrollEl?.scrollTo({ top: this.scrollEl?.scrollHeight ?? 0, behavior: "smooth" }); // Scroll to bottom after reset
+            }
         }
     }
 
     private isMessageTurn(el: HTMLElement): boolean {
         return el.matches?.(this.selectors.messageTurn) ?? false;
     }
+
+    private readonly handleScroll = (): void => {
+        if (this.scrollRaf) cancelAnimationFrame(this.scrollRaf);
+        if(this.visibleMessages === this.totalMessages) return; // No hidden messages, no need to check scroll position
+        this.scrollRaf = requestAnimationFrame(() => {
+            const el = this.scrollEl ?? this.findScrollContainer();
+            if (!el) return;
+            var percentFromTop = getPercentFromTop(el);
+            if (this.callbacks.onScrollToTop && percentFromTop <= 10) this.callbacks.onScrollToTop();
+            percentFromTop = getPercentFromTop(el);
+            // console.log("Percent from top:", percentFromTop);
+            // If user is still near the top after loading more messages, scroll down slightly to prevent multiple triggers
+            if(percentFromTop <= 10){
+                el?.scrollTo({ top: 0.1 * (this.scrollEl?.scrollHeight ?? 0), behavior: "smooth" });
+                logger.debug("Auto scrolled down slightly to prevent multiple auto-load triggers");
+            }
+        });
+
+        function getPercentFromTop(el: HTMLElement): number {
+            const max = el.scrollHeight - el.clientHeight;
+            const top = el.scrollTop;
+            return max > 0 ? (top / max) * 100 : 100;
+        }
+    };
 }
