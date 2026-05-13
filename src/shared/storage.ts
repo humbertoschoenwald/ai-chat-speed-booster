@@ -1,5 +1,5 @@
 import { storageGet, storageSet, onStorageChanged } from "./browser-api";
-import { STORAGE_KEY, DEFAULT_CONFIG, CONFIG_LIMITS, REQUEST_COUNTS_KEY } from "./constants";
+import { STORAGE_KEY, DEFAULT_CONFIG, CONFIG_LIMITS, REQUEST_COUNTS_KEY, AUTO_LOAD_RESET_KEY } from "./constants";
 import type { ExtensionConfig, WeeklyRequestCount } from "./types";
 import { logger } from "./logger";
 
@@ -29,16 +29,38 @@ function sanitiseConfig(raw: Partial<ExtensionConfig> | undefined): ExtensionCon
         autoLoad: typeof base.autoLoad === "boolean" ? base.autoLoad : DEFAULT_CONFIG.autoLoad,
         weeklyRequestLimit: clamp(base.weeklyRequestLimit ?? DEFAULT_CONFIG.weeklyRequestLimit, CONFIG_LIMITS.weeklyRequestLimit.min, CONFIG_LIMITS.weeklyRequestLimit.max),
         theme: base.theme === "light" || base.theme === "dark" ? base.theme : DEFAULT_CONFIG.theme,
+        hideOldMessages: typeof base.hideOldMessages === "boolean" ? base.hideOldMessages : DEFAULT_CONFIG.hideOldMessages,
     };
 }
 
 export async function loadConfig(): Promise<ExtensionConfig> {
     try {
         const raw = await storageGet<Partial<ExtensionConfig>>(STORAGE_KEY);
-        return sanitiseConfig(raw);
+        const config = sanitiseConfig(raw);
+        return await applyAutoLoadReset(config);
     } catch (error) {
         logger.error("failed to load config, using defaults", error);
         return { ...DEFAULT_CONFIG };
+    }
+}
+
+/**
+ * One-time reset: Auto Load originally shipped enabled by default and caused
+ * scroll regressions, so we force it off once per profile and remember we did.
+ * Users who want the Beta can re-enable it from the popup.
+ */
+async function applyAutoLoadReset(config: ExtensionConfig): Promise<ExtensionConfig> {
+    try {
+        const done = await storageGet<boolean>(AUTO_LOAD_RESET_KEY);
+        if (done) return config;
+        await storageSet(AUTO_LOAD_RESET_KEY, true);
+        if (!config.autoLoad) return config;
+        const reset: ExtensionConfig = { ...config, autoLoad: false };
+        await storageSet(STORAGE_KEY, reset);
+        logger.debug("auto-load reset applied (one-time)");
+        return reset;
+    } catch {
+        return config;
     }
 }
 

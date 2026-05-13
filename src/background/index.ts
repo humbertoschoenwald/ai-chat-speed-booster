@@ -64,6 +64,13 @@ onMessage(async (message): Promise<unknown> => {
             return updated;
         }
 
+        case MessageType.TOGGLE_HIDE_OLD_MESSAGES: {
+            const current = await loadConfig();
+            const updated = await saveConfig({ hideOldMessages: !current.hideOldMessages });
+            await broadcastToContentScripts({ type: MessageType.CONFIG_UPDATED, payload: updated });
+            return updated;
+        }
+
         case MessageType.GET_REQUEST_COUNT: {
             const siteId = (msg as { payload?: { siteId?: string } }).payload?.siteId ?? "";
             return await loadRequestCount(siteId);

@@ -198,6 +198,22 @@ body {
     margin-top: 1px;
 }
 
+.setting__badge {
+    display: inline-block;
+    margin-left: 6px;
+    padding: 1px 6px;
+    font-size: 9px;
+    font-weight: 600;
+    line-height: 1.4;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--accent);
+    background: rgba(16, 163, 127, 0.12);
+    border: 1px solid rgba(16, 163, 127, 0.35);
+    border-radius: 4px;
+    vertical-align: middle;
+}
+
 .setting__input {
     width: 56px;
     padding: 4px 6px;

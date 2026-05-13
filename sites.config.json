@@ -11,6 +11,7 @@
         "selectors": {
             "messageTurn": "section[data-testid^=\"conversation-turn-\"]",
             "scrollContainer": "div[data-scroll-root]",
+            "scrollContainerAlt": "main",
             "userMessageSelector": "[data-message-author-role=\"user\"]"
         },
         "messageIdAttribute": "data-turn-id",

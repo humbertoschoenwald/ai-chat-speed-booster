@@ -51,13 +51,28 @@
                         <span class="toggle__slider"></span>
                     </label>
                 </div>
-                <div class="setting" data-tooltip="Reveals one older message when you scroll to the top, so you can read back without clicking Load More.">
-                    <span class="setting__label">Auto load</span>
-                    <label class="toggle" aria-label="Enable or disable auto-load">
+                <div class="setting" data-tooltip="Beta: reveals one older message when you scroll to the top. Disabled by default while we iron out scroll glitches.">
+                    <span class="setting__label">
+                        Auto load
+                        <span class="setting__badge">Beta</span>
+                    </span>
+                    <label class="toggle" aria-label="Enable or disable auto-load (Beta)">
                         <input type="checkbox" id="toggle-auto-load" class="toggle__input">
                         <span class="toggle__slider"></span>
                     </label>
                 </div>
+            </div>
+
+            <!-- Hide old messages toggle -->
+            <div class="setting" data-tooltip="Hide older turns from the DOM beyond the Visible limit. Turn this off if scrolling feels janky on ChatGPT (which has its own viewport-based rendering) — Fast mode still trims the API payload for speed.">
+                <div class="setting__info">
+                    <span class="setting__label">Hide old turns</span>
+                    <span class="setting__hint">Only keep the last N visible</span>
+                </div>
+                <label class="toggle" aria-label="Enable or disable DOM hiding of older turns">
+                    <input type="checkbox" id="toggle-hide-old" class="toggle__input">
+                    <span class="toggle__slider"></span>
+                </label>
             </div>
 
             <!-- Visible messages + Batch size -->

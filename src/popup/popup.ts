@@ -7,6 +7,7 @@ const toggleEnabled = document.getElementById("toggle-enabled") as HTMLInputElem
 const toggleStatus = document.getElementById("toggle-status") as HTMLInputElement;
 const toggleFetchIntercept = document.getElementById("toggle-fetch-intercept") as HTMLInputElement;
 const toggleAutoLoad = document.getElementById("toggle-auto-load") as HTMLInputElement;
+const toggleHideOld = document.getElementById("toggle-hide-old") as HTMLInputElement;
 const visibleLimitInput = document.getElementById("visible-limit") as HTMLInputElement;
 const batchSizeInput = document.getElementById("batch-size") as HTMLInputElement;
 const statusText = document.getElementById("status-text") as HTMLElement;
@@ -61,6 +62,7 @@ function renderConfig(config: ExtensionConfig): void {
     toggleEnabled.checked = config.enabled;
     toggleStatus.checked = config.showStatus;
     toggleAutoLoad.checked = config.autoLoad;
+    toggleHideOld.checked = config.hideOldMessages;
     toggleFetchIntercept.checked = config.fetchInterceptEnabled;
     visibleLimitInput.value = String(config.visibleMessageLimit);
     batchSizeInput.value = String(config.loadMoreBatchSize);
@@ -174,6 +176,12 @@ toggleStatus.addEventListener("change", async () => {
 
 toggleAutoLoad.addEventListener("change", async () => {
     const config = await safeSendMessage<ExtensionConfig>({ type: MessageType.TOGGLE_AUTO_LOAD });
+    if (config) renderConfig(config);
+    await refreshStatus();
+});
+
+toggleHideOld.addEventListener("change", async () => {
+    const config = await safeSendMessage<ExtensionConfig>({ type: MessageType.TOGGLE_HIDE_OLD_MESSAGES });
     if (config) renderConfig(config);
     await refreshStatus();
 });

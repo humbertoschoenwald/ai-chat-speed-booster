@@ -27,6 +27,7 @@ export class DOMObserver {
     private scrollRaf: number | null = null;
     private autoLoadEnabled = false;
     private scrollRetryTimer: ReturnType<typeof setInterval> | null = null;
+    private lastAutoLoadAt = 0;
 
     constructor(currentSite: SiteConfig, callbacks: DOMObserverCallbacks) {
         this.currentSite = currentSite;
@@ -219,15 +220,15 @@ export class DOMObserver {
         if (removedMessages.length > 0) {
             logger.debug(`${removedMessages.length} message turn(s) removed out of ${this.totalMessages} total tracked messages`);
             this.callbacks.onMessagesRemoved(removedMessages);
-            if(removedMessages.length >= this.totalMessages) {
-                // If all or nearly all messages are removed at once,
-                //  it's likely a conversation reset scenario like the chatgpt + excel scenario,
-                //  the existing message tracking can get out of sync, so we trigger a full reset to be safe
-                // This fixes the issue where the "entire chat disappears," but there's a bug in chatgpt's ui 
-                // which disables the prompt area, after collapsing the excel table, until a page refresh.
+            // If essentially every tracked turn is removed in one batch it's a
+            // re-render of the whole thread (e.g. the ChatGPT + Excel-table
+            // collapse bug), so trigger a full reset to keep tracking aligned.
+            // Guard on totalMessages > 0 so this never fires before the first
+            // refreshUI has populated the count (totalMessages starts at 0,
+            // which would otherwise make ANY removal look like a full wipe).
+            if (this.totalMessages > 0 && removedMessages.length >= this.totalMessages) {
                 logger.debug(`Detected ${removedMessages.length} removed messages, triggering full reset`);
                 this.callbacks.onMessagesReset();
-                this.scrollEl?.scrollTo({ top: this.scrollEl?.scrollHeight ?? 0, behavior: "smooth" }); // Scroll to bottom after reset
             }
         }
     }
@@ -236,27 +237,25 @@ export class DOMObserver {
         return el.matches?.(this.selectors.messageTurn) ?? false;
     }
 
+    private static readonly AUTO_LOAD_COOLDOWN_MS = 800;
+
     private readonly handleScroll = (): void => {
         if (this.scrollRaf) cancelAnimationFrame(this.scrollRaf);
-        if(this.visibleMessages === this.totalMessages) return; // No hidden messages, no need to check scroll position
+        if (this.visibleMessages >= this.totalMessages) return; // nothing hidden left to reveal
         this.scrollRaf = requestAnimationFrame(() => {
             const el = this.scrollEl ?? this.findScrollContainer();
             if (!el) return;
-            var percentFromTop = getPercentFromTop(el);
-            if (this.callbacks.onScrollToTop && percentFromTop <= 10) this.callbacks.onScrollToTop();
-            percentFromTop = getPercentFromTop(el);
-            // console.log("Percent from top:", percentFromTop);
-            // If user is still near the top after loading more messages, scroll down slightly to prevent multiple triggers
-            if(percentFromTop <= 10){
-                el?.scrollTo({ top: 0.1 * (this.scrollEl?.scrollHeight ?? 0), behavior: "smooth" });
-                logger.debug("Auto scrolled down slightly to prevent multiple auto-load triggers");
-            }
-        });
-
-        function getPercentFromTop(el: HTMLElement): number {
             const max = el.scrollHeight - el.clientHeight;
-            const top = el.scrollTop;
-            return max > 0 ? (top / max) * 100 : 100;
-        }
+            const percentFromTop = max > 0 ? (el.scrollTop / max) * 100 : 100;
+            if (percentFromTop > 10) return;
+            // Throttle so parking at the top reveals turns gradually instead of
+            // dumping them all at once. We intentionally do NOT force-scroll the
+            // user — browser scroll anchoring keeps their view stable when the
+            // newly revealed turn is prepended above the viewport.
+            const now = Date.now();
+            if (now - this.lastAutoLoadAt < DOMObserver.AUTO_LOAD_COOLDOWN_MS) return;
+            this.lastAutoLoadAt = now;
+            this.callbacks.onScrollToTop();
+        });
     };
 }

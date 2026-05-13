@@ -13,7 +13,14 @@ function injectHideStyle(): void {
     if (styleInjected) return;
     styleInjected = true;
     const style = document.createElement("style");
-    style.textContent = `.${HIDE_CLASS}{display:none!important}`;
+    // The second rule defeats ChatGPT's `content-visibility: auto` on the turns
+    // we let through. Without it, turns materialize/de-materialize as they
+    // cross the viewport, making scrollHeight oscillate and triggering
+    // overflow-anchor jumps. Hidden turns are display:none so this is cheap.
+    style.textContent = `.${HIDE_CLASS}{display:none!important}` +
+        `[${DATA_ATTR}]:not(.${HIDE_CLASS}),` +
+        `[${DATA_ATTR}]:not(.${HIDE_CLASS}) *` +
+        `{content-visibility:visible!important;contain-intrinsic-size:auto!important;}`;
     (document.head ?? document.documentElement).appendChild(style);
 }
 
@@ -130,7 +137,9 @@ export class MessageManager {
 
     private recalculateVisibility(): void {
         injectHideStyle();
-        if (!this.config.enabled) {
+        if (!this.config.enabled || !this.config.hideOldMessages) {
+            // Filtering off: leave the DOM intact and let the site handle
+            // its own virtualization. Fast Mode still trims the API payload.
             for (const msg of this.messages) this.showMessage(msg);
             return;
         }

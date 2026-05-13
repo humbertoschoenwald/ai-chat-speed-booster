@@ -215,9 +215,15 @@ function handleMessagesReset(): void {
 }
 
 function handleExtensionMessage(message: unknown): ExtensionStatus | undefined {
-    const msg = message as { type?: string };
+    const msg = message as { type?: string; payload?: unknown };
     if (msg.type === MessageType.GET_STATUS) {
         return { ...messageManager.getStatus(), siteId: currentSite.id };
+    }
+    // Background also broadcasts CONFIG_UPDATED here (in addition to the
+    // storage-change listener) so config changes still propagate if storage
+    // events are missed.
+    if (msg.type === MessageType.CONFIG_UPDATED && msg.payload) {
+        handleConfigUpdated(msg.payload as ExtensionConfig);
     }
     return undefined;
 }
