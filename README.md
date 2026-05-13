@@ -55,6 +55,58 @@ npm run build:chrome
 ```
 Build output goes to `dist/chrome/`.
 
+## Releasing a new version
+
+The two scripts under `scripts/` handle everything between editing code and uploading zips to the stores.
+
+### 1. Bump the version
+
+```bash
+npm run bump 1.4.5
+```
+
+Updates the version in `package.json` and all four browser manifests (`browsers/{chrome,edge,firefox,safari}/manifest.json`), stages only those five files, commits with `fix: update version to 1.4.5`, and creates the tag `v1.4.5`.
+
+Flags:
+
+- `npm run bump 1.4.5 -- --dry` — preview the changes, write nothing
+- `npm run bump 1.4.5 -- --no-tag` — commit but skip the tag
+
+The script refuses to run if the tag already exists, if you're already on that version, or if the version isn't semver-shaped (`X.Y.Z` or `X.Y.Z-beta.1`).
+
+### 2. Package the release zips
+
+```bash
+npm run package
+```
+
+Builds Chrome + Firefox, then writes three zips into `deploys/` (gitignored):
+
+| File | What it's for |
+| --- | --- |
+| `chrome-v<version>.zip` | Upload to the Chrome Web Store |
+| `firefox-v<version>.zip` | Upload to Firefox AMO |
+| `firefox-source-v<version>.zip` | Source archive AMO requires for review |
+
+The source zip is produced by `git archive HEAD`, so it always matches the last commit — **bump and commit before packaging**, otherwise the source archive will show the previous version's tree.
+
+Flag: `npm run package -- --skip-build` re-zips whatever's already in `dist/` without rebuilding.
+
+### 3. Push and upload
+
+```bash
+git push && git push --tags
+```
+
+Then upload from `deploys/`:
+
+- **Chrome Web Store** — upload `chrome-v<version>.zip`
+- **Firefox AMO** — upload `firefox-v<version>.zip`, then attach `firefox-source-v<version>.zip` when prompted for source code. AMO also asks for release notes — paste a short summary of what changed.
+
+### 4. After the stores publish
+
+Update the version numbers in the [Install via official browser extension store](#install-via-official-browser-extension-store) table at the top of this README. Store review can take days, so the listed version is allowed to lag behind the tag.
+
 ## Adding a new AI chat site
 
 All site definitions live in one file: [`sites.config.json`](sites.config.json).

@@ -24,7 +24,9 @@
         "test:extension": "npm run build:chrome && npx playwright test --project=extension",
         "test:integration": "npm run build:chrome && npx playwright test --project=integration",
         "test:auth": "npm run build:chrome && node tests/auth-setup.mjs",
-        "diagnose:scroll": "npm run build:chrome && node tests/scroll-diagnostic.mjs"
+        "diagnose:scroll": "npm run build:chrome && node tests/scroll-diagnostic.mjs",
+        "package": "node scripts/package.mjs",
+        "bump": "node scripts/bump.mjs"
     },
     "devDependencies": {
         "@playwright/test": "^1.49.0",
