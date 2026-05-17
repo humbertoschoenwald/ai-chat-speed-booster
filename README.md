@@ -1,5 +1,7 @@
 # AI Chat Speed Booster
 
+**Website:** [projects.thiering.org/ai-chat-speed-booster](https://projects.thiering.org/ai-chat-speed-booster/)
+
 Keeps long AI chat conversations responsive by showing only recent messages first, then letting you load older ones when you need them.
 
 Works on **ChatGPT**, **Claude**, **Gemini**, and any AI chat app you add to the config.
