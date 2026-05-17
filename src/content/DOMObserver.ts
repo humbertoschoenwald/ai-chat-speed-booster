@@ -27,7 +27,6 @@ export class DOMObserver {
     private scrollRaf: number | null = null;
     private autoLoadEnabled = false;
     private scrollRetryTimer: ReturnType<typeof setInterval> | null = null;
-    private lastAutoLoadAt = 0;
 
     constructor(currentSite: SiteConfig, callbacks: DOMObserverCallbacks) {
         this.currentSite = currentSite;
@@ -237,7 +236,6 @@ export class DOMObserver {
         return el.matches?.(this.selectors.messageTurn) ?? false;
     }
 
-    private static readonly AUTO_LOAD_COOLDOWN_MS = 800;
 /*
     private readonly handleScroll = (): void => {
         if (this.scrollRaf) cancelAnimationFrame(this.scrollRaf);
