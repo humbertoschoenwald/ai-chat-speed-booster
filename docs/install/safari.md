@@ -21,19 +21,25 @@ cd ai-chat-speed-booster
 pnpm install
 ```
 
-### 2. Build the Safari extension files
+### 2. Validate the Safari build track
+
+```bash
+pnpm run test:safari
+```
+
+### 3. Build the Safari extension files
 
 ```bash
 pnpm run safari:setup
 ```
 
-### 3. Open the Xcode project
+### 4. Open the Xcode project
 
 ```bash
 open "safari-app/AI Chat Speed Booster/AI Chat Speed Booster.xcodeproj"
 ```
 
-### 4. Add your Apple ID to Xcode
+### 5. Add your Apple ID to Xcode
 
 This is required so Xcode can sign the app. You only need to do this once.
 
@@ -43,7 +49,7 @@ This is required so Xcode can sign the app. You only need to do this once.
 
 ![Add Apple Account in Xcode Settings](../../assets/docs/xcode-account.png)
 
-### 5. Set your Team on the macOS targets
+### 6. Set your Team on the macOS targets
 
 You need to do this for both the app and the extension target.
 
@@ -57,7 +63,7 @@ You need to do this for both the app and the extension target.
 
 > If Xcode shows a "Failed to register bundle identifier" error, click **Try Again** — it usually resolves on its own.
 
-### 6. Run the app
+### 7. Run the app
 
 Make sure the selected scheme in the top bar shows **macOS (App)** and **My Mac**, then click the **Run** button (▶).
 
@@ -65,7 +71,7 @@ Make sure the selected scheme in the top bar shows **macOS (App)** and **My Mac*
 
 Xcode will ask for your **Mac login password** to access the keychain for code signing — this is the same password you use to unlock your Mac.
 
-### 7. Enable the extension in Safari
+### 8. Enable the extension in Safari
 
 After the app launches, it will show a prompt telling you to enable the extension in Safari.
 
@@ -76,6 +82,6 @@ After the app launches, it will show a prompt telling you to enable the extensio
 
 ![Enable extension in Safari settings](../../assets/docs/safari-extension.png)
 
-### 8. Allow the extension on your AI chat sites
+### 9. Allow the extension on your AI chat sites
 
 Click the extension icon in the Safari toolbar and allow it to run on the sites you use (e.g. chatgpt.com, claude.ai).

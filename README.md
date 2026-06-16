@@ -187,6 +187,7 @@ This builds all browser targets, validates every `dist/` output, then loads the 
 ```bash
 pnpm run test:build       # validate dist/ outputs only
 pnpm run test:extension   # extension tests on mock pages
+pnpm run test:safari      # Safari build and manifest compatibility
 pnpm run test:integration # live site tests (requires auth, see below)
 ```
 

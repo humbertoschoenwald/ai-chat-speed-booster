@@ -22,6 +22,7 @@
         "test": "pnpm run build:all && pnpm exec playwright test --project=build --project=extension",
         "test:build": "pnpm run build:all && pnpm exec playwright test --project=build",
         "test:extension": "pnpm run build:chrome && pnpm exec playwright test --project=extension",
+        "test:safari": "pnpm run build:safari && pnpm exec playwright test --project=safari",
         "test:integration": "pnpm run build:chrome && pnpm exec playwright test --project=integration",
         "test:auth": "pnpm run build:chrome && node tests/auth-setup.mjs",
         "diagnose:scroll": "pnpm run build:chrome && node tests/scroll-diagnostic.mjs",

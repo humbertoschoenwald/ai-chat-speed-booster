@@ -16,6 +16,10 @@ export default defineConfig({
             testMatch: "extension.spec.ts",
         },
         {
+            name: "safari",
+            testMatch: "safari-compatibility.spec.ts",
+        },
+        {
             name: "integration",
             testMatch: "integration.spec.ts",
         },
