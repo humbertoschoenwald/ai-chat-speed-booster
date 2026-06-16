@@ -5,9 +5,9 @@
  * matching git tag (v<version>).
  *
  * Usage:
- *   npm run bump 1.4.5             # bump, commit, and tag
- *   npm run bump 1.4.5 -- --no-tag # bump and commit but don't tag
- *   npm run bump 1.4.5 -- --dry    # show what would change, do nothing
+ *   pnpm run bump 1.4.5             # bump, commit, and tag
+ *   pnpm run bump 1.4.5 -- --no-tag # bump and commit but don't tag
+ *   pnpm run bump 1.4.5 -- --dry    # show what would change, do nothing
  *
  * Does NOT push — review with `git log` / `git show` first, then push manually.
  */
@@ -26,7 +26,7 @@ const dry = flags.has("--dry");
 
 const newVersion = args[0];
 if (!newVersion) {
-    console.error("usage: npm run bump <version>  (e.g. 1.4.5)");
+    console.error("usage: pnpm run bump <version>  (e.g. 1.4.5)");
     process.exit(1);
 }
 if (!/^\d+\.\d+\.\d+(-[\w.]+)?$/.test(newVersion)) {

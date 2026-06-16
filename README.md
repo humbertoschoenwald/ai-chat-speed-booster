@@ -32,14 +32,14 @@ Store listings (Chrome/Firefox) may lag because review can take time.
 ### 1) Requirements
 
 - Node.js 18+
-- npm
+- pnpm 10+
 
 ### 2) Install
 
 ```bash
 git clone https://github.com/Noah4ever/ai-chat-speed-booster.git
 cd ai-chat-speed-booster
-npm install
+pnpm install
 ```
 
 ### 3) Build
@@ -47,13 +47,13 @@ npm install
 Build all targets:
 
 ```bash
-npm run build:all
+pnpm run build:all
 ```
 
 You can also just build one target (`chrome`, `firefox`, `safari`, `edge`):
 
 ```bash
-npm run build:chrome
+pnpm run build:chrome
 ```
 Build output goes to `dist/chrome/`.
 
@@ -64,22 +64,22 @@ The two scripts under `scripts/` handle everything between editing code and uplo
 ### 1. Bump the version
 
 ```bash
-npm run bump 1.4.5
+pnpm run bump 1.4.5
 ```
 
 Updates the version in `package.json` and all four browser manifests (`browsers/{chrome,edge,firefox,safari}/manifest.json`), stages only those five files, commits with `fix: update version to 1.4.5`, and creates the tag `v1.4.5`.
 
 Flags:
 
-- `npm run bump 1.4.5 -- --dry` — preview the changes, write nothing
-- `npm run bump 1.4.5 -- --no-tag` — commit but skip the tag
+- `pnpm run bump 1.4.5 -- --dry` — preview the changes, write nothing
+- `pnpm run bump 1.4.5 -- --no-tag` — commit but skip the tag
 
 The script refuses to run if the tag already exists, if you're already on that version, or if the version isn't semver-shaped (`X.Y.Z` or `X.Y.Z-beta.1`).
 
 ### 2. Package the release zips
 
 ```bash
-npm run package
+pnpm run package
 ```
 
 Builds Chrome + Firefox, then writes three zips into `deploys/` (gitignored):
@@ -92,7 +92,7 @@ Builds Chrome + Firefox, then writes three zips into `deploys/` (gitignored):
 
 The source zip is produced by `git archive HEAD`, so it always matches the last commit — **bump and commit before packaging**, otherwise the source archive will show the previous version's tree.
 
-Flag: `npm run package -- --skip-build` re-zips whatever's already in `dist/` without rebuilding.
+Flag: `pnpm run package -- --skip-build` re-zips whatever's already in `dist/` without rebuilding.
 
 ### 3. Push and upload
 
@@ -177,7 +177,7 @@ Automated tests use [Playwright](https://playwright.dev/) to validate build outp
 ### Run all tests
 
 ```bash
-npm test
+pnpm test
 ```
 
 This builds all browser targets, validates every `dist/` output, then loads the extension in Chromium and verifies it works for each configured site (60 tests, ~7s).
@@ -185,9 +185,9 @@ This builds all browser targets, validates every `dist/` output, then loads the 
 ### Individual test suites
 
 ```bash
-npm run test:build       # validate dist/ outputs only
-npm run test:extension   # extension tests on mock pages
-npm run test:integration # live site tests (requires auth, see below)
+pnpm run test:build       # validate dist/ outputs only
+pnpm run test:extension   # extension tests on mock pages
+pnpm run test:integration # live site tests (requires auth, see below)
 ```
 
 ### Integration tests (live sites)
@@ -196,8 +196,8 @@ To test against real sites with your account:
 
 1. Copy `.env.example` to `.env` and fill in your credentials  
    (for ChatGPT via Google login, use your Google email/password)
-2. Run `npm run test:auth` — a browser opens, log in to each site, press Enter
-3. Run `npm run test:integration`
+2. Run `pnpm run test:auth` — a browser opens, log in to each site, press Enter
+3. Run `pnpm run test:integration`
 
 The auth profile is saved to `tests/.auth-profile/` (git-ignored) and reused across runs.
 
@@ -206,7 +206,7 @@ The auth profile is saved to `tests/.auth-profile/` (git-ignored) and reused acr
 Set `HEADLESS=1` to run without a visible browser window:
 
 ```bash
-HEADLESS=1 npm test
+HEADLESS=1 pnpm test
 ```
 
 ## Browser support
@@ -230,15 +230,15 @@ This project is built from TypeScript source files and bundled with esbuild.
 
 - Operating systems: Linux, macOS, or Windows
 - Node.js: 18 or newer
-- npm: included with Node.js
+- pnpm: 10 or newer
 
 ### Reproducible build steps (Firefox)
 
 ```bash
 git clone https://github.com/Noah4ever/ai-chat-speed-booster.git
 cd ai-chat-speed-booster
-npm ci
-npm run build:firefox
+pnpm install --frozen-lockfile
+pnpm run build:firefox
 ```
 
 The Firefox extension output is generated in `dist/firefox/`.

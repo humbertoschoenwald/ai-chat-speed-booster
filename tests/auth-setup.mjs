@@ -4,7 +4,7 @@
  * Log in to each AI chat site, then press Enter to save the auth profile.
  *
  * Usage:
- *   npm run test:auth
+ *   pnpm run test:auth
  *
  * Credentials from .env are auto-filled where possible (best-effort).
  * If auto-fill fails, log in manually — the profile is saved either way.
@@ -58,7 +58,7 @@ async function tryAutoFill(page, email, password) {
 async function main() {
     // Ensure extension is built
     if (!existsSync(EXTENSION_PATH)) {
-        console.error("Extension not built. Run: npm run build:chrome");
+        console.error("Extension not built. Run: pnpm run build:chrome");
         process.exit(1);
     }
 
@@ -116,7 +116,7 @@ async function main() {
     await context.close();
     console.log();
     console.log(`✓ Auth profile saved to ${AUTH_DIR}`);
-    console.log("  Run: npm run test:integration");
+    console.log("  Run: pnpm run test:integration");
 }
 
 main().catch((err) => {

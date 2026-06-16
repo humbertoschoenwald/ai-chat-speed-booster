@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
  * Probes the actual DOM structure of each configured site to discover
- * which selectors match. Requires a saved auth profile (npm run test:auth).
+ * which selectors match. Requires a saved auth profile (pnpm run test:auth).
  *
  * Usage: node tests/probe-selectors.mjs
  */
@@ -15,7 +15,7 @@ const AUTH_PROFILE = path.resolve("tests", ".auth-profile");
 const sites = JSON.parse(readFileSync("sites.config.json", "utf8"));
 
 if (!existsSync(AUTH_PROFILE)) {
-    console.error("No auth profile found. Run: npm run test:auth");
+    console.error("No auth profile found. Run: pnpm run test:auth");
     process.exit(1);
 }
 

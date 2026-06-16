@@ -9,8 +9,8 @@
  * committed tree (no node_modules, no dist, no local untracked files).
  *
  * Usage:
- *   npm run package                # build chrome + firefox, then zip everything
- *   npm run package -- --skip-build  # zip whatever's already in dist/
+ *   pnpm run package                # build chrome + firefox, then zip everything
+ *   pnpm run package -- --skip-build  # zip whatever's already in dist/
  */
 import { execSync } from "child_process";
 import { existsSync, mkdirSync, rmSync, readFileSync } from "fs";
@@ -46,8 +46,8 @@ function zipDir(srcDir, outZip) {
 mkdirSync(DEPLOYS, { recursive: true });
 
 if (!skipBuild) {
-    run("npm run build:chrome");
-    run("npm run build:firefox");
+    run("pnpm run build:chrome");
+    run("pnpm run build:firefox");
 }
 
 const chromeZip = resolve(DEPLOYS, `chrome-v${VERSION}.zip`);

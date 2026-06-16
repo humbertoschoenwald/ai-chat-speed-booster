@@ -11,20 +11,20 @@
         "build:safari": "cross-env TARGET_BROWSER=safari node scripts/build.mjs",
         "safari:convert": "DEVELOPER_DIR=/Applications/Xcode.app/Contents/Developer xcrun safari-web-extension-converter dist/safari --project-location safari-app --app-name \"AI Chat Speed Booster\" --bundle-identifier com.noah.aichatspeedbooster --force",
         "safari:fix-signing": "sed -i '' '/\"CODE_SIGN_IDENTITY\\[sdk=macosx\\*\\]\" = \"-\";/d' 'safari-app/AI Chat Speed Booster/AI Chat Speed Booster.xcodeproj/project.pbxproj'",
-        "safari:setup": "npm run build:safari && npm run safari:convert && npm run safari:fix-signing",
+        "safari:setup": "pnpm run build:safari && pnpm run safari:convert && pnpm run safari:fix-signing",
         "build:all": "node scripts/build.mjs --all",
         "watch:chrome": "cross-env TARGET_BROWSER=chrome node scripts/build.mjs --watch",
         "watch:firefox": "cross-env TARGET_BROWSER=firefox node scripts/build.mjs --watch",
         "watch:safari": "cross-env TARGET_BROWSER=safari node scripts/build.mjs --watch",
-        "clean": "rm -rf dist",
+        "clean": "node -e \"fs.rmSync('dist', { recursive: true, force: true })\"",
         "lint": "eslint src --ext .ts",
         "typecheck": "tsc --noEmit",
-        "test": "npm run build:all && npx playwright test --project=build --project=extension",
-        "test:build": "npm run build:all && npx playwright test --project=build",
-        "test:extension": "npm run build:chrome && npx playwright test --project=extension",
-        "test:integration": "npm run build:chrome && npx playwright test --project=integration",
-        "test:auth": "npm run build:chrome && node tests/auth-setup.mjs",
-        "diagnose:scroll": "npm run build:chrome && node tests/scroll-diagnostic.mjs",
+        "test": "pnpm run build:all && pnpm exec playwright test --project=build --project=extension",
+        "test:build": "pnpm run build:all && pnpm exec playwright test --project=build",
+        "test:extension": "pnpm run build:chrome && pnpm exec playwright test --project=extension",
+        "test:integration": "pnpm run build:chrome && pnpm exec playwright test --project=integration",
+        "test:auth": "pnpm run build:chrome && node tests/auth-setup.mjs",
+        "diagnose:scroll": "pnpm run build:chrome && node tests/scroll-diagnostic.mjs",
         "package": "node scripts/package.mjs",
         "bump": "node scripts/bump.mjs"
     },
@@ -32,11 +32,12 @@
         "@playwright/test": "^1.49.0",
         "@types/chrome": "^0.0.268",
         "cross-env": "^10.1.0",
-        "esbuild": "^0.21.0",
+        "esbuild": "^0.28.1",
         "typescript": "^5.4.0"
     },
     "engines": {
-        "node": ">=18.0.0"
+        "node": ">=18.0.0",
+        "pnpm": ">=10.0.0"
     },
     "license": "MIT"
 }

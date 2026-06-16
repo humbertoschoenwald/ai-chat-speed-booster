@@ -18,13 +18,13 @@ Safari requires building the extension yourself using Xcode. You will need a fre
 ```bash
 git clone https://github.com/Noah4ever/ai-chat-speed-booster
 cd ai-chat-speed-booster
-npm install
+pnpm install
 ```
 
 ### 2. Build the Safari extension files
 
 ```bash
-npm run safari:setup
+pnpm run safari:setup
 ```
 
 ### 3. Open the Xcode project

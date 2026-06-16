@@ -2,8 +2,8 @@
  * Integration tests – run against REAL sites using saved auth.
  *
  * Prerequisites:
- *   1. npm run test:auth    (log in to each site, profile is saved)
- *   2. npm run test:integration
+ *   1. pnpm run test:auth    (log in to each site, profile is saved)
+ *   2. pnpm run test:integration
  *
  * Tests verify the extension actually works on live sites:
  *  - Content script activates
@@ -19,7 +19,7 @@ const AUTH_PROFILE = path.resolve("tests", ".auth-profile");
 test.beforeAll(() => {
     if (!existsSync(AUTH_PROFILE)) {
         console.warn(
-            "\n⚠  No auth profile found. Run `npm run test:auth` first.\n" +
+            "\n⚠  No auth profile found. Run `pnpm run test:auth` first.\n" +
             "   Skipping integration tests or running without auth.\n",
         );
     }

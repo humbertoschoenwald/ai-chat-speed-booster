@@ -10,7 +10,7 @@
  *   node tests/scroll-diagnostic.mjs "<chat-url>"
  *
  * Requires a saved auth profile so the chat actually loads:
- *   npm run test:auth
+ *   pnpm run test:auth
  *
  * Output: scroll-diagnostic.log in the repo root.
  */
@@ -41,7 +41,7 @@ function log(line) {
 }
 
 if (!existsSync(EXTENSION_PATH)) {
-    log(`ERROR: ${EXTENSION_PATH} not found — run "npm run build:chrome" first.`);
+    log(`ERROR: ${EXTENSION_PATH} not found — run "pnpm run build:chrome" first.`);
     process.exit(1);
 }
 
@@ -51,7 +51,7 @@ if (existsSync(AUTH_PROFILE)) {
     cpSync(AUTH_PROFILE, userDataDir, { recursive: true });
     log(`using auth profile copy at ${userDataDir}`);
 } else {
-    log(`WARNING: no auth profile at ${AUTH_PROFILE} — the chat may not load. Run "npm run test:auth".`);
+    log(`WARNING: no auth profile at ${AUTH_PROFILE} — the chat may not load. Run "pnpm run test:auth".`);
 }
 
 const context = await chromium.launchPersistentContext(userDataDir, {
