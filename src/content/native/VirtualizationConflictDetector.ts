@@ -33,7 +33,7 @@ export class VirtualizationConflictDetector {
             revealLoopCount: this.revealLoopCount,
             scrollOscillationCount: this.scrollOscillationCount,
             shouldDisableNativeVirtualization:
-                this.revealLoopCount >= DISABLE_THRESHOLD || this.scrollOscillationCount >= DISABLE_THRESHOLD,
+                this.revealLoopCount + this.scrollOscillationCount >= DISABLE_THRESHOLD,
             lastReason: this.lastReason,
         };
     }
