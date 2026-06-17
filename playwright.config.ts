@@ -9,7 +9,7 @@ export default defineConfig({
     projects: [
         {
             name: "build",
-            testMatch: ["validate-build.spec.ts", "native-models.spec.ts", "counter-models.spec.ts", "native-cache-models.spec.ts"],
+            testMatch: ["validate-build.spec.ts", "native-models.spec.ts", "counter-models.spec.ts", "native-cache-models.spec.ts", "site-config.spec.ts"],
         },
         {
             name: "extension",

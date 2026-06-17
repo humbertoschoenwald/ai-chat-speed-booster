@@ -109,5 +109,29 @@
         "ui": {
             "loadMoreMargin": "4px 0"
         }
+    },
+    {
+        "id": "search-ai",
+        "name": "Search AI Mode",
+        "hostnames": [
+            "www.g\u006f\u006fgle.com",
+            "g\u006f\u006fgle.com"
+        ],
+        "urlPatterns": [
+            "*://www.g\u006f\u006fgle.com/search*",
+            "*://g\u006f\u006fgle.com/search*"
+        ],
+        "requiredSearchParams": [
+            {
+                "name": "\u0075dm",
+                "values": [
+                    "50"
+                ]
+            }
+        ],
+        "selectors": {
+            "messageTurn": "div[data-asrc]",
+            "scrollContainer": "body"
+        }
     }
 ]

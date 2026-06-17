@@ -55,6 +55,7 @@ export interface SiteConfig {
     readonly hostnames: readonly string[];
     readonly isDynamic?: boolean; // Indicates if the site has dynamic content loading that may require special handling (e.g. Gemini)
     readonly urlPatterns: readonly string[];
+    readonly requiredSearchParams?: readonly { readonly name: string; readonly values: readonly string[] }[];
     readonly selectors: SiteSelectors;
     readonly messageIdAttribute?: string;
     readonly statusAnchors?: StatusAnchors;
@@ -68,13 +69,23 @@ export const SITES: readonly SiteConfig[] = sitesConfig as SiteConfig[];
  * Detect which supported AI chat site the content script is running on.
  * Returns null if the current page is not a supported site.
  */
+function hostnameMatches(site: SiteConfig, hostname: string): boolean {
+    return site.hostnames.some((h) => hostname === h || hostname.endsWith(`.${h}`));
+}
+
+function requiredSearchParamsMatch(site: SiteConfig): boolean {
+    if (!site.requiredSearchParams?.length) return true;
+
+    const params = new URLSearchParams(window.location.search);
+    return site.requiredSearchParams.every((requirement) => {
+        const currentValue = params.get(requirement.name);
+        return currentValue !== null && requirement.values.includes(currentValue);
+    });
+}
+
 export function detectCurrentSite(): SiteConfig | null {
     const hostname = window.location.hostname;
-    return (
-        SITES.find((site) =>
-            site.hostnames.some((h) => hostname === h || hostname.endsWith(`.${h}`)),
-        ) ?? null
-    );
+    return SITES.find((site) => hostnameMatches(site, hostname) && requiredSearchParamsMatch(site)) ?? null;
 }
 
 /** Collect every URL pattern across all configured sites. */
