@@ -111,6 +111,28 @@
         }
     },
     {
+        "id": "deepseek",
+        "name": "DeepSeek",
+        "hostnames": [
+            "chat.deepseek.com"
+        ],
+        "urlPatterns": [
+            "*://chat.deepseek.com/*"
+        ],
+        "selectors": {
+            "messageTurn": ".ds-virtual-list-visible-items > [data-virtual-list-item-key]",
+            "scrollContainer": ".ds-virtual-list.ds-scroll-area",
+            "scrollContainerAlt": "div.ds-scroll-area.ds-virtual-list"
+        },
+        "messageIdAttribute": "data-virtual-list-item-key",
+        "statusAnchors": {
+            "name": "DeepSeek"
+        },
+        "ui": {
+            "loadMoreMargin": "4px 0"
+        }
+    },
+    {
         "id": "search-ai",
         "name": "Search AI Mode",
         "hostnames": [

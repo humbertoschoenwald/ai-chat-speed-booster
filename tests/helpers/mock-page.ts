@@ -47,6 +47,8 @@ export function getMessageTestAttr(site: SiteConfig): { attr: string; prefix: st
             return { attr: "data-test-render-count", prefix: "" };
         case "gemini":
             return { attr: "data-mock-id", prefix: "msg-" };
+        case "deepseek":
+            return { attr: "data-virtual-list-item-key", prefix: "" };
         default: {
             const parsed = parseMessageSelector(site.selectors.messageTurn);
             return { attr: parsed.attrName, prefix: parsed.prefix };
@@ -114,6 +116,21 @@ function generateMessageHtml(site: SiteConfig, idx: number): string {
             ].join("\n");
         }
 
+        case "deepseek": {
+            const contentClass = idx % 2 === 0
+                ? "ds-assistant-message-main-content"
+                : "ds-user-message-main-content";
+            return [
+                `        <div data-virtual-list-item-key="${idx}">`,
+                `            <div class="ds-message">`,
+                `                <div class="ds-markdown ${contentClass}">`,
+                `                    <p>Mock message ${idx} on ${site.name}</p>`,
+                `                </div>`,
+                `            </div>`,
+                `        </div>`,
+            ].join("\n");
+        }
+
         default: {
             // Generic fallback using selector parsing
             const parsed = parseMessageSelector(site.selectors.messageTurn);
@@ -133,6 +150,28 @@ export function generateMockPage(site: SiteConfig, messageCount: number): string
     const messages = Array.from({ length: messageCount }, (_, i) =>
         generateMessageHtml(site, i + 1),
     ).join("\n");
+
+    if (site.id === "deepseek") {
+        return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>${site.name} – Mock Page</title>
+</head>
+<body>
+<main>
+    <div class="ds-scroll-area">Extra non-chat scroll area</div>
+    <div data-scroll-root class="ds-virtual-list ds-scroll-area">
+        <div class="ds-virtual-list-items">
+            <div class="ds-virtual-list-visible-items">
+${messages}
+            </div>
+        </div>
+    </div>
+</main>
+</body>
+</html>`;
+    }
 
     // Build scroll container wrapping
     const containerParts = site.selectors.scrollContainer.split(">").map((s) => s.trim());

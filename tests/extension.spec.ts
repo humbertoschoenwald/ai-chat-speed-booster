@@ -33,13 +33,19 @@ for (const site of SITES) {
             return page.locator(`[${attr}="${prefix}${index}"]`);
         }
 
+        function getMockUrl(): string {
+            if (site.id === "deepseek") return `https://${site.hostnames[0]}/a/chat/s/mock`;
+            if (site.id === "search-ai") return `https://${site.hostnames[0]}/search?q=mock&udm=50`;
+            return `https://${site.hostnames[0]}/mock-test`;
+        }
+
         /** Navigate to mock page and wait for the extension to process messages */
         async function loadMockPage(page: import("@playwright/test").Page) {
             const mockHtml = generateMockPage(site, MESSAGE_COUNT);
             await page.route(`**/${site.hostnames[0]}/**`, (route) =>
                 route.fulfill({ contentType: "text/html", body: mockHtml }),
             );
-            await page.goto(`https://${site.hostnames[0]}/mock-test`, {
+            await page.goto(getMockUrl(), {
                 waitUntil: "domcontentloaded",
             });
             // Wait for the extension to process: it adds data-acsb-managed attrs
@@ -135,6 +141,32 @@ for (const site of SITES) {
 
             await page.evaluate(() => window.dispatchEvent(new Event("pageshow")));
             await expect(page.locator(".acsb-status-indicator")).toBeVisible();
+        });
+
+        test("DeepSeek uses virtual-list item roots without inner markdown duplicates", async ({ page }) => {
+            test.skip(site.id !== "deepseek");
+            await loadMockPage(page);
+
+            const rootCount = await page.locator(".ds-virtual-list-visible-items > [data-virtual-list-item-key]").count();
+            const innerCount = await page.locator(".ds-message").count();
+            const assistantMarkdownCount = await page.locator(".ds-assistant-message-main-content").count();
+            const managedCount = await page.locator("[data-acsb-managed]").count();
+
+            expect(rootCount).toBe(MESSAGE_COUNT);
+            expect(innerCount).toBe(MESSAGE_COUNT);
+            expect(assistantMarkdownCount).toBeGreaterThan(0);
+            expect(managedCount).toBe(MESSAGE_COUNT);
+        });
+
+        test("DeepSeek uses the virtual-list scroll container", async ({ page }) => {
+            test.skip(site.id !== "deepseek");
+            await loadMockPage(page);
+
+            const scrollContainers = await page.locator(".ds-virtual-list.ds-scroll-area").count();
+            const allScrollAreas = await page.locator(".ds-scroll-area").count();
+
+            expect(scrollContainers).toBe(1);
+            expect(allScrollAreas).toBeGreaterThanOrEqual(2);
         });
 
         test("no errors in extension service worker", async ({ extensionContext }) => {

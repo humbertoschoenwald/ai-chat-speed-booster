@@ -10,3 +10,14 @@ test("search ai site config is guarded by required query parameter (#23)", () =>
     ]);
     expect(site?.fetchIntercept).toBeUndefined();
 });
+
+
+test("deepseek site config uses virtual-list roots without fetch trimming (#14)", () => {
+    const site = SITES.find((candidate) => candidate.id === "deepseek");
+
+    expect(site).toBeDefined();
+    expect(site?.selectors.messageTurn).toBe(".ds-virtual-list-visible-items > [data-virtual-list-item-key]");
+    expect(site?.selectors.scrollContainer).toBe(".ds-virtual-list.ds-scroll-area");
+    expect(site?.messageIdAttribute).toBe("data-virtual-list-item-key");
+    expect(site?.fetchIntercept).toBeUndefined();
+});

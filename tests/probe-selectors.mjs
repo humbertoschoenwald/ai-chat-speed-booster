@@ -5,7 +5,7 @@
  *
  * Usage: node tests/probe-selectors.mjs
  */
-import { chromium } from "playwright";
+import { chromium } from "@playwright/test";
 import path from "path";
 import { readFileSync, existsSync, cpSync, mkdtempSync } from "fs";
 import os from "os";
@@ -13,6 +13,18 @@ import os from "os";
 const EXTENSION_PATH = path.resolve("dist", "chrome");
 const AUTH_PROFILE = path.resolve("tests", ".auth-profile");
 const sites = JSON.parse(readFileSync("sites.config.json", "utf8"));
+const probeUrls = {
+    deepseek: process.env.ACSB_DEEPSEEK_PROBE_URL,
+};
+const siteSpecificPatterns = {
+    deepseek: [
+        ".ds-virtual-list-visible-items > [data-virtual-list-item-key]",
+        ".ds-message",
+        ".ds-assistant-message-main-content",
+        ".ds-virtual-list.ds-scroll-area",
+        ".ds-scroll-area",
+    ],
+};
 
 if (!existsSync(AUTH_PROFILE)) {
     console.error("No auth profile found. Run: pnpm run test:auth");
@@ -34,7 +46,7 @@ const context = await chromium.launchPersistentContext(userDataDir, {
 });
 
 for (const site of sites) {
-    const url = `https://${site.hostnames[0]}`;
+    const url = probeUrls[site.id] || `https://${site.hostnames[0]}`;
     console.log(`\n${"=".repeat(60)}`);
     console.log(`Probing: ${site.name} (${url})`);
     console.log("=".repeat(60));
@@ -80,12 +92,19 @@ for (const site of sites) {
                 "[role='article']",
                 "[role='row']",
                 "[role='listitem']",
-                "[data-message-id']",
+                "[data-message-id]",
                 "[data-index]",
             ];
 
             results.selectorProbe = {};
             for (const sel of patterns) {
+                try {
+                    const count = document.querySelectorAll(sel).length;
+                    if (count > 0) results.selectorProbe[sel] = count;
+                } catch { /* invalid selector */ }
+            }
+
+            for (const sel of cfg.siteSpecificPatterns ?? []) {
                 try {
                     const count = document.querySelectorAll(sel).length;
                     if (count > 0) results.selectorProbe[sel] = count;
@@ -133,7 +152,7 @@ for (const site of sites) {
             }
 
             return results;
-        }, site);
+        }, { ...site, siteSpecificPatterns: siteSpecificPatterns[site.id] ?? [] });
 
         console.log(`\nConfigured selector: ${results.configuredSelector}`);
         console.log(`  Matches: ${results.matchCount}`);
