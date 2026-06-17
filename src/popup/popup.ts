@@ -1,6 +1,14 @@
 import { sendMessage } from "../shared/browser-api";
 import { CONFIG_LIMITS, DEFAULT_CONFIG } from "../shared/constants";
-import { MessageType, Theme, type ExtensionConfig, type ExtensionStatus, type StatusPosition, type WeeklyRequestCount } from "../shared/types";
+import {
+    MessageType,
+    type ExtensionConfig,
+    type ExtensionStatus,
+    type PerformanceMode,
+    type StatusPosition,
+    type Theme,
+    type WeeklyRequestCount,
+} from "../shared/types";
 import { SITES } from "../shared/sites";
 
 const toggleEnabled = document.getElementById("toggle-enabled") as HTMLInputElement;
@@ -24,6 +32,10 @@ const requestLimitSep = document.getElementById("request-limit-sep") as HTMLElem
 const requestLimitInput = document.getElementById("request-limit-input") as HTMLInputElement;
 const requestCountHint = document.getElementById("request-counter-hint") as HTMLElement;
 const requestCountReset = document.getElementById("request-count-reset") as HTMLButtonElement;
+const performanceModeSelect = document.getElementById("performance-mode") as HTMLSelectElement;
+const performanceModeHint = document.getElementById("performance-mode-hint") as HTMLElement;
+const nativeDiagnosticsBody = document.getElementById("native-diagnostics-body") as HTMLElement;
+const nativePanels = document.querySelectorAll<HTMLElement>(".native-panel");
 
 let saveTimer: ReturnType<typeof setTimeout> | null = null;
 let limitSaveTimer: ReturnType<typeof setTimeout> | null = null;
@@ -62,6 +74,28 @@ async function init(): Promise<void> {
     await refreshStatus();
 }
 
+function renderPerformanceMode(mode: PerformanceMode): void {
+    const nativeMode = mode === "native";
+    performanceModeHint.textContent = nativeMode
+        ? "Experimental guarded diagnostics"
+        : "Legacy mode";
+    nativePanels.forEach((panel) => {
+        panel.hidden = !nativeMode;
+    });
+}
+
+function renderNativeDiagnostics(status: ExtensionStatus | undefined): void {
+    if (!status || status.performanceMode !== "native") {
+        nativeDiagnosticsBody.textContent = "Enable Native Mode to inspect guarded diagnostics.";
+        return;
+    }
+
+    const selectorHealth = status.nativeModeSelectorHealthy ? "healthy" : "blocked";
+    const inputState = status.nativeModeInputActive ? "protected" : "idle";
+    const lifecycle = status.contentLifecycleState ?? "unknown";
+    nativeDiagnosticsBody.textContent = `Lifecycle: ${lifecycle} · selector: ${selectorHealth} · input: ${inputState}`;
+}
+
 function renderConfig(config: ExtensionConfig): void {
     toggleEnabled.checked = config.enabled;
     toggleStatus.checked = config.showStatus;
@@ -71,6 +105,8 @@ function renderConfig(config: ExtensionConfig): void {
     visibleLimitInput.value = String(config.visibleMessageLimit);
     batchSizeInput.value = String(config.loadMoreBatchSize);
     requestLimitInput.value = String(config.weeklyRequestLimit);
+    performanceModeSelect.value = config.performanceMode;
+    renderPerformanceMode(config.performanceMode);
     settingsSection.setAttribute("aria-disabled", String(!config.enabled));
 
     positionButtons.forEach((btn) => {
@@ -87,11 +123,13 @@ async function refreshStatus(): Promise<void> {
                 (status.hiddenMessages > 0 ? ` · ${Math.floor(status.hiddenMessages / 2)} hidden` : "");
             settingsSection.style.display = "flex"; // Set to flex only when the site is actually supported
             currentSiteId = status.siteId;
+            renderNativeDiagnostics(status);
             await refreshRequestCounter();
         } else {
             settingsSection.style.display = "none";
             statusText.textContent = "Open a supported AI chat to see status";
             currentSiteId = undefined;
+            renderNativeDiagnostics(undefined);
             requestCounter.hidden = true;
         }
     } catch {
@@ -192,6 +230,16 @@ toggleHideOld.addEventListener("change", async () => {
 
 toggleFetchIntercept.addEventListener("change", async () => {
     const config = await safeSendMessage<ExtensionConfig>({ type: MessageType.TOGGLE_FETCH_INTERCEPT });
+    if (config) renderConfig(config);
+    await refreshStatus();
+});
+
+performanceModeSelect.addEventListener("change", async () => {
+    const mode = performanceModeSelect.value as PerformanceMode;
+    const config = await safeSendMessage<ExtensionConfig>({
+        type: MessageType.SET_CONFIG,
+        payload: { performanceMode: mode },
+    });
     if (config) renderConfig(config);
     await refreshStatus();
 });

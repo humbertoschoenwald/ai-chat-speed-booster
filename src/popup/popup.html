@@ -45,6 +45,38 @@
 
         <section class="popup-settings" aria-label="Settings">
 
+            <!-- Performance mode -->
+            <div class="setting" data-tooltip="Legacy preserves current behavior. OpenAI Native (Imaginary) is experimental and currently exposes guarded diagnostics before virtualization ships.">
+                <div class="setting__info">
+                    <span class="setting__label">Performance mode</span>
+                    <span class="setting__hint" id="performance-mode-hint">Legacy mode</span>
+                </div>
+                <select id="performance-mode" class="setting__select" aria-labelledby="performance-mode-hint">
+                    <option value="legacy">Legacy</option>
+                    <option value="native">OpenAI Native (Imaginary)</option>
+                </select>
+            </div>
+
+            <div class="native-panel" id="native-diagnostics" hidden>
+                <div class="native-panel__title">Native diagnostics</div>
+                <div class="native-panel__body" id="native-diagnostics-body">Waiting for page status…</div>
+            </div>
+
+            <div class="native-panel" id="native-toolcalls" hidden>
+                <div class="native-panel__title">Tool Calls / MCP</div>
+                <div class="native-panel__body">Coming later: completed tool-call grouping with running and failed tool calls pinned.</div>
+            </div>
+
+            <div class="native-panel" id="native-overrides" hidden>
+                <div class="native-panel__title">Native overrides</div>
+                <div class="native-panel__body">Virtualization, freezing, and scroll compensation are disabled until guarded tests prove they are safe.</div>
+            </div>
+
+            <div class="native-panel" id="native-safety" hidden>
+                <div class="native-panel__title">Safety / Reset</div>
+                <div class="native-panel__body">Native Mode is reversible and stores no chat text, raw HTML, tool output, or conversation identifiers.</div>
+            </div>
+
             <!-- Fast mode + Auto load -->
             <div class="setting-row">
                 <div class="setting" data-tooltip="Trims API responses before rendering. Faster than hiding after the fact. Disable if messages appear missing.">

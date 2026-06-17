@@ -247,6 +247,42 @@ body {
     border-color: var(--accent);
 }
 
+.setting__select {
+    width: 112px;
+    padding: 4px 6px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    font-size: 12px;
+    font-family: var(--font);
+    outline: none;
+}
+
+.setting__select:focus {
+    border-color: var(--accent);
+}
+
+.native-panel {
+    padding: 9px 12px;
+    border-radius: var(--radius-sm);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+}
+
+.native-panel__title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.native-panel__body {
+    margin-top: 3px;
+    font-size: 11px;
+    line-height: 1.45;
+    color: var(--text-muted);
+}
+
 .popup-settings[aria-disabled="true"] {
     opacity: 0.4;
     pointer-events: none;

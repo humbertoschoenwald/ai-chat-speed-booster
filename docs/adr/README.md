@@ -9,6 +9,7 @@ Current taxonomy:
 - `architecture/native-mode/` for OpenAI Native mode boundaries, registries, geometry, and future virtualization foundations.
 - `engineering/tooling/` for repository tooling, package-manager authority, validation, and build decisions.
 - `experience/editor-input/` for editor interaction and input-protection decisions.
+- `experience/popup/` for popup settings, mode-gating, and user-facing controls.
 
 Naming rules:
 
