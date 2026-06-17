@@ -1,10 +1,11 @@
 import { DOMObserver } from "./DOMObserver";
 import { MessageManager } from "./MessageManager";
+import { RequestLifecycleTracker } from "./RequestLifecycleTracker";
 import { LoadMoreButton, StatusIndicator } from "./UIComponents";
 import { NativeModeController } from "./native/NativeModeController";
 import { detectCurrentSite, type SiteConfig } from "../shared/sites";
 import { loadConfig, onConfigChanged } from "../shared/storage";
-import { onMessage, sendMessage } from "../shared/browser-api";
+import { onMessage } from "../shared/browser-api";
 import {
     MessageType,
     type ContentLifecycleState,
@@ -18,6 +19,7 @@ const CONTENT_BOOTSTRAP_ATTR = "data-acsb-content-bootstrapped";
 let config: ExtensionConfig;
 let currentSite: SiteConfig;
 const messageManager = new MessageManager();
+let requestLifecycleTracker: RequestLifecycleTracker | null = null;
 let loadMoreButton: LoadMoreButton;
 let statusIndicator: StatusIndicator;
 let domObserver: DOMObserver;
@@ -55,6 +57,7 @@ async function bootstrap(): Promise<void> {
     logger.info(`bootstrapping content script for ${currentSite.name}`);
 
     config = await loadConfig();
+    requestLifecycleTracker = new RequestLifecycleTracker(currentSite.id, currentSite.selectors.userMessageSelector);
     nativeModeController = new NativeModeController(currentSite);
     nativeModeController.updateConfig(config);
     messageManager.updateConfig(config);
@@ -145,17 +148,7 @@ function handleMessagesAdded(elements: HTMLElement[]): void {
 }
 
 function countNewUserRequests(elements: HTMLElement[]): void {
-    const sel = currentSite.selectors.userMessageSelector;
-    if (!sel) return;
-    const count = elements.filter(
-        (el) => el.matches(sel) || el.querySelector(sel) !== null,
-    ).length;
-    if (count > 0) {
-        sendMessage({
-            type: MessageType.INCREMENT_REQUEST_COUNT,
-            payload: { siteId: currentSite.id, count },
-        }).catch(() => {});
-    }
+    requestLifecycleTracker?.observeAddedTurns(elements);
 }
 
 /**
@@ -177,6 +170,7 @@ function handleConversationChanged(): void {
     // Reset the trimmed flag for the new conversation.  The fetch
     // interceptor will set the DOM attribute again if it trims.
     currentConversationTrimmed = false;
+    requestLifecycleTracker?.reset();
 
     // Cancel any in-flight retry loop from a previous navigation
     if (conversationRetryTimer) {
