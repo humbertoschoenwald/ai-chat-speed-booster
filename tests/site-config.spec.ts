@@ -10,7 +10,7 @@ test("search ai site config is guarded by required query parameter (#23)", () =>
     expect(site?.requiredSearchParams).toEqual([
         { name: "udm", values: ["50"] },
     ]);
-    expect(site?.selectors.messageTurn).toBe('div[data-xid^="aim-mars-turn-root"]');
+    expect(site?.selectors.messageTurn).toBe('div[data-xid^="aim-mars-turn-root"] > div[data-asrc="true"]');
     expect(site?.selectors.scrollContainer).toBe("body");
     expect(site?.fetchIntercept).toBeUndefined();
 });

@@ -185,7 +185,7 @@ for (const site of SITES) {
                 await expect(page.locator(".acsb-status-indicator")).toHaveCount(0);
             });
 
-            test("Search AI Mode selector regression: manages AI turn roots instead of generic main content (#23)", async ({ page }) => {
+            test("Search AI Mode selector regression: manages repeated inner turns instead of generic main content (#23)", async ({ page }) => {
                 await loadMockPage(page);
                 await page.evaluate(() => {
                     const main = document.createElement("div");

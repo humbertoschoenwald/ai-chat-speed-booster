@@ -52,7 +52,7 @@ export function getMessageTestAttr(site: SiteConfig): { attr: string; prefix: st
         case "grok":
             return { attr: "id", prefix: "response-" };
         case "search-ai-mode":
-            return { attr: "data-xid", prefix: "aim-mars-turn-root-" };
+            return { attr: "data-mock-id", prefix: "aim-turn-" };
         default: {
             const parsed = parseMessageSelector(site.selectors.messageTurn);
             return { attr: parsed.attrName, prefix: parsed.prefix };
@@ -137,8 +137,10 @@ function generateMessageHtml(site: SiteConfig, idx: number): string {
 
         case "search-ai-mode":
             return [
-                `        <div data-xid="aim-mars-turn-root-${idx}" data-asrc="true">`,
-                `            <p>Mock Search AI Mode turn ${idx} on ${site.name}</p>`,
+                `        <div data-xid="aim-mars-turn-root-${idx}">`,
+                `            <div data-asrc="true" data-mock-id="aim-turn-${idx}">`,
+                `                <p>Mock Search AI Mode turn ${idx} on ${site.name}</p>`,
+                `            </div>`,
                 `        </div>`,
             ].join("\n");
 
@@ -213,6 +215,22 @@ ${messages}
             </div>
         </main>
     </div>
+</div>
+</body>
+</html>`;
+    }
+
+    if (site.id === "search-ai-mode") {
+        return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>${site.name} – Mock Page</title>
+</head>
+<body>
+<main role="main">Generic Google Search content that must not be managed</main>
+<div data-xid="aim-mars-container" data-asrc="true">
+${messages}
 </div>
 </body>
 </html>`;

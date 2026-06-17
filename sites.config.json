@@ -173,7 +173,7 @@
             }
         ],
         "selectors": {
-            "messageTurn": "div[data-xid^=\"aim-mars-turn-root\"]",
+            "messageTurn": "div[data-xid^=\"aim-mars-turn-root\"] > div[data-asrc=\"true\"]",
             "scrollContainer": "body"
         },
         "statusAnchors": {
