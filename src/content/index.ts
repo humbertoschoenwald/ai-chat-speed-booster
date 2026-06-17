@@ -7,6 +7,7 @@ import { loadConfig, onConfigChanged } from "../shared/storage";
 import { onMessage, sendMessage } from "../shared/browser-api";
 import {
     MessageType,
+    type ContentLifecycleState,
     type ExtensionConfig,
     type ExtensionStatus,
 } from "../shared/types";
@@ -20,6 +21,10 @@ let statusIndicator: StatusIndicator;
 let domObserver: DOMObserver;
 let nativeModeController: NativeModeController | null = null;
 let conversationRetryTimer: ReturnType<typeof setTimeout> | null = null;
+const contentBootTime = Date.now();
+let contentLifecycleState: ContentLifecycleState = "initializing";
+let contentLastUiRefreshAt: number | null = null;
+let contentLastRecoverableErrorClass: string | null = null;
 /**
  * Internal flag tracking whether the fetch interceptor trimmed the current
  * conversation's API response.  Set by consuming the DOM attribute
@@ -31,9 +36,11 @@ let currentConversationTrimmed = false;
 async function bootstrap(): Promise<void> {
     const site = detectCurrentSite();
     if (!site) {
+        contentLifecycleState = "unsupported";
         logger.info("no supported site detected, content script inactive");
         return;
     }
+    contentLifecycleState = "initializing";
     currentSite = site;
     logger.info(`bootstrapping content script for ${currentSite.name}`);
 
@@ -77,6 +84,7 @@ function scheduleInitialScan(): void {
         const existing = domObserver.queryAllMessages();
         if (existing.length > 0) {
             messageManager.initialise(existing);
+            contentLifecycleState = "active";
             refreshUI();
             logger.info(`initial scan: ${existing.length} messages`);
             // Moved the log here so it runs after actually finding messages.
@@ -149,6 +157,7 @@ function handleMessagesRemoved(elements: HTMLElement[]): void {
  * the newly rendered thread without requiring a full page refresh.
  */
 function handleConversationChanged(): void {
+    contentLifecycleState = "recovering";
     logger.debug("conversation changed, re-initialising");
 
     // Reset the trimmed flag for the new conversation.  The fetch
@@ -179,6 +188,10 @@ function handleConversationChanged(): void {
 
         if (messages.length > 0 || retries >= maxRetries) {
             messageManager.initialise(messages);
+            contentLifecycleState = messages.length > 0 ? "active" : "degraded";
+            if (messages.length === 0) {
+                contentLastRecoverableErrorClass = "conversation-empty-after-retry";
+            }
             refreshUI();
             conversationRetryTimer = null;
             if (messages.length > 0) {
@@ -208,11 +221,13 @@ function handleConfigUpdated(newConfig: ExtensionConfig): void {
  * and incremental mutation handling can't keep up with the changes.
  */
 function handleMessagesReset(): void {
+    contentLifecycleState = "recovering";
     logger.debug("large batch detected, re-initialising message manager");
     messageManager.destroy();
     loadMoreButton.hide();
     const messages = domObserver.queryAllMessages();
     messageManager.initialise(messages);
+    contentLifecycleState = "active";
     domObserver.resetAutoLoad(); // Reset auto-load state to prevent it from getting stuck after a reset
     refreshUI();
     // Do NOT scroll here — the user is actively reading a streaming response.
@@ -230,6 +245,11 @@ function handleExtensionMessage(message: unknown): ExtensionStatus | undefined {
             nativeModeActive: nativeState?.active ?? false,
             nativeModeSelectorHealthy: nativeState?.selectorHealth?.healthy ?? false,
             nativeModeInputActive: nativeState?.editorInput.active ?? false,
+            contentLifecycleState,
+            contentBootTime,
+            contentLastUiRefreshAt,
+            contentOverlayPresent: statusIndicator.isMounted(),
+            contentLastRecoverableErrorClass,
         };
     }
     // Background also broadcasts CONFIG_UPDATED here (in addition to the
@@ -285,6 +305,7 @@ function refreshUI(): void {
     rafPending = true;
     requestAnimationFrame(() => {
         rafPending = false;
+        contentLastUiRefreshAt = Date.now();
         const status = messageManager.getStatus();
 
         // Consume the DOM attribute written by the MAIN-world fetch
@@ -341,6 +362,7 @@ function findMessageContainer(): HTMLElement | null {
 }
 
 window.addEventListener("beforeunload", () => {
+    contentLifecycleState = "stopped";
     if (conversationRetryTimer) {
         clearTimeout(conversationRetryTimer);
         conversationRetryTimer = null;

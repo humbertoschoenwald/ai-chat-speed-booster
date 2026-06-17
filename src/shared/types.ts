@@ -6,6 +6,8 @@ export type Theme = "light" | "dark";
 
 export type PerformanceMode = "legacy" | "native";
 
+export type ContentLifecycleState = "initializing" | "active" | "recovering" | "degraded" | "unsupported" | "stopped";
+
 export interface ExtensionConfig {
     readonly visibleMessageLimit: number;
     readonly loadMoreBatchSize: number;
@@ -90,6 +92,11 @@ export interface ExtensionStatus {
     readonly nativeModeActive?: boolean;
     readonly nativeModeSelectorHealthy?: boolean;
     readonly nativeModeInputActive?: boolean;
+    readonly contentLifecycleState?: ContentLifecycleState;
+    readonly contentBootTime?: number;
+    readonly contentLastUiRefreshAt?: number | null;
+    readonly contentOverlayPresent?: boolean;
+    readonly contentLastRecoverableErrorClass?: string | null;
 }
 
 export interface WeeklyRequestCount {

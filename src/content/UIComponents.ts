@@ -258,6 +258,10 @@ export class StatusIndicator {
         }
     }
 
+    isMounted(): boolean {
+        return this.container?.isConnected ?? false;
+    }
+
     hide(): void {
         this.container?.remove();
         this.container = null;
