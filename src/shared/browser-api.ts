@@ -9,6 +9,17 @@ export async function storageSet<T>(key: string, value: T): Promise<void> {
     await api.storage.local.set({ [key]: value });
 }
 
+export async function storageGetSync<T>(key: string): Promise<T | undefined> {
+    if (!api.storage.sync) return undefined;
+    const result = await api.storage.sync.get(key);
+    return result[key] as T | undefined;
+}
+
+export async function storageSetSync<T>(key: string, value: T): Promise<void> {
+    if (!api.storage.sync) return;
+    await api.storage.sync.set({ [key]: value });
+}
+
 export async function sendMessage<T>(message: unknown): Promise<T> {
     return api.runtime.sendMessage(message) as Promise<T>;
 }

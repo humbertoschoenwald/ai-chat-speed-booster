@@ -1,4 +1,4 @@
-import { storageGet, storageSet, onStorageChanged } from "./browser-api";
+import { storageGet, storageSet, storageGetSync, storageSetSync, onStorageChanged } from "./browser-api";
 import { STORAGE_KEY, DEFAULT_CONFIG, CONFIG_LIMITS, REQUEST_COUNTS_KEY, AUTO_LOAD_RESET_KEY } from "./constants";
 import type { ExtensionConfig, WeeklyRequestCount } from "./types";
 import { logger } from "./logger";
@@ -96,26 +96,63 @@ function getMondayUTCTimestamp(): number {
     return Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - daysSinceMonday);
 }
 
+type RequestCountMap = Record<string, WeeklyRequestCount>;
+
+function activeRequestCount(entry: WeeklyRequestCount | undefined, weekStart: number): number {
+    return entry?.weekStart === weekStart ? entry.count : 0;
+}
+
+async function loadSyncedRequestCounts(): Promise<RequestCountMap> {
+    try {
+        return (await storageGetSync<RequestCountMap>(REQUEST_COUNTS_KEY)) ?? {};
+    } catch (error) {
+        logger.debug("browser account request-count sync unavailable", error);
+        return {};
+    }
+}
+
+async function saveRequestCounts(raw: RequestCountMap): Promise<void> {
+    await storageSet(REQUEST_COUNTS_KEY, raw);
+    try {
+        await storageSetSync(REQUEST_COUNTS_KEY, raw);
+    } catch (error) {
+        logger.debug("failed to mirror request counts to browser sync storage", error);
+    }
+}
+
 export async function loadRequestCount(siteId: string): Promise<WeeklyRequestCount> {
-    const raw = await storageGet<Record<string, WeeklyRequestCount>>(REQUEST_COUNTS_KEY);
+    const localRaw = (await storageGet<RequestCountMap>(REQUEST_COUNTS_KEY)) ?? {};
+    const syncedRaw = await loadSyncedRequestCounts();
     const weekStart = getMondayUTCTimestamp();
-    const entry = raw?.[siteId];
-    if (!entry || entry.weekStart !== weekStart) return { count: 0, weekStart };
-    return entry;
+    const count = Math.max(
+        activeRequestCount(localRaw[siteId], weekStart),
+        activeRequestCount(syncedRaw[siteId], weekStart),
+    );
+    const merged = { count, weekStart };
+    if (activeRequestCount(localRaw[siteId], weekStart) !== count || activeRequestCount(syncedRaw[siteId], weekStart) !== count) {
+        await saveRequestCounts({ ...localRaw, ...syncedRaw, [siteId]: merged });
+    }
+    return merged;
 }
 
 export async function incrementRequestCount(siteId: string, amount = 1): Promise<WeeklyRequestCount> {
-    const raw = (await storageGet<Record<string, WeeklyRequestCount>>(REQUEST_COUNTS_KEY)) ?? {};
+    const localRaw = (await storageGet<RequestCountMap>(REQUEST_COUNTS_KEY)) ?? {};
+    const syncedRaw = await loadSyncedRequestCounts();
     const weekStart = getMondayUTCTimestamp();
-    const existing = raw[siteId];
-    const count = (existing?.weekStart === weekStart ? existing.count : 0) + amount;
-    await storageSet(REQUEST_COUNTS_KEY, { ...raw, [siteId]: { count, weekStart } });
+    const count = Math.max(
+        activeRequestCount(localRaw[siteId], weekStart),
+        activeRequestCount(syncedRaw[siteId], weekStart),
+    ) + amount;
+    const updated = { ...localRaw, ...syncedRaw, [siteId]: { count, weekStart } };
+    await saveRequestCounts(updated);
     return { count, weekStart };
 }
 
 export async function resetRequestCount(siteId: string): Promise<WeeklyRequestCount> {
-    const raw = (await storageGet<Record<string, WeeklyRequestCount>>(REQUEST_COUNTS_KEY)) ?? {};
+    const localRaw = (await storageGet<RequestCountMap>(REQUEST_COUNTS_KEY)) ?? {};
+    const syncedRaw = await loadSyncedRequestCounts();
     const weekStart = getMondayUTCTimestamp();
-    await storageSet(REQUEST_COUNTS_KEY, { ...raw, [siteId]: { count: 0, weekStart } });
+    const updated = { ...localRaw, ...syncedRaw, [siteId]: { count: 0, weekStart } };
+    await saveRequestCounts(updated);
     return { count: 0, weekStart };
 }
