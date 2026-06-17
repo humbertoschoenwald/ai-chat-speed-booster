@@ -19,13 +19,20 @@ interface BridgePayload {
     loadMoreBatchSize: number;
 }
 
+function nativeModeAllowedHere(): boolean {
+    return location.hostname === "chatgpt.com" || location.hostname.endsWith(".chatgpt.com");
+}
+
 function writeBridge(raw: Record<string, unknown> | undefined): void {
+    const requestedNative = raw?.performanceMode === "native";
+    const performanceMode = requestedNative && nativeModeAllowedHere() ? "native" : "legacy";
     const payload: BridgePayload = {
         schemaVersion: 1,
         enabled: typeof raw?.enabled === "boolean" ? raw.enabled : true,
-        performanceMode: raw?.performanceMode === "native" ? "native" : "legacy",
-        fetchInterceptEnabled:
-            typeof raw?.fetchInterceptEnabled === "boolean"
+        performanceMode,
+        fetchInterceptEnabled: performanceMode === "native"
+            ? false
+            : typeof raw?.fetchInterceptEnabled === "boolean"
                 ? raw.fetchInterceptEnabled
                 : true,
         visibleMessageLimit:

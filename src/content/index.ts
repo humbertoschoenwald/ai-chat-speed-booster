@@ -4,6 +4,7 @@ import { RequestLifecycleTracker } from "./RequestLifecycleTracker";
 import { LoadMoreButton, StatusIndicator } from "./UIComponents";
 import { NativeModeController } from "./native/NativeModeController";
 import { detectCurrentSite, type SiteConfig } from "../shared/sites";
+import { deriveRuntimeConfigForSite } from "../shared/native-runtime-policy";
 import { loadConfig, onConfigChanged } from "../shared/storage";
 import { onMessage } from "../shared/browser-api";
 import {
@@ -56,7 +57,7 @@ async function bootstrap(): Promise<void> {
     currentSite = site;
     logger.info(`bootstrapping content script for ${currentSite.name}`);
 
-    config = await loadConfig();
+    config = deriveRuntimeConfigForSite(await loadConfig(), currentSite.id);
     requestLifecycleTracker = new RequestLifecycleTracker(currentSite.id, currentSite.selectors.userMessageSelector);
     nativeModeController = new NativeModeController(currentSite);
     nativeModeController.updateConfig(config);
@@ -216,7 +217,7 @@ function handleConversationChanged(): void {
 }
 
 function handleConfigUpdated(newConfig: ExtensionConfig): void {
-    config = newConfig;
+    config = deriveRuntimeConfigForSite(newConfig, currentSite.id);
     nativeModeController?.updateConfig(config);
     messageManager.updateConfig(config);
     refreshUI();

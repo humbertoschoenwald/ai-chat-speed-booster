@@ -1,0 +1,26 @@
+# ADR: ChatGPT-only Native runtime
+
+## Status
+
+Accepted.
+
+## Context
+
+Native Mode is not a more aggressive version of Legacy Mode. Legacy Mode can hide old turns, auto-load hidden turns, render a floating status badge, and optionally bridge Fast Mode fetch trimming. Native Mode must use its own runtime path and must not inherit those Legacy controls.
+
+Native Mode is also not ready for every supported AI site. ChatGPT is the only enabled Native provider today.
+
+## Decision
+
+Derive a runtime config from saved settings and the current site before content behavior runs.
+
+- If the saved mode is Native and the current site is ChatGPT, Native Mode runs with Legacy controls disabled: fetch interception, auto-load, hard DOM hiding, and the floating status badge are all off.
+- If the saved mode is Native on any non-ChatGPT site, the runtime falls back to Legacy Mode for that page.
+- The MAIN-world bridge also disables Fast Mode while ChatGPT Native Mode is active.
+
+## Consequences
+
+- Native Mode cannot accidentally apply ChatGPT-specific tuning to other providers.
+- Native Mode cannot accidentally reuse Legacy hiding or Fast Mode behavior.
+- Existing DOM-only adapters continue to work through Legacy Mode.
+- Request counters remain per site and are not part of the Legacy-control shutdown.
