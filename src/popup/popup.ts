@@ -96,6 +96,27 @@ function renderNativeDiagnostics(status: ExtensionStatus | undefined): void {
     nativeDiagnosticsBody.textContent = `Lifecycle: ${lifecycle} · selector: ${selectorHealth} · input: ${inputState}`;
 }
 
+function renderStatusText(status: ExtensionStatus): string {
+    const countText = `${Math.floor(status.visibleMessages / 2)}/${Math.floor(status.totalMessages / 2)} messages visible` +
+        (status.hiddenMessages > 0 ? ` · ${Math.floor(status.hiddenMessages / 2)} hidden` : "");
+
+    switch (status.contentLifecycleState) {
+        case "initializing":
+            return `Initializing content script · ${countText}`;
+        case "recovering":
+            return `Recovering content script · ${countText}`;
+        case "degraded":
+            return `Degraded content script · ${countText}`;
+        case "stopped":
+            return `Content script stopped · ${countText}`;
+        case "unsupported":
+            return "Unsupported page";
+        case "active":
+        default:
+            return countText;
+    }
+}
+
 function renderConfig(config: ExtensionConfig): void {
     toggleEnabled.checked = config.enabled;
     toggleStatus.checked = config.showStatus;
@@ -118,9 +139,7 @@ async function refreshStatus(): Promise<void> {
     try {
         const status = await safeSendMessage<ExtensionStatus | undefined>({ type: MessageType.GET_STATUS });
         if (status && typeof status.totalMessages === "number") {
-            statusText.textContent =
-                `${Math.floor(status.visibleMessages / 2)}/${Math.floor(status.totalMessages / 2)} messages visible` +
-                (status.hiddenMessages > 0 ? ` · ${Math.floor(status.hiddenMessages / 2)} hidden` : "");
+            statusText.textContent = renderStatusText(status);
             settingsSection.style.display = "flex"; // Set to flex only when the site is actually supported
             currentSiteId = status.siteId;
             renderNativeDiagnostics(status);
@@ -133,7 +152,8 @@ async function refreshStatus(): Promise<void> {
             requestCounter.hidden = true;
         }
     } catch {
-        statusText.textContent = "Unable to fetch status";
+        statusText.textContent = "Content script unavailable or still initializing";
+        renderNativeDiagnostics(undefined);
     }
 }
 
