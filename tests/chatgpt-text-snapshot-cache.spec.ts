@@ -3,6 +3,7 @@ import {
     ChatGptTextSnapshotCache,
     renderChatGptTextSnapshot,
 } from "../src/content/native/chatgpt/ChatGptTextSnapshotCache";
+import { estimateChatGptPromptTokens } from "../src/content/native/chatgpt/ChatGptTokenEstimator";
 
 test.describe("ChatGPT text snapshot cache", () => {
     test("keeps small snapshots inside a bounded in-memory budget", () => {
@@ -39,4 +40,14 @@ test.describe("ChatGPT text snapshot cache", () => {
             `<div data-acsb-native-snapshot="true">&lt;hello&gt;&amp;&quot;&#39;</div>`,
         );
     });
+});
+
+
+test("ChatGPT prompt token estimator warns near configured limit", () => {
+    const small = estimateChatGptPromptTokens("hello world", 100);
+    const nearLimit = estimateChatGptPromptTokens("word ".repeat(80), 100);
+
+    expect(small.warningLevel).toBe("ok");
+    expect(nearLimit.approxTokens).toBeGreaterThanOrEqual(80);
+    expect(nearLimit.warningLevel).toBe("critical");
 });

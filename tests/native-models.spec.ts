@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { EditorInputOptimizer } from "../src/content/native/EditorInputOptimizer";
 import { InputChunkPlanner } from "../src/content/native/InputChunkPlanner";
 import { MultiTabCoordinator } from "../src/content/native/MultiTabCoordinator";
 import { NativeDiagnostics } from "../src/content/native/NativeDiagnostics";
@@ -99,5 +100,19 @@ test.describe("native model guards", () => {
         const [event] = diagnostics.snapshot().events;
         expect(event.code).toBe("native code");
         expect(event.detail.length).toBeLessThanOrEqual(160);
+    });
+});
+
+
+test("native send and stream activity opens a protected background-work window", () => {
+    const optimizer = new EditorInputOptimizer({ quietWindowMs: 50 });
+
+    optimizer.markProtectedActivity("messages-added", 1_000, 10_000);
+
+    expect(optimizer.shouldDeferBackgroundWork(10_500)).toBe(true);
+    expect(optimizer.shouldDeferBackgroundWork(11_100)).toBe(false);
+    expect(optimizer.snapshot()).toMatchObject({
+        lastEventType: "messages-added",
+        lastEventAt: 10_000,
     });
 });

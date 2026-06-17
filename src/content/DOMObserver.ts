@@ -12,6 +12,8 @@ export interface DOMObserverCallbacks {
     hasTrackedMessageId(id: string): boolean;
     onScrollToTop(): void;
     onObserverError(error: unknown, phase: string): void;
+    shouldDeferBackgroundWork?(): boolean;
+    onBackgroundWorkDeferred?(): void;
 }
 
 export interface DOMObserverDiagnostics {
@@ -192,12 +194,20 @@ export class DOMObserver {
     private readonly handleMutations = (mutations: MutationRecord[]): void => {
         this.pendingMutations.push(...mutations);
         if (this.debounceTimer) clearTimeout(this.debounceTimer);
-        this.debounceTimer = setTimeout(() => {
-            const batch = this.pendingMutations;
-            this.pendingMutations = [];
-            this.processMutations(batch);
-        }, MUTATION_DEBOUNCE_MS);
+        this.debounceTimer = setTimeout(() => this.flushPendingMutations(), MUTATION_DEBOUNCE_MS);
     };
+
+    private flushPendingMutations(): void {
+        if (this.callbacks.shouldDeferBackgroundWork?.()) {
+            this.callbacks.onBackgroundWorkDeferred?.();
+            this.debounceTimer = setTimeout(() => this.flushPendingMutations(), MUTATION_DEBOUNCE_MS);
+            return;
+        }
+
+        const batch = this.pendingMutations;
+        this.pendingMutations = [];
+        this.processMutations(batch);
+    }
 
     private processMutations(mutations: MutationRecord[]): void {
         const startedAt = performance.now();

@@ -113,6 +113,11 @@ export interface ExtensionStatus {
     readonly observerLastBatchSize?: number;
     readonly observerLastDurationMs?: number;
     readonly observerOverBudgetCount?: number;
+    readonly nativeModeSnapshotHosts?: number;
+    readonly nativeModeSnapshotCacheBytes?: number;
+    readonly nativeModeApproxInputTokens?: number;
+    readonly nativeModeTokenLimit?: number;
+    readonly nativeModeTokenWarningLevel?: "ok" | "warn" | "critical";
 }
 
 export interface WeeklyRequestCount {

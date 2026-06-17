@@ -71,6 +71,12 @@ export class NativeModeController {
         this.state = this.createState(this.state.active, this.state.selectorHealth, this.state.blockedReason);
     }
 
+    protectBackgroundWork(reason: string, durationMs: number): void {
+        if (!this.state.active) return;
+        this.editorInput.markProtectedActivity(reason, durationMs);
+        this.state = this.createState(this.state.active, this.state.selectorHealth, this.state.blockedReason);
+    }
+
     snapshot(): NativeModeState {
         return this.createState(this.state.active, this.state.selectorHealth, this.state.blockedReason);
     }

@@ -33,6 +33,7 @@ export class EditorInputOptimizer {
     private composing = false;
     private lastEventType: string | null = null;
     private lastEventAt: number | null = null;
+    private protectedUntilMs = 0;
     private deferredTaskCount = 0;
     private listening = false;
 
@@ -59,6 +60,7 @@ export class EditorInputOptimizer {
         this.composing = false;
         this.lastEventType = null;
         this.lastEventAt = null;
+        this.protectedUntilMs = 0;
     }
 
     markEvent(type: string): void {
@@ -68,8 +70,15 @@ export class EditorInputOptimizer {
         if (type === "compositionend") this.composing = false;
     }
 
+    markProtectedActivity(type: string, durationMs: number, now = Date.now()): void {
+        this.lastEventType = type;
+        this.lastEventAt = now;
+        this.protectedUntilMs = Math.max(this.protectedUntilMs, now + Math.max(0, durationMs));
+    }
+
     shouldDeferBackgroundWork(now = Date.now()): boolean {
         if (this.composing) return true;
+        if (now < this.protectedUntilMs) return true;
         if (this.lastEventAt === null) return false;
         return now - this.lastEventAt < this.quietWindowMs;
     }

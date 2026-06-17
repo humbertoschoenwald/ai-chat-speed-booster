@@ -3,6 +3,8 @@ import { MessageManager } from "./MessageManager";
 import { RequestLifecycleTracker } from "./RequestLifecycleTracker";
 import { LoadMoreButton, StatusIndicator } from "./UIComponents";
 import { NativeModeController } from "./native/NativeModeController";
+import { ChatGptTextSnapshotRenderer } from "./native/chatgpt/ChatGptTextSnapshotRenderer";
+import { estimateChatGptPromptTokens, readChatGptComposerText } from "./native/chatgpt/ChatGptTokenEstimator";
 import { detectCurrentSite, type SiteConfig } from "../shared/sites";
 import { deriveRuntimeConfigForSite } from "../shared/native-runtime-policy";
 import { loadConfig, onConfigChanged } from "../shared/storage";
@@ -25,8 +27,12 @@ let loadMoreButton: LoadMoreButton;
 let statusIndicator: StatusIndicator;
 let domObserver: DOMObserver;
 let nativeModeController: NativeModeController | null = null;
+let chatGptTextSnapshotRenderer: ChatGptTextSnapshotRenderer | null = null;
+let nativeSnapshotHosts = 0;
+let nativeSnapshotCacheBytes = 0;
 let conversationRetryTimer: ReturnType<typeof setTimeout> | null = null;
 let resumeHealthCheckTimer: ReturnType<typeof setTimeout> | null = null;
+let viewportResizeTimer: ReturnType<typeof setTimeout> | null = null;
 let contentScriptOwnsBootstrap = false;
 const contentBootTime = Date.now();
 let contentLifecycleState: ContentLifecycleState = "initializing";
@@ -61,6 +67,11 @@ async function bootstrap(): Promise<void> {
     requestLifecycleTracker = new RequestLifecycleTracker(currentSite.id, currentSite.selectors.userMessageSelector);
     nativeModeController = new NativeModeController(currentSite);
     nativeModeController.updateConfig(config);
+    if (currentSite.id === "chatgpt") {
+        chatGptTextSnapshotRenderer = new ChatGptTextSnapshotRenderer();
+        chatGptTextSnapshotRenderer.start(document);
+        window.addEventListener("resize", handleViewportResize);
+    }
     messageManager.updateConfig(config);
     if (currentSite.messageIdAttribute) {
         messageManager.setMessageIdAttribute(currentSite.messageIdAttribute);
@@ -81,6 +92,8 @@ async function bootstrap(): Promise<void> {
             messageManager.hasTrackedMessageId(id),
         onScrollToTop: loadOneMoreMessage,
         onObserverError: handleObserverError,
+        shouldDeferBackgroundWork: () => nativeModeController?.shouldDeferBackgroundWork() ?? false,
+        onBackgroundWorkDeferred: () => nativeModeController?.deferBackgroundWork(),
     });
 
     domObserver.start();
@@ -143,6 +156,7 @@ function scheduleInitialScan(): void {
  * Incremental path for newly appended turns detected by DOMObserver.
  */
 function handleMessagesAdded(elements: HTMLElement[]): void {
+    nativeModeController?.protectBackgroundWork("messages-added", 1_000);
     messageManager.addMessages(elements);
     refreshUI();
     countNewUserRequests(elements);
@@ -165,6 +179,8 @@ function handleMessagesRemoved(elements: HTMLElement[]): void {
  * the newly rendered thread without requiring a full page refresh.
  */
 function handleConversationChanged(): void {
+    nativeModeController?.protectBackgroundWork("conversation-changed", 1_000);
+    chatGptTextSnapshotRenderer?.restoreAll(document);
     contentLifecycleState = "recovering";
     logger.debug("conversation changed, re-initialising");
 
@@ -238,6 +254,15 @@ function handleVisibilityResume(): void {
     }
 }
 
+function handleViewportResize(): void {
+    nativeModeController?.protectBackgroundWork("viewport-resize", 250);
+    if (viewportResizeTimer) clearTimeout(viewportResizeTimer);
+    viewportResizeTimer = setTimeout(() => {
+        viewportResizeTimer = null;
+        refreshUI();
+    }, 250);
+}
+
 function queueResumeHealthCheck(reason: string): void {
     if (contentLifecycleState === "stopped") return;
     if (resumeHealthCheckTimer) clearTimeout(resumeHealthCheckTimer);
@@ -288,6 +313,8 @@ function handleObserverError(error: unknown, phase: string): void {
 }
 
 function handleMessagesReset(): void {
+    nativeModeController?.protectBackgroundWork("messages-reset", 1_000);
+    chatGptTextSnapshotRenderer?.restoreAll(document);
     contentLifecycleState = "recovering";
     logger.debug("large batch detected, re-initialising message manager");
     messageManager.destroy();
@@ -306,6 +333,9 @@ function handleExtensionMessage(message: unknown): ExtensionStatus | undefined {
     if (msg.type === MessageType.GET_STATUS) {
         const nativeState = nativeModeController?.snapshot();
         const observerDiagnostics = domObserver.getDiagnostics();
+        const tokenEstimate = currentSite.id === "chatgpt"
+            ? estimateChatGptPromptTokens(readChatGptComposerText(document))
+            : null;
         return {
             ...messageManager.getStatus(),
             siteId: currentSite.id,
@@ -333,6 +363,11 @@ function handleExtensionMessage(message: unknown): ExtensionStatus | undefined {
             observerLastBatchSize: observerDiagnostics.lastBatchSize,
             observerLastDurationMs: observerDiagnostics.lastDurationMs,
             observerOverBudgetCount: observerDiagnostics.overBudgetCount,
+            nativeModeSnapshotHosts: nativeSnapshotHosts,
+            nativeModeSnapshotCacheBytes: nativeSnapshotCacheBytes,
+            nativeModeApproxInputTokens: tokenEstimate?.approxTokens,
+            nativeModeTokenLimit: tokenEstimate?.limitTokens,
+            nativeModeTokenWarningLevel: tokenEstimate?.warningLevel,
         };
     }
     // Background also broadcasts CONFIG_UPDATED here (in addition to the
@@ -428,7 +463,34 @@ function refreshUI(): void {
         } else {
             statusIndicator.update(status.hiddenMessages, status.totalMessages, config.statusPosition, config.fetchInterceptEnabled, config.theme === "light");
         }
+
+        syncChatGptNativeSnapshots();
     });
+}
+
+function syncChatGptNativeSnapshots(): void {
+    const controller = nativeModeController;
+    const nativeActive = config.performanceMode === "native" && controller?.snapshot().active === true;
+    if (!chatGptTextSnapshotRenderer || !controller || currentSite.id !== "chatgpt" || !nativeActive) {
+        chatGptTextSnapshotRenderer?.restoreAll(document);
+        nativeSnapshotHosts = 0;
+        nativeSnapshotCacheBytes = 0;
+        return;
+    }
+    if (controller.shouldDeferBackgroundWork()) {
+        controller.deferBackgroundWork();
+        return;
+    }
+
+    const liveWindowSize = Math.max(3, Math.min(5, config.visibleMessageLimit));
+    const result = chatGptTextSnapshotRenderer.sync(domObserver.queryAllMessages(), {
+        enabled: true,
+        liveWindowSize,
+        nearestWindow: 2,
+        nowMs: Date.now(),
+    });
+    nativeSnapshotHosts = result.snapshotHosts;
+    nativeSnapshotCacheBytes = result.cache.totalBytes;
 }
 
 function findFirstVisibleMessage(): HTMLElement | null {
@@ -455,9 +517,16 @@ window.addEventListener("beforeunload", () => {
         clearTimeout(resumeHealthCheckTimer);
         resumeHealthCheckTimer = null;
     }
+    if (viewportResizeTimer) {
+        clearTimeout(viewportResizeTimer);
+        viewportResizeTimer = null;
+    }
     window.removeEventListener("pageshow", handlePageResume);
     window.removeEventListener("focus", handleWindowFocus);
+    window.removeEventListener("resize", handleViewportResize);
     document.removeEventListener("visibilitychange", handleVisibilityResume);
+    chatGptTextSnapshotRenderer?.stop();
+    chatGptTextSnapshotRenderer = null;
     nativeModeController?.stop("content script unloading");
     nativeModeController = null;
     document.documentElement.removeAttribute(CONTENT_BOOTSTRAP_ATTR);
