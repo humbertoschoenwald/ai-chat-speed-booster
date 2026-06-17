@@ -46,18 +46,18 @@
         <section class="popup-settings" aria-label="Settings">
 
             <!-- Performance mode -->
-            <div class="setting" data-tooltip="Legacy preserves current behavior. OpenAI Native (Imaginary) is experimental and currently exposes guarded diagnostics before virtualization ships.">
+            <div class="setting" data-tooltip="Stable preserves current proven behavior. OpenAI Native (Imaginary) is experimental and currently exposes guarded diagnostics before virtualization ships.">
                 <div class="setting__info">
                     <span class="setting__label">Performance mode</span>
-                    <span class="setting__hint" id="performance-mode-hint">Legacy mode</span>
+                    <span class="setting__hint" id="performance-mode-hint">Stable mode</span>
                 </div>
                 <select id="performance-mode" class="setting__select" aria-labelledby="performance-mode-hint">
-                    <option value="legacy">Legacy</option>
+                    <option value="legacy">Stable</option>
                     <option value="native">OpenAI Native (Imaginary)</option>
                 </select>
             </div>
 
-            <div class="setting native-only-setting" id="native-ai-setting" hidden data-tooltip="Native Mode currently supports ChatGPT only. Other AI sites use Legacy Mode until their native adapters are promoted.">
+            <div class="setting native-only-setting" id="native-ai-setting" hidden data-tooltip="Native Mode currently supports ChatGPT only. Other AI sites use Stable Mode until their native adapters are promoted.">
                 <div class="setting__info">
                     <span class="setting__label">Native AI</span>
                     <span class="setting__hint">ChatGPT only</span>

@@ -90,8 +90,8 @@ function renderPerformanceMode(mode: PerformanceMode, status?: ExtensionStatus):
     performanceModeHint.textContent = nativeMode
         ? "ChatGPT-only native runtime"
         : nativeRequestedButUnavailable
-            ? "Legacy on this AI"
-            : "Legacy mode";
+            ? "Stable on this AI"
+            : "Stable mode";
 
     nativeAiSetting.hidden = !nativeMode;
     nativePanels.forEach((panel) => {
