@@ -11,11 +11,12 @@ const FAILURE_SELECTOR = [
 
 type AcceptedRequestReporter = (siteId: string, count: number) => void | Promise<void>;
 
-const defaultAcceptedRequestReporter: AcceptedRequestReporter = (siteId, count) =>
-    sendMessage({
+const defaultAcceptedRequestReporter: AcceptedRequestReporter = (siteId, count) => {
+    void sendMessage({
         type: MessageType.INCREMENT_REQUEST_COUNT,
         payload: { siteId, count },
     }).catch(() => {});
+};
 
 export class RequestLifecycleTracker {
     private readonly seenAttempts = new WeakSet<HTMLElement>();
