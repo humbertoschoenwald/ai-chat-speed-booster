@@ -9,7 +9,7 @@ export default defineConfig({
     projects: [
         {
             name: "build",
-            testMatch: "validate-build.spec.ts",
+            testMatch: ["validate-build.spec.ts", "native-models.spec.ts"],
         },
         {
             name: "extension",
