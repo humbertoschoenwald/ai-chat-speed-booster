@@ -25,3 +25,16 @@ test("deepseek site config uses virtual-list roots without fetch trimming (#14)"
     expect(site?.messageIdAttribute).toBe("data-virtual-list-item-key");
     expect(site?.fetchIntercept).toBeUndefined();
 });
+
+
+test("grok site config uses scoped response roots without fetch trimming (#12)", () => {
+    const site = SITES.find((candidate) => candidate.id === "grok");
+
+    expect(site).toBeDefined();
+    expect(site?.hostnames).toEqual(["grok.com"]);
+    expect(site?.urlPatterns).toEqual(["*://grok.com/*"]);
+    expect(site?.selectors.messageTurn).toBe('[data-testid="drop-ui"] div[id^="response-"]');
+    expect(site?.selectors.scrollContainer).toBe('[data-testid="drop-ui"] main > div > div.overflow-y-auto');
+    expect(site?.messageIdAttribute).toBe("id");
+    expect(site?.fetchIntercept).toBeUndefined();
+});

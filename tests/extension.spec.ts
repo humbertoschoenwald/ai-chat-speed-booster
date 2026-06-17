@@ -35,6 +35,7 @@ for (const site of SITES) {
 
         function getMockUrl(): string {
             if (site.id === "deepseek") return `https://${site.hostnames[0]}/a/chat/s/mock`;
+            if (site.id === "grok") return `https://${site.hostnames[0]}/c/mock-conversation`;
             if (site.id === "search-ai-mode") return `https://${site.hostnames[0]}/search?q=mock-test&udm=50`;
             return `https://${site.hostnames[0]}/mock-test`;
         }
@@ -196,6 +197,50 @@ for (const site of SITES) {
 
             await expect(page.locator('div[data-xid^="aim-mars-turn-root"]')).toHaveCount(MESSAGE_COUNT);
             await expect(page.locator("[data-acsb-managed]")).toHaveCount(MESSAGE_COUNT);
+        });
+
+        test("grok manages scoped response roots (#12)", async ({ page }) => {
+            test.skip(site.id !== "grok");
+            await loadMockPage(page);
+
+            await expect(page.locator('[data-testid="drop-ui"] div[id^="response-"]')).toHaveCount(MESSAGE_COUNT);
+            await expect(page.locator("[data-acsb-managed]")).toHaveCount(MESSAGE_COUNT);
+        });
+
+        test("grok avoids duplicate message bubbles (#12)", async ({ page }) => {
+            test.skip(site.id !== "grok");
+            await loadMockPage(page);
+
+            expect(await page.locator('[data-testid="drop-ui"] div[id^="response-"]').count()).toBe(MESSAGE_COUNT);
+            expect(await page.locator(".message-bubble").count()).toBe(MESSAGE_COUNT);
+            expect(await page.locator("[data-acsb-managed]").count()).toBe(MESSAGE_COUNT);
+        });
+
+        test("grok avoids generic response overmatch (#12)", async ({ page }) => {
+            test.skip(site.id !== "grok");
+            await loadMockPage(page);
+            await page.evaluate(() => {
+                const extra = document.createElement("div");
+                extra.className = "relative response-content-markdown markdown";
+                extra.textContent = "Nested response-looking element that must not be managed";
+                document.body.appendChild(extra);
+            });
+
+            await expect(page.locator('[data-testid="drop-ui"] div[id^="response-"]')).toHaveCount(MESSAGE_COUNT);
+            await expect(page.locator("[data-acsb-managed]")).toHaveCount(MESSAGE_COUNT);
+        });
+
+        test("grok uses scoped chat scroll container (#12)", async ({ page }) => {
+            test.skip(site.id !== "grok");
+            await loadMockPage(page);
+            await page.evaluate(() => {
+                const fakeScroll = document.createElement("div");
+                fakeScroll.className = "fake-scroll overflow-y-auto";
+                fakeScroll.textContent = "Fake scroll container";
+                document.body.appendChild(fakeScroll);
+            });
+
+            await expect(page.locator('[data-testid="drop-ui"] main > div > div.overflow-y-auto')).toHaveCount(1);
         });
 
         test("no errors in extension service worker", async ({ extensionContext }) => {

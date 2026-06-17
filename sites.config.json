@@ -133,6 +133,29 @@
         }
     },
     {
+        "id": "grok",
+        "name": "Grok",
+        "hostnames": [
+            "grok.com"
+        ],
+        "urlPatterns": [
+            "*://grok.com/*"
+        ],
+        "selectors": {
+            "messageTurn": "[data-testid=\"drop-ui\"] div[id^=\"response-\"]",
+            "scrollContainer": "[data-testid=\"drop-ui\"] main > div > div.overflow-y-auto",
+            "scrollContainerAlt": "main > div > div.overflow-y-auto",
+            "userMessageSelector": "[data-testid=\"user-message\"]"
+        },
+        "messageIdAttribute": "id",
+        "statusAnchors": {
+            "name": "Grok"
+        },
+        "ui": {
+            "loadMoreMargin": "4px 0"
+        }
+    },
+    {
         "id": "search-ai-mode",
         "name": "Search AI Mode",
         "hostnames": [

@@ -16,3 +16,7 @@ Generic selectors such as `[class*="message"]`, `[role="article"]`, and `[data-m
 This adapter is DOM-only and requires the `udm=50` query flag. It uses `div[data-xid^="aim-mars-turn-root"]` as the turn selector and `body` as the scroll container.
 
 Normal result pages remain unsupported, and fetch interception is disabled.
+
+## Grok
+
+Grok support is DOM-only. The adapter uses scoped response roots as message turns and avoids inner bubble or generic class selectors that can overmatch. Fetch interception is intentionally disabled.

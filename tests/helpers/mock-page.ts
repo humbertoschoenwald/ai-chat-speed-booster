@@ -49,6 +49,8 @@ export function getMessageTestAttr(site: SiteConfig): { attr: string; prefix: st
             return { attr: "data-mock-id", prefix: "msg-" };
         case "deepseek":
             return { attr: "data-virtual-list-item-key", prefix: "" };
+        case "grok":
+            return { attr: "id", prefix: "response-" };
         case "search-ai-mode":
             return { attr: "data-xid", prefix: "aim-mars-turn-root-" };
         default: {
@@ -140,6 +142,17 @@ function generateMessageHtml(site: SiteConfig, idx: number): string {
                 `        </div>`,
             ].join("\n");
 
+        case "grok": {
+            const testId = idx % 2 === 0 ? "assistant-message" : "user-message";
+            return [
+                `        <div id="response-${idx}" data-mock-id="msg-${idx}">`,
+                `            <div class="message-bubble" data-testid="${testId}">`,
+                `                <p>Mock message ${idx} on ${site.name}</p>`,
+                `            </div>`,
+                `        </div>`,
+            ].join("\n");
+        }
+
         default: {
             // Generic fallback using selector parsing
             const parsed = parseMessageSelector(site.selectors.messageTurn);
@@ -178,6 +191,29 @@ ${messages}
         </div>
     </div>
 </main>
+</body>
+</html>`;
+    }
+
+    if (site.id === "grok") {
+        return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>${site.name} – Mock Page</title>
+</head>
+<body>
+<div data-testid="drop-container">
+    <div data-testid="drop-ui">
+        <main>
+            <div>
+                <div class="overflow-y-auto">
+${messages}
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
 </body>
 </html>`;
     }
