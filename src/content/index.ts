@@ -21,6 +21,7 @@ let statusIndicator: StatusIndicator;
 let domObserver: DOMObserver;
 let nativeModeController: NativeModeController | null = null;
 let conversationRetryTimer: ReturnType<typeof setTimeout> | null = null;
+let resumeHealthCheckTimer: ReturnType<typeof setTimeout> | null = null;
 const contentBootTime = Date.now();
 let contentLifecycleState: ContentLifecycleState = "initializing";
 let contentLastUiRefreshAt: number | null = null;
@@ -73,6 +74,9 @@ async function bootstrap(): Promise<void> {
     scheduleInitialScan();
     onConfigChanged(handleConfigUpdated);
     onMessage(handleExtensionMessage);
+    window.addEventListener("pageshow", handlePageResume);
+    window.addEventListener("focus", handleWindowFocus);
+    document.addEventListener("visibilitychange", handleVisibilityResume);
 
 }
 
@@ -213,6 +217,57 @@ function handleConfigUpdated(newConfig: ExtensionConfig): void {
     messageManager.updateConfig(config);
     refreshUI();
     logger.debug("config updated from external source");
+}
+
+function handlePageResume(): void {
+    queueResumeHealthCheck("pageshow");
+}
+
+function handleWindowFocus(): void {
+    queueResumeHealthCheck("focus");
+}
+
+function handleVisibilityResume(): void {
+    if (document.visibilityState === "visible") {
+        queueResumeHealthCheck("visibilitychange");
+    }
+}
+
+function queueResumeHealthCheck(reason: string): void {
+    if (contentLifecycleState === "stopped") return;
+    if (resumeHealthCheckTimer) clearTimeout(resumeHealthCheckTimer);
+    resumeHealthCheckTimer = setTimeout(() => {
+        resumeHealthCheckTimer = null;
+        runResumeHealthCheck(reason);
+    }, 120);
+}
+
+function runResumeHealthCheck(reason: string): void {
+    try {
+        nativeModeController?.updateConfig(config);
+        const status = messageManager.getStatus();
+        const overlayMissing = config.showStatus && status.totalMessages > 0 && !statusIndicator.isMounted();
+        if (contentLifecycleState === "active" && !overlayMissing) {
+            refreshUI();
+            return;
+        }
+
+        contentLifecycleState = "recovering";
+        const messages = domObserver.queryAllMessages();
+        if (messages.length > 0) {
+            messageManager.initialise(messages);
+            contentLifecycleState = "active";
+            contentLastRecoverableErrorClass = null;
+        } else {
+            contentLifecycleState = "degraded";
+            contentLastRecoverableErrorClass = `${reason}-empty`;
+        }
+        refreshUI();
+    } catch (error) {
+        contentLifecycleState = "degraded";
+        contentLastRecoverableErrorClass = error instanceof Error ? error.name : "resume-health-check-error";
+        logger.error("resume health check failed", error);
+    }
 }
 
 /**
@@ -367,6 +422,13 @@ window.addEventListener("beforeunload", () => {
         clearTimeout(conversationRetryTimer);
         conversationRetryTimer = null;
     }
+    if (resumeHealthCheckTimer) {
+        clearTimeout(resumeHealthCheckTimer);
+        resumeHealthCheckTimer = null;
+    }
+    window.removeEventListener("pageshow", handlePageResume);
+    window.removeEventListener("focus", handleWindowFocus);
+    document.removeEventListener("visibilitychange", handleVisibilityResume);
     nativeModeController?.stop("content script unloading");
     nativeModeController = null;
     domObserver.stop();
