@@ -100,7 +100,12 @@ function renderNativeDiagnostics(status: ExtensionStatus | undefined): void {
         ? `${status.observerLastBatchClass}/${status.observerLastBatchSize ?? 0} in ${(status.observerLastDurationMs ?? 0).toFixed(1)}ms`
         : "idle";
     const blocked = status.nativeModeBlockedReason ? ` · blocked: ${status.nativeModeBlockedReason}` : "";
-    nativeDiagnosticsBody.textContent = `Adapter: ${adapter} · lifecycle: ${lifecycle} · selector: ${selectorHealth} · input: ${inputState} · observer: ${observer}${blocked}`;
+    const plan = status.nativeModePlanReason ? ` · plan: ${status.nativeModePlanReason}` : "";
+    const featureCount = status.nativeModePlanActiveFeatures?.length ?? 0;
+    const budget = typeof status.nativeModeMutationBudgetMs === "number"
+        ? ` · budget: ${status.nativeModeMutationBudgetMs}ms/${status.nativeModeScrollOverscanPx ?? 0}px`
+        : "";
+    nativeDiagnosticsBody.textContent = `Adapter: ${adapter} · lifecycle: ${lifecycle} · selector: ${selectorHealth} · input: ${inputState} · features: ${featureCount} · observer: ${observer}${plan}${budget}${blocked}`;
 }
 
 function renderStatusText(status: ExtensionStatus): string {

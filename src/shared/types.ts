@@ -97,6 +97,13 @@ export interface ExtensionStatus {
     readonly nativeModeAdapterName?: string;
     readonly nativeModeAdapterSupport?: "enabled" | "planned";
     readonly nativeModeBlockedReason?: string | null;
+    readonly nativeModePlanCanStart?: boolean;
+    readonly nativeModePlanReason?: string;
+    readonly nativeModePlanActiveFeatures?: readonly string[];
+    readonly nativeModePlanBlockedFeatures?: readonly string[];
+    readonly nativeModeMutationBudgetMs?: number | null;
+    readonly nativeModeInputQuietWindowMs?: number | null;
+    readonly nativeModeScrollOverscanPx?: number | null;
     readonly contentLifecycleState?: ContentLifecycleState;
     readonly contentBootTime?: number;
     readonly contentLastUiRefreshAt?: number | null;

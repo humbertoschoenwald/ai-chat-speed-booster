@@ -3,6 +3,7 @@ import type { ExtensionConfig } from "../../shared/types";
 import { EditorInputOptimizer, type EditorInputSnapshot } from "./EditorInputOptimizer";
 import { NativeDiagnostics } from "./NativeDiagnostics";
 import { NativeEngine } from "./NativeEngine";
+import type { NativeExecutionPlanSnapshot } from "./NativeExecutionPlan";
 import { getNativeSiteAdapter, type NativeSiteAdapterSnapshot } from "./NativeSiteAdapter";
 import { SelectorRegistry, type SelectorHealth } from "./SelectorRegistry";
 
@@ -12,6 +13,7 @@ export interface NativeModeState {
     readonly editorInput: EditorInputSnapshot;
     readonly adapter: NativeSiteAdapterSnapshot;
     readonly blockedReason: string | null;
+    readonly executionPlan: NativeExecutionPlanSnapshot | null;
 }
 
 export class NativeModeController {
@@ -19,6 +21,7 @@ export class NativeModeController {
     private readonly editorInput = new EditorInputOptimizer();
     private readonly engine: NativeEngine;
     private readonly selectors: SelectorRegistry;
+    private lastExecutionPlan: NativeExecutionPlanSnapshot | null = null;
     private state: NativeModeState;
 
     constructor(site: SiteConfig) {
@@ -30,6 +33,7 @@ export class NativeModeController {
 
     updateConfig(config: ExtensionConfig): NativeModeState {
         const engineDecision = this.engine.evaluateStart(config);
+        this.lastExecutionPlan = engineDecision.plan;
         if (!engineDecision.canStart) {
             this.stop(engineDecision.reason);
             this.state = this.createState(false, this.state.selectorHealth, engineDecision.reason);
@@ -86,6 +90,7 @@ export class NativeModeController {
             editorInput: this.editorInput.snapshot(),
             adapter: this.engine.snapshot(),
             blockedReason,
+            executionPlan: this.lastExecutionPlan,
         };
     }
 }
