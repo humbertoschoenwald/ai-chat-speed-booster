@@ -1,4 +1,4 @@
-# ADR: OpenAI Native (Imaginary) Mode Boundary
+# ADR: Native Mode Boundary
 
 ## Status
 
@@ -12,7 +12,7 @@ The planned repair must also respect browser-extension boundaries. It cannot del
 
 ## Decision
 
-Add OpenAI Native (Imaginary) Mode as an explicit experimental mode instead of replacing the legacy behavior.
+Add Native Mode as an explicit experimental mode instead of replacing the legacy behavior.
 
 Native Mode must be additive, reversible, selector-guarded, diagnostics-driven, and off or conservative by default. Conflicting legacy controls may be paused while Native Mode is active, but their saved values must be preserved.
 

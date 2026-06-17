@@ -1,4 +1,4 @@
-# ADR: ChatGPT-only Native runtime
+# ADR: ChatGPT Native runtime boundary
 
 ## Status
 
@@ -27,4 +27,4 @@ Derive a runtime config from saved settings and the current site before content 
 
 ## Popup separation
 
-The popup must not present Native Mode as a variant of Legacy Mode. When the effective mode is Native, Legacy-only controls for Fast Mode, Auto Load, hard hiding, visible-count limits, batch-size loading, and the floating status badge are hidden and disabled. The per-site request counter remains outside that Legacy-only block. The Native AI selector currently exposes ChatGPT as the only Native target.
+The popup must not present Native Mode as a variant of Legacy Mode. When the effective mode is Native, Legacy-only controls for Fast Mode, Auto Load, hard hiding, visible-count limits, batch-size loading, and the floating status badge are hidden and disabled. The per-site request counter remains outside that Legacy-only block. The old Native target selector is hidden; ChatGPT is the only enabled Native target today.

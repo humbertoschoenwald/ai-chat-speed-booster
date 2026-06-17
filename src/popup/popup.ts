@@ -164,7 +164,13 @@ function renderNativeDiagnostics(status: ExtensionStatus | undefined): void {
     const budget = typeof status.nativeModeMutationBudgetMs === "number"
         ? ` · budget: ${status.nativeModeMutationBudgetMs}ms/${status.nativeModeScrollOverscanPx ?? 0}px`
         : "";
-    nativeDiagnosticsBody.textContent = `Adapter: ${adapter} · lifecycle: ${lifecycle} · selector: ${selectorHealth} · input: ${inputState} · features: ${featureCount} · observer: ${observer}${plan}${budget}${blocked}`;
+    const snapshots = typeof status.nativeModeSnapshotHosts === "number"
+        ? ` · snapshots: ${status.nativeModeSnapshotHosts} (${Math.round((status.nativeModeSnapshotCacheBytes ?? 0) / 1024)} KiB)`
+        : "";
+    const tokens = typeof status.nativeModeApproxInputTokens === "number"
+        ? ` · prompt: ~${status.nativeModeApproxInputTokens}/${status.nativeModeTokenLimit ?? "?"} tokens${status.nativeModeTokenWarningLevel && status.nativeModeTokenWarningLevel !== "ok" ? ` ${status.nativeModeTokenWarningLevel}` : ""}`
+        : "";
+    nativeDiagnosticsBody.textContent = `Adapter: ${adapter} · lifecycle: ${lifecycle} · selector: ${selectorHealth} · input: ${inputState} · features: ${featureCount} · observer: ${observer}${snapshots}${tokens}${plan}${budget}${blocked}`;
 }
 
 function renderStatusText(status: ExtensionStatus): string {
@@ -335,15 +341,7 @@ performanceModeSelect.addEventListener("change", async () => {
     const mode: PerformanceMode = requestedMode === "native" && !isNativeModeAllowedForSite(currentSiteId)
         ? "legacy"
         : requestedMode;
-    const payload: Partial<ExtensionConfig> = mode === "native"
-        ? {
-            performanceMode: mode,
-            fetchInterceptEnabled: false,
-            autoLoad: false,
-            hideOldMessages: false,
-            showStatus: false,
-        }
-        : { performanceMode: mode };
+    const payload: Partial<ExtensionConfig> = { performanceMode: mode };
     const config = await safeSendMessage<ExtensionConfig>({
         type: MessageType.SET_CONFIG,
         payload,

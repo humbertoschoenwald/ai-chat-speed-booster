@@ -12,7 +12,7 @@ Legacy Mode remains the default and keeps existing Fast Mode, Auto Load, Hide Ol
 
 ## Decision
 
-Add a performance-mode selector with Legacy and OpenAI Native (Imaginary) options. Native Mode reveals guarded panels for diagnostics, Tool Calls / MCP, Native overrides, and Safety / Reset.
+Add a performance-mode selector with Stable and Native options. Native Mode reveals guarded panels for diagnostics, Tool Calls / MCP, Native overrides, and Safety / Reset.
 
 The panels are intentionally descriptive while the risky features remain disabled. They explain what is not active yet: virtualization, freezing, scroll compensation, and completed tool-call grouping.
 
