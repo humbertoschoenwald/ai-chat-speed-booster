@@ -93,6 +93,10 @@ export interface ExtensionStatus {
     readonly nativeModeActive?: boolean;
     readonly nativeModeSelectorHealthy?: boolean;
     readonly nativeModeInputActive?: boolean;
+    readonly nativeModeAdapterId?: string;
+    readonly nativeModeAdapterName?: string;
+    readonly nativeModeAdapterSupport?: "enabled" | "planned";
+    readonly nativeModeBlockedReason?: string | null;
     readonly contentLifecycleState?: ContentLifecycleState;
     readonly contentBootTime?: number;
     readonly contentLastUiRefreshAt?: number | null;

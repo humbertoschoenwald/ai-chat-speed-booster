@@ -90,13 +90,17 @@ function renderNativeDiagnostics(status: ExtensionStatus | undefined): void {
         return;
     }
 
+    const adapter = status.nativeModeAdapterName
+        ? `${status.nativeModeAdapterName}/${status.nativeModeAdapterSupport ?? "planned"}`
+        : "unknown";
     const selectorHealth = status.nativeModeSelectorHealthy ? "healthy" : "blocked";
     const inputState = status.nativeModeInputActive ? "protected" : "idle";
     const lifecycle = status.contentLifecycleState ?? "unknown";
     const observer = status.observerLastBatchClass
         ? `${status.observerLastBatchClass}/${status.observerLastBatchSize ?? 0} in ${(status.observerLastDurationMs ?? 0).toFixed(1)}ms`
         : "idle";
-    nativeDiagnosticsBody.textContent = `Lifecycle: ${lifecycle} · selector: ${selectorHealth} · input: ${inputState} · observer: ${observer}`;
+    const blocked = status.nativeModeBlockedReason ? ` · blocked: ${status.nativeModeBlockedReason}` : "";
+    nativeDiagnosticsBody.textContent = `Adapter: ${adapter} · lifecycle: ${lifecycle} · selector: ${selectorHealth} · input: ${inputState} · observer: ${observer}${blocked}`;
 }
 
 function renderStatusText(status: ExtensionStatus): string {
