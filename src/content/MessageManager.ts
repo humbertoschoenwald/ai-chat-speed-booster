@@ -31,6 +31,8 @@ export class MessageManager {
     private cachedVisibleCount: number = 0;
     /** O(1) element → TrackedMessage lookup (avoids .find() scans). */
     private elementMap = new Map<HTMLElement, TrackedMessage>();
+    /** O(1) id → TrackedMessage lookup for DOMObserver dedupe checks. */
+    private idMap = new Map<string, TrackedMessage>();
     private visibleCounter = 0;
 
     private get visibleCount(): number {
@@ -50,6 +52,7 @@ export class MessageManager {
         injectHideStyle();
         this.messages = [];
         this.elementMap.clear();
+        this.idMap.clear();
         this.visibleCounter = 0;
         for (const el of elements) this.trackElement(el);
         this.recalculateVisibility();
@@ -69,6 +72,7 @@ export class MessageManager {
         this.messages = this.messages.filter((m) => {
             if (removed.has(m.element)) {
                 this.elementMap.delete(m.element);
+                this.idMap.delete(m.id);
                 if (m.visible) this.visibleCounter--;
                 return false;
             }
@@ -121,6 +125,7 @@ export class MessageManager {
         }
         this.messages = [];
         this.elementMap.clear();
+        this.idMap.clear();
         this.visibleCounter = 0;
         this.cachedVisibleCount = 0;
         logger.debug("MessageManager destroyed");
@@ -131,6 +136,7 @@ export class MessageManager {
         const msg: TrackedMessage = { id, element: el, visible: true };
         this.messages.push(msg);
         this.elementMap.set(el, msg);
+        this.idMap.set(id, msg);
         this.visibleCounter++;
         el.setAttribute(DATA_ATTR, id);
     }
@@ -193,6 +199,6 @@ export class MessageManager {
      * Used by DOMObserver to prevent re-adding already tracked turns.
      */
     hasTrackedMessageId(id: string): boolean {
-        return this.messages.some((m) => m.id === id);
+        return this.idMap.has(id);
     }
 }
