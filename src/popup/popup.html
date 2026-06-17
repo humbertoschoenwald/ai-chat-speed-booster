@@ -46,7 +46,7 @@
         <section class="popup-settings" aria-label="Settings">
 
             <!-- Performance mode -->
-            <div class="setting" data-tooltip="Stable preserves current proven behavior. OpenAI Native (Imaginary) is experimental and currently exposes guarded diagnostics before virtualization ships.">
+            <div class="setting" data-tooltip="Stable preserves current proven behavior. Native is experimental and currently exposes guarded diagnostics before virtualization ships.">
                 <div class="setting__info">
                     <span class="setting__label">Performance mode</span>
                     <span class="setting__hint" id="performance-mode-hint">Stable mode</span>
@@ -59,8 +59,8 @@
 
             <div class="setting native-only-setting" id="native-ai-setting" hidden data-tooltip="Native Mode currently supports ChatGPT only. Other AI sites use Stable Mode until their native adapters are promoted.">
                 <div class="setting__info">
-                    <span class="setting__label">Native AI</span>
-                    <span class="setting__hint">ChatGPT only</span>
+                    <span class="setting__label">Native target</span>
+                    <span class="setting__hint">Current site</span>
                 </div>
                 <select id="native-ai-target" class="setting__select" disabled>
                     <option value="chatgpt">ChatGPT</option>

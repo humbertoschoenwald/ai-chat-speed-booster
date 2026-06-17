@@ -119,26 +119,27 @@ async function init(): Promise<void> {
 
 function renderPerformanceMode(mode: PerformanceMode, status?: ExtensionStatus): void {
     const effectiveMode = status?.performanceMode ?? mode;
-    const nativeMode = effectiveMode === "native";
-    const nativeRequestedButUnavailable = mode === "native" && effectiveMode === "legacy";
+    const nativeRequested = mode === "native";
+    const nativeRuntimeActive = nativeRequested && effectiveMode === "native";
+    const nativeRequestedButUnavailable = nativeRequested && effectiveMode === "legacy";
 
-    performanceModeSelect.value = effectiveMode;
+    performanceModeSelect.value = mode;
     nativeAiTarget.value = "chatgpt";
-    performanceModeHint.textContent = nativeMode
+    performanceModeHint.textContent = nativeRuntimeActive
         ? "Native mode"
         : nativeRequestedButUnavailable
-            ? "Stable on this AI"
+            ? "Native mode selected; Stable runtime active on this site"
             : "Stable mode";
 
-    nativeAiSetting.hidden = !nativeMode;
+    nativeAiSetting.hidden = true;
     nativePanels.forEach((panel) => {
-        panel.hidden = !nativeMode;
+        panel.hidden = !nativeRequested;
     });
     legacyControls.forEach((control) => {
-        control.hidden = nativeMode;
+        control.hidden = nativeRequested;
     });
     legacyControlInputs.forEach((input) => {
-        input.disabled = nativeMode;
+        input.disabled = nativeRequested;
     });
 }
 
@@ -367,10 +368,10 @@ positionPicker.addEventListener("click", async (e) => {
 });
 
 themeToggle.addEventListener("click", async () => {
-    const currentTheme = document.documentElement.getAttribute("data-theme") as "light" | "dark" || "dark";
-    const newTheme = currentTheme === "dark" ? "light" : "dark";
+    const currentTheme = (document.documentElement.getAttribute("data-theme") || "dark") as Theme;
+    const newTheme: Theme = currentTheme === "dark" ? "light" : "dark";
     applyTheme(newTheme);
-    const optimisticConfig = { ...currentConfig, theme: newTheme };
+    const optimisticConfig: ExtensionConfig = { ...currentConfig, theme: newTheme };
     renderConfig(optimisticConfig);
 
     const config = await safeSendMessage<ExtensionConfig>({

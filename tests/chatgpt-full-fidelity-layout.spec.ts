@@ -32,7 +32,7 @@ test.describe("ChatGPT full-fidelity layout plan", () => {
             { key: "middle", heightPx: 300 },
             { key: "latest", heightPx: 250 },
         ], {
-            scrollTopPx: 850,
+            scrollTopPx: 1000,
             viewportHeightPx: 200,
             overscanPx: 100,
         });
