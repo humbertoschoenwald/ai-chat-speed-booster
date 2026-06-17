@@ -144,104 +144,102 @@ for (const site of SITES) {
             await expect(page.locator(".acsb-status-indicator")).toBeVisible();
         });
 
-        test("DeepSeek uses virtual-list item roots without inner markdown duplicates", async ({ page }) => {
-            test.skip(site.id !== "deepseek");
-            await loadMockPage(page);
+        if (site.id === "deepseek") {
+            test("DeepSeek selector regression: manages virtual-list item roots without inner markdown duplicates (#14)", async ({ page }) => {
+                await loadMockPage(page);
 
-            const rootCount = await page.locator(".ds-virtual-list-visible-items > [data-virtual-list-item-key]").count();
-            const innerCount = await page.locator(".ds-message").count();
-            const assistantMarkdownCount = await page.locator(".ds-assistant-message-main-content").count();
-            const managedCount = await page.locator("[data-acsb-managed]").count();
+                const rootCount = await page.locator(".ds-virtual-list-visible-items > [data-virtual-list-item-key]").count();
+                const innerCount = await page.locator(".ds-message").count();
+                const assistantMarkdownCount = await page.locator(".ds-assistant-message-main-content").count();
+                const managedCount = await page.locator("[data-acsb-managed]").count();
 
-            expect(rootCount).toBe(MESSAGE_COUNT);
-            expect(innerCount).toBe(MESSAGE_COUNT);
-            expect(assistantMarkdownCount).toBeGreaterThan(0);
-            expect(managedCount).toBe(MESSAGE_COUNT);
-        });
-
-        test("DeepSeek uses the virtual-list scroll container", async ({ page }) => {
-            test.skip(site.id !== "deepseek");
-            await loadMockPage(page);
-
-            const scrollContainers = await page.locator(".ds-virtual-list.ds-scroll-area").count();
-            const allScrollAreas = await page.locator(".ds-scroll-area").count();
-
-            expect(scrollContainers).toBe(1);
-            expect(allScrollAreas).toBeGreaterThanOrEqual(2);
-        });
-
-        test("search mode stays off without the required query flag (#23)", async ({ page }) => {
-            test.skip(site.id !== "search-ai-mode");
-            const mockHtml = generateMockPage(site, MESSAGE_COUNT);
-            await page.route(`**/${site.hostnames[0]}/**`, (route) =>
-                route.fulfill({ contentType: "text/html", body: mockHtml }),
-            );
-            await page.goto(`https://${site.hostnames[0]}/search?q=mock-test`, {
-                waitUntil: "domcontentloaded",
-            });
-            await page.waitForTimeout(1000);
-
-            await expect(page.locator("[data-acsb-managed]")).toHaveCount(0);
-            await expect(page.locator(".acsb-status-indicator")).toHaveCount(0);
-        });
-
-        test("search mode manages turn roots instead of generic main content (#23)", async ({ page }) => {
-            test.skip(site.id !== "search-ai-mode");
-            await loadMockPage(page);
-            await page.evaluate(() => {
-                const main = document.createElement("div");
-                main.setAttribute("role", "main");
-                main.textContent = "Generic content that must not be managed";
-                document.body.appendChild(main);
+                expect(rootCount).toBe(MESSAGE_COUNT);
+                expect(innerCount).toBe(MESSAGE_COUNT);
+                expect(assistantMarkdownCount).toBeGreaterThan(0);
+                expect(managedCount).toBe(MESSAGE_COUNT);
             });
 
-            await expect(page.locator('div[data-xid^="aim-mars-turn-root"]')).toHaveCount(MESSAGE_COUNT);
-            await expect(page.locator("[data-acsb-managed]")).toHaveCount(MESSAGE_COUNT);
-        });
+            test("DeepSeek scroll regression: uses the scoped virtual-list scroll container (#14)", async ({ page }) => {
+                await loadMockPage(page);
 
-        test("grok manages scoped response roots (#12)", async ({ page }) => {
-            test.skip(site.id !== "grok");
-            await loadMockPage(page);
+                const scrollContainers = await page.locator(".ds-virtual-list.ds-scroll-area").count();
+                const allScrollAreas = await page.locator(".ds-scroll-area").count();
 
-            await expect(page.locator('[data-testid="drop-ui"] div[id^="response-"]')).toHaveCount(MESSAGE_COUNT);
-            await expect(page.locator("[data-acsb-managed]")).toHaveCount(MESSAGE_COUNT);
-        });
+                expect(scrollContainers).toBe(1);
+                expect(allScrollAreas).toBeGreaterThanOrEqual(2);
+            });
+        }
 
-        test("grok avoids duplicate message bubbles (#12)", async ({ page }) => {
-            test.skip(site.id !== "grok");
-            await loadMockPage(page);
+        if (site.id === "search-ai-mode") {
+            test("Search AI Mode guard: normal search URL without udm=50 does not activate ACSB (#23)", async ({ page }) => {
+                const mockHtml = generateMockPage(site, MESSAGE_COUNT);
+                await page.route(`**/${site.hostnames[0]}/**`, (route) =>
+                    route.fulfill({ contentType: "text/html", body: mockHtml }),
+                );
+                await page.goto(`https://${site.hostnames[0]}/search?q=mock-test`, {
+                    waitUntil: "domcontentloaded",
+                });
+                await page.waitForTimeout(1000);
 
-            expect(await page.locator('[data-testid="drop-ui"] div[id^="response-"]').count()).toBe(MESSAGE_COUNT);
-            expect(await page.locator(".message-bubble").count()).toBe(MESSAGE_COUNT);
-            expect(await page.locator("[data-acsb-managed]").count()).toBe(MESSAGE_COUNT);
-        });
-
-        test("grok avoids generic response overmatch (#12)", async ({ page }) => {
-            test.skip(site.id !== "grok");
-            await loadMockPage(page);
-            await page.evaluate(() => {
-                const extra = document.createElement("div");
-                extra.className = "relative response-content-markdown markdown";
-                extra.textContent = "Nested response-looking element that must not be managed";
-                document.body.appendChild(extra);
+                await expect(page.locator("[data-acsb-managed]")).toHaveCount(0);
+                await expect(page.locator(".acsb-status-indicator")).toHaveCount(0);
             });
 
-            await expect(page.locator('[data-testid="drop-ui"] div[id^="response-"]')).toHaveCount(MESSAGE_COUNT);
-            await expect(page.locator("[data-acsb-managed]")).toHaveCount(MESSAGE_COUNT);
-        });
+            test("Search AI Mode selector regression: manages AI turn roots instead of generic main content (#23)", async ({ page }) => {
+                await loadMockPage(page);
+                await page.evaluate(() => {
+                    const main = document.createElement("div");
+                    main.setAttribute("role", "main");
+                    main.textContent = "Generic content that must not be managed";
+                    document.body.appendChild(main);
+                });
 
-        test("grok uses scoped chat scroll container (#12)", async ({ page }) => {
-            test.skip(site.id !== "grok");
-            await loadMockPage(page);
-            await page.evaluate(() => {
-                const fakeScroll = document.createElement("div");
-                fakeScroll.className = "fake-scroll overflow-y-auto";
-                fakeScroll.textContent = "Fake scroll container";
-                document.body.appendChild(fakeScroll);
+                await expect(page.locator('div[data-xid^="aim-mars-turn-root"]')).toHaveCount(MESSAGE_COUNT);
+                await expect(page.locator("[data-acsb-managed]")).toHaveCount(MESSAGE_COUNT);
+            });
+        }
+
+        if (site.id === "grok") {
+            test("Grok selector regression: manages scoped response roots (#12)", async ({ page }) => {
+                await loadMockPage(page);
+
+                await expect(page.locator('[data-testid="drop-ui"] div[id^="response-"]')).toHaveCount(MESSAGE_COUNT);
+                await expect(page.locator("[data-acsb-managed]")).toHaveCount(MESSAGE_COUNT);
             });
 
-            await expect(page.locator('[data-testid="drop-ui"] main > div > div.overflow-y-auto')).toHaveCount(1);
-        });
+            test("Grok selector regression: does not treat message bubbles as duplicate turns (#12)", async ({ page }) => {
+                await loadMockPage(page);
+
+                expect(await page.locator('[data-testid="drop-ui"] div[id^="response-"]').count()).toBe(MESSAGE_COUNT);
+                expect(await page.locator(".message-bubble").count()).toBe(MESSAGE_COUNT);
+                expect(await page.locator("[data-acsb-managed]").count()).toBe(MESSAGE_COUNT);
+            });
+
+            test("Grok selector regression: avoids generic response-class overmatch (#12)", async ({ page }) => {
+                await loadMockPage(page);
+                await page.evaluate(() => {
+                    const extra = document.createElement("div");
+                    extra.className = "relative response-content-markdown markdown";
+                    extra.textContent = "Nested response-looking element that must not be managed";
+                    document.body.appendChild(extra);
+                });
+
+                await expect(page.locator('[data-testid="drop-ui"] div[id^="response-"]')).toHaveCount(MESSAGE_COUNT);
+                await expect(page.locator("[data-acsb-managed]")).toHaveCount(MESSAGE_COUNT);
+            });
+
+            test("Grok scroll regression: uses scoped chat scroll container instead of generic overflow nodes (#12)", async ({ page }) => {
+                await loadMockPage(page);
+                await page.evaluate(() => {
+                    const fakeScroll = document.createElement("div");
+                    fakeScroll.className = "fake-scroll overflow-y-auto";
+                    fakeScroll.textContent = "Fake scroll container";
+                    document.body.appendChild(fakeScroll);
+                });
+
+                await expect(page.locator('[data-testid="drop-ui"] main > div > div.overflow-y-auto')).toHaveCount(1);
+            });
+        }
 
         test("no errors in extension service worker", async ({ extensionContext }) => {
             const workers = extensionContext.serviceWorkers();
