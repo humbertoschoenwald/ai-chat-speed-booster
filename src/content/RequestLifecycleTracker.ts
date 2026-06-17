@@ -9,6 +9,14 @@ const FAILURE_SELECTOR = [
     '[class*="danger" i]',
 ].join(",");
 
+type AcceptedRequestReporter = (siteId: string, count: number) => void | Promise<void>;
+
+const defaultAcceptedRequestReporter: AcceptedRequestReporter = (siteId, count) =>
+    sendMessage({
+        type: MessageType.INCREMENT_REQUEST_COUNT,
+        payload: { siteId, count },
+    }).catch(() => {});
+
 export class RequestLifecycleTracker {
     private readonly seenAttempts = new WeakSet<HTMLElement>();
     private readonly seenResponses = new WeakSet<HTMLElement>();
@@ -17,6 +25,7 @@ export class RequestLifecycleTracker {
     constructor(
         private readonly siteId: string,
         private readonly userMessageSelector?: string,
+        private readonly reporter: AcceptedRequestReporter = defaultAcceptedRequestReporter,
     ) {}
 
     reset(): void {
@@ -48,10 +57,7 @@ export class RequestLifecycleTracker {
         }
 
         if (acceptedCount > 0) {
-            sendMessage({
-                type: MessageType.INCREMENT_REQUEST_COUNT,
-                payload: { siteId: this.siteId, count: acceptedCount },
-            }).catch(() => {});
+            void this.reporter(this.siteId, acceptedCount);
         }
     }
 
