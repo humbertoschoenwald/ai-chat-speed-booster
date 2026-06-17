@@ -1,4 +1,16 @@
-export const api: typeof chrome = chrome;
+type ChromeGlobal = typeof globalThis & { chrome?: typeof chrome };
+
+function getChromeApi(): typeof chrome {
+    const chromeApi = (globalThis as ChromeGlobal).chrome;
+    if (!chromeApi) throw new ReferenceError("chrome is not defined");
+    return chromeApi;
+}
+
+export const api: typeof chrome = new Proxy({} as typeof chrome, {
+    get(_target, property: string | symbol): unknown {
+        return getChromeApi()[property as keyof typeof chrome];
+    },
+}) as typeof chrome;
 
 export async function storageGet<T>(key: string): Promise<T | undefined> {
     const result = await api.storage.local.get(key);
