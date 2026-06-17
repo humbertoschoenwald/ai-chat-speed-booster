@@ -11,6 +11,7 @@ export interface DOMObserverCallbacks {
     getLastTrackedMessageId(): string | null;
     hasTrackedMessageId(id: string): boolean;
     onScrollToTop(): void;
+    onObserverError(error: unknown, phase: string): void;
 }
 
 export interface DOMObserverDiagnostics {
@@ -180,7 +181,7 @@ export class DOMObserver {
         if (current !== this.lastUrl) {
             logger.debug(`URL changed: ${this.lastUrl} -> ${current}`);
             this.lastUrl = current;
-            this.callbacks.onConversationChanged();
+            this.runCallback("conversation-changed", () => this.callbacks.onConversationChanged());
         }
     }
 
@@ -246,15 +247,15 @@ export class DOMObserver {
         // Only apply this heuristic for sites known to have dynamic loading (e.g. Gemini),
         // to avoid unnecessary resets on more static sites where the existing mutation handling is sufficient
             logger.debug(`Detected ${addedMessages.length} new messages, triggering full reset`);
-            this.callbacks.onMessagesReset();
+            this.runCallback("messages-reset-added", () => this.callbacks.onMessagesReset());
         } else if (addedMessages.length > 0) {
             logger.debug(`${addedMessages.length} message turn(s) added`);
-            this.callbacks.onMessagesAdded(addedMessages);
+            this.runCallback("messages-added", () => this.callbacks.onMessagesAdded(addedMessages));
         }
 
         if (removedMessages.length > 0) {
             logger.debug(`${removedMessages.length} message turn(s) removed out of ${this.totalMessages} total tracked messages`);
-            this.callbacks.onMessagesRemoved(removedMessages);
+            this.runCallback("messages-removed", () => this.callbacks.onMessagesRemoved(removedMessages));
             // If essentially every tracked turn is removed in one batch it's a
             // re-render of the whole thread (e.g. the ChatGPT + Excel-table
             // collapse bug), so trigger a full reset to keep tracking aligned.
@@ -263,8 +264,17 @@ export class DOMObserver {
             // which would otherwise make ANY removal look like a full wipe).
             if (this.totalMessages > 0 && removedMessages.length >= this.totalMessages) {
                 logger.debug(`Detected ${removedMessages.length} removed messages, triggering full reset`);
-                this.callbacks.onMessagesReset();
+                this.runCallback("messages-reset-removed", () => this.callbacks.onMessagesReset());
             }
+        }
+    }
+
+    private runCallback(phase: string, callback: () => void): void {
+        try {
+            callback();
+        } catch (error) {
+            logger.error(`DOMObserver callback failed during ${phase}`, error);
+            this.callbacks.onObserverError(error, phase);
         }
     }
 

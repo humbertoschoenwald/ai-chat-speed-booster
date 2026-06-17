@@ -76,6 +76,7 @@ async function bootstrap(): Promise<void> {
         hasTrackedMessageId: (id: string) =>
             messageManager.hasTrackedMessageId(id),
         onScrollToTop: loadOneMoreMessage,
+        onObserverError: handleObserverError,
     });
 
     domObserver.start();
@@ -284,6 +285,13 @@ function runResumeHealthCheck(reason: string): void {
  * that the conversation thread was re-rendered from scratch (e.g. due to a significant navigation or dynamic loading event)
  * and incremental mutation handling can't keep up with the changes.
  */
+function handleObserverError(error: unknown, phase: string): void {
+    contentLifecycleState = "degraded";
+    const errorClass = error instanceof Error ? error.name : "observer-callback-error";
+    contentLastRecoverableErrorClass = `${phase}:${errorClass}`;
+    refreshUI();
+}
+
 function handleMessagesReset(): void {
     contentLifecycleState = "recovering";
     logger.debug("large batch detected, re-initialising message manager");
