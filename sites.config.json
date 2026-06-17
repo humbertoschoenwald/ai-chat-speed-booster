@@ -159,6 +159,7 @@
         "id": "perplexity",
         "name": "Perplexity",
         "hostnames": [
+            "www.perplexity.ai",
             "perplexity.ai"
         ],
         "urlPatterns": [
