@@ -7,6 +7,7 @@ export type Theme = "light" | "dark";
 export type PerformanceMode = "legacy" | "native";
 
 export type ContentLifecycleState = "initializing" | "active" | "recovering" | "degraded" | "unsupported" | "stopped";
+export type MutationBatchClass = "small" | "heavy" | "extreme";
 
 export interface ExtensionConfig {
     readonly visibleMessageLimit: number;
@@ -97,6 +98,10 @@ export interface ExtensionStatus {
     readonly contentLastUiRefreshAt?: number | null;
     readonly contentOverlayPresent?: boolean;
     readonly contentLastRecoverableErrorClass?: string | null;
+    readonly observerLastBatchClass?: MutationBatchClass | null;
+    readonly observerLastBatchSize?: number;
+    readonly observerLastDurationMs?: number;
+    readonly observerOverBudgetCount?: number;
 }
 
 export interface WeeklyRequestCount {

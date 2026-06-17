@@ -293,6 +293,7 @@ function handleExtensionMessage(message: unknown): ExtensionStatus | undefined {
     const msg = message as { type?: string; payload?: unknown };
     if (msg.type === MessageType.GET_STATUS) {
         const nativeState = nativeModeController?.snapshot();
+        const observerDiagnostics = domObserver.getDiagnostics();
         return {
             ...messageManager.getStatus(),
             siteId: currentSite.id,
@@ -305,6 +306,10 @@ function handleExtensionMessage(message: unknown): ExtensionStatus | undefined {
             contentLastUiRefreshAt,
             contentOverlayPresent: statusIndicator.isMounted(),
             contentLastRecoverableErrorClass,
+            observerLastBatchClass: observerDiagnostics.lastBatchClass,
+            observerLastBatchSize: observerDiagnostics.lastBatchSize,
+            observerLastDurationMs: observerDiagnostics.lastDurationMs,
+            observerOverBudgetCount: observerDiagnostics.overBudgetCount,
         };
     }
     // Background also broadcasts CONFIG_UPDATED here (in addition to the

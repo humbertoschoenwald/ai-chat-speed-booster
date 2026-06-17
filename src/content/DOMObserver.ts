@@ -1,5 +1,6 @@
 import { SiteConfig, type SiteSelectors } from "../shared/sites";
 import { MUTATION_DEBOUNCE_MS } from "../shared/constants";
+import type { MutationBatchClass } from "../shared/types";
 import { logger } from "../shared/logger";
 
 export interface DOMObserverCallbacks {
@@ -11,8 +12,6 @@ export interface DOMObserverCallbacks {
     hasTrackedMessageId(id: string): boolean;
     onScrollToTop(): void;
 }
-
-export type MutationBatchClass = "small" | "heavy" | "extreme";
 
 export interface DOMObserverDiagnostics {
     readonly lastBatchClass: MutationBatchClass | null;

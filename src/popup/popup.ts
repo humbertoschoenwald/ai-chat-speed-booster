@@ -93,7 +93,10 @@ function renderNativeDiagnostics(status: ExtensionStatus | undefined): void {
     const selectorHealth = status.nativeModeSelectorHealthy ? "healthy" : "blocked";
     const inputState = status.nativeModeInputActive ? "protected" : "idle";
     const lifecycle = status.contentLifecycleState ?? "unknown";
-    nativeDiagnosticsBody.textContent = `Lifecycle: ${lifecycle} · selector: ${selectorHealth} · input: ${inputState}`;
+    const observer = status.observerLastBatchClass
+        ? `${status.observerLastBatchClass}/${status.observerLastBatchSize ?? 0} in ${(status.observerLastDurationMs ?? 0).toFixed(1)}ms`
+        : "idle";
+    nativeDiagnosticsBody.textContent = `Lifecycle: ${lifecycle} · selector: ${selectorHealth} · input: ${inputState} · observer: ${observer}`;
 }
 
 function renderStatusText(status: ExtensionStatus): string {
