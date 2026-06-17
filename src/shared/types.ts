@@ -86,6 +86,10 @@ export interface ExtensionStatus {
     readonly showStatus: boolean;
     readonly statusPosition: StatusPosition;
     readonly siteId?: string;
+    readonly performanceMode?: PerformanceMode;
+    readonly nativeModeActive?: boolean;
+    readonly nativeModeSelectorHealthy?: boolean;
+    readonly nativeModeInputActive?: boolean;
 }
 
 export interface WeeklyRequestCount {

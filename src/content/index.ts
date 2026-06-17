@@ -1,6 +1,7 @@
 import { DOMObserver } from "./DOMObserver";
 import { MessageManager } from "./MessageManager";
 import { LoadMoreButton, StatusIndicator } from "./UIComponents";
+import { NativeModeController } from "./native/NativeModeController";
 import { detectCurrentSite, type SiteConfig } from "../shared/sites";
 import { loadConfig, onConfigChanged } from "../shared/storage";
 import { onMessage, sendMessage } from "../shared/browser-api";
@@ -17,6 +18,7 @@ const messageManager = new MessageManager();
 let loadMoreButton: LoadMoreButton;
 let statusIndicator: StatusIndicator;
 let domObserver: DOMObserver;
+let nativeModeController: NativeModeController | null = null;
 let conversationRetryTimer: ReturnType<typeof setTimeout> | null = null;
 /**
  * Internal flag tracking whether the fetch interceptor trimmed the current
@@ -36,6 +38,8 @@ async function bootstrap(): Promise<void> {
     logger.info(`bootstrapping content script for ${currentSite.name}`);
 
     config = await loadConfig();
+    nativeModeController = new NativeModeController(currentSite);
+    nativeModeController.updateConfig(config);
     messageManager.updateConfig(config);
     if (currentSite.messageIdAttribute) {
         messageManager.setMessageIdAttribute(currentSite.messageIdAttribute);
@@ -192,6 +196,7 @@ function handleConversationChanged(): void {
 
 function handleConfigUpdated(newConfig: ExtensionConfig): void {
     config = newConfig;
+    nativeModeController?.updateConfig(config);
     messageManager.updateConfig(config);
     refreshUI();
     logger.debug("config updated from external source");
@@ -217,7 +222,15 @@ function handleMessagesReset(): void {
 function handleExtensionMessage(message: unknown): ExtensionStatus | undefined {
     const msg = message as { type?: string; payload?: unknown };
     if (msg.type === MessageType.GET_STATUS) {
-        return { ...messageManager.getStatus(), siteId: currentSite.id };
+        const nativeState = nativeModeController?.snapshot();
+        return {
+            ...messageManager.getStatus(),
+            siteId: currentSite.id,
+            performanceMode: config.performanceMode,
+            nativeModeActive: nativeState?.active ?? false,
+            nativeModeSelectorHealthy: nativeState?.selectorHealth?.healthy ?? false,
+            nativeModeInputActive: nativeState?.editorInput.active ?? false,
+        };
     }
     // Background also broadcasts CONFIG_UPDATED here (in addition to the
     // storage-change listener) so config changes still propagate if storage
@@ -332,6 +345,8 @@ window.addEventListener("beforeunload", () => {
         clearTimeout(conversationRetryTimer);
         conversationRetryTimer = null;
     }
+    nativeModeController?.stop("content script unloading");
+    nativeModeController = null;
     domObserver.stop();
     messageManager.destroy();
     loadMoreButton.destroy();
