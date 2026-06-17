@@ -144,6 +144,10 @@ body {
     outline-offset: 2px;
 }
 
+[hidden] {
+    display: none !important;
+}
+
 .popup-settings {
     padding: 4px 15px 15px;
     display: none; /* Hidden by default to prevent settings UI flashing on unsupported sites */

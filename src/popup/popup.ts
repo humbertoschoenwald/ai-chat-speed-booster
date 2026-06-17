@@ -88,7 +88,7 @@ function renderPerformanceMode(mode: PerformanceMode, status?: ExtensionStatus):
     performanceModeSelect.value = effectiveMode;
     nativeAiTarget.value = "chatgpt";
     performanceModeHint.textContent = nativeMode
-        ? "ChatGPT-only native runtime"
+        ? "Native mode"
         : nativeRequestedButUnavailable
             ? "Stable on this AI"
             : "Stable mode";
