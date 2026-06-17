@@ -1,4 +1,5 @@
 import type { ExtensionConfig } from "../../shared/types";
+import { createNativeExecutionPlan, type NativeExecutionPlanSnapshot } from "./NativeExecutionPlan";
 import type { NativeDiagnostics } from "./NativeDiagnostics";
 import {
     type NativeSiteAdapter,
@@ -10,6 +11,7 @@ export interface NativeEngineDecision {
     readonly canStart: boolean;
     readonly reason: string;
     readonly adapter: NativeSiteAdapterSnapshot;
+    readonly plan: NativeExecutionPlanSnapshot;
 }
 
 export class NativeEngine {
@@ -20,21 +22,18 @@ export class NativeEngine {
 
     evaluateStart(config: ExtensionConfig): NativeEngineDecision {
         const adapter = toNativeSiteAdapterSnapshot(this.adapter);
+        const plan = createNativeExecutionPlan(this.adapter, config);
 
-        if (!config.enabled) {
-            return { canStart: false, reason: "extension disabled", adapter };
-        }
-
-        if (config.performanceMode !== "native") {
-            return { canStart: false, reason: "native mode disabled", adapter };
-        }
-
-        if (this.adapter.support !== "enabled") {
+        if (!plan.canStart && config.performanceMode === "native" && this.adapter.support !== "enabled") {
             this.diagnostics.warn("native.adapter.planned", this.adapter.supportReason);
-            return { canStart: false, reason: this.adapter.supportReason, adapter };
         }
 
-        return { canStart: true, reason: "native adapter enabled", adapter };
+        return {
+            canStart: plan.canStart,
+            reason: plan.reason,
+            adapter,
+            plan,
+        };
     }
 
     snapshot(): NativeSiteAdapterSnapshot {
