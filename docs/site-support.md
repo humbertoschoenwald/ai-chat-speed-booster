@@ -20,3 +20,7 @@ Normal result pages remain unsupported, and fetch interception is disabled.
 ## Grok
 
 Grok support is DOM-only. The adapter uses scoped response roots as message turns and avoids inner bubble or generic class selectors that can overmatch. Fetch interception is intentionally disabled.
+
+## Perplexity
+
+Perplexity is supported through a DOM-only adapter using the active answer tab panel inside `main .scrollable-container` as the message turn and `main .scrollable-container` as the scroll container. Fetch interception is intentionally disabled.

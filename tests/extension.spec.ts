@@ -144,6 +144,23 @@ for (const site of SITES) {
             await expect(page.locator(".acsb-status-indicator")).toBeVisible();
         });
 
+        if (site.id === "perplexity") {
+            test("Perplexity selector regression: manages active answer tab panels", async ({ page }) => {
+                await loadMockPage(page);
+
+                await expect(page.locator('main .scrollable-container [role="tabpanel"][data-state="active"]')).toHaveCount(MESSAGE_COUNT);
+                await expect(page.locator('main .scrollable-container [id^="markdown-content-"]')).toHaveCount(MESSAGE_COUNT);
+                await expect(page.locator("[data-acsb-managed]")).toHaveCount(MESSAGE_COUNT);
+            });
+
+            test("Perplexity scroll regression: uses the scoped scrollable container", async ({ page }) => {
+                await loadMockPage(page);
+
+                await expect(page.locator("main .scrollable-container")).toHaveCount(1);
+                await expect(page.locator('#ask-input[role="textbox"]')).toHaveCount(1);
+            });
+        }
+
         if (site.id === "deepseek") {
             test("DeepSeek selector regression: manages virtual-list item roots without inner markdown duplicates (#14)", async ({ page }) => {
                 await loadMockPage(page);

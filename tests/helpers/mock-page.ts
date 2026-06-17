@@ -47,6 +47,8 @@ export function getMessageTestAttr(site: SiteConfig): { attr: string; prefix: st
             return { attr: "data-test-render-count", prefix: "" };
         case "gemini":
             return { attr: "data-mock-id", prefix: "msg-" };
+        case "perplexity":
+            return { attr: "id", prefix: "radix-mock-perplexity-" };
         case "deepseek":
             return { attr: "data-virtual-list-item-key", prefix: "" };
         case "grok":
@@ -120,6 +122,22 @@ function generateMessageHtml(site: SiteConfig, idx: number): string {
             ].join("\n");
         }
 
+        case "perplexity":
+            return [
+                `        <div id="radix-mock-perplexity-${idx}" role="tabpanel" data-state="active" class="focus:outline-none">`,
+                `            <div>`,
+                `                <div aria-label="Edit query"></div>`,
+                `                <div aria-label="Copy query"></div>`,
+                `                <div id="markdown-content-${idx}" class="prose">`,
+                `                    <p>Mock Perplexity answer ${idx}</p>`,
+                `                </div>`,
+                `                <div aria-label="Share"></div>`,
+                `                <div aria-label="Download"></div>`,
+                `                <div aria-label="Copy"></div>`,
+                `            </div>`,
+                `        </div>`,
+            ].join("\n");
+
         case "deepseek": {
             const contentClass = idx % 2 === 0
                 ? "ds-assistant-message-main-content"
@@ -174,6 +192,24 @@ export function generateMockPage(site: SiteConfig, messageCount: number): string
     const messages = Array.from({ length: messageCount }, (_, i) =>
         generateMessageHtml(site, i + 1),
     ).join("\n");
+
+    if (site.id === "perplexity") {
+        return `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>${site.name} – Mock Page</title>
+</head>
+<body>
+<main>
+    <div class="scrollable-container">
+${messages}
+        <div id="ask-input" role="textbox"></div>
+    </div>
+</main>
+</body>
+</html>`;
+    }
 
     if (site.id === "deepseek") {
         return `<!DOCTYPE html>

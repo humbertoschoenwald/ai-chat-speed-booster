@@ -38,3 +38,16 @@ test("grok site config uses scoped response roots without fetch trimming (#12)",
     expect(site?.messageIdAttribute).toBe("id");
     expect(site?.fetchIntercept).toBeUndefined();
 });
+
+
+test("perplexity site config uses active answer tab panels without fetch trimming", () => {
+    const site = SITES.find((candidate) => candidate.id === "perplexity");
+
+    expect(site).toBeDefined();
+    expect(site?.hostnames).toEqual(["perplexity.ai"]);
+    expect(site?.urlPatterns).toEqual(["*://perplexity.ai/*", "*://www.perplexity.ai/*"]);
+    expect(site?.selectors.messageTurn).toBe('main .scrollable-container [role="tabpanel"][data-state="active"]');
+    expect(site?.selectors.scrollContainer).toBe("main .scrollable-container");
+    expect(site?.messageIdAttribute).toBe("id");
+    expect(site?.fetchIntercept).toBeUndefined();
+});

@@ -156,6 +156,28 @@
         }
     },
     {
+        "id": "perplexity",
+        "name": "Perplexity",
+        "hostnames": [
+            "perplexity.ai"
+        ],
+        "urlPatterns": [
+            "*://perplexity.ai/*",
+            "*://www.perplexity.ai/*"
+        ],
+        "selectors": {
+            "messageTurn": "main .scrollable-container [role=\"tabpanel\"][data-state=\"active\"]",
+            "scrollContainer": "main .scrollable-container"
+        },
+        "messageIdAttribute": "id",
+        "statusAnchors": {
+            "name": "Perplexity"
+        },
+        "ui": {
+            "loadMoreMargin": "4px 0"
+        }
+    },
+    {
         "id": "search-ai-mode",
         "name": "Search AI Mode",
         "hostnames": [
