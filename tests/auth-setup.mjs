@@ -9,7 +9,7 @@
  * Credentials from .env are auto-filled where possible (best-effort).
  * If auto-fill fails, log in manually — the profile is saved either way.
  */
-import { chromium } from "playwright";
+import { chromium } from "@playwright/test";
 import path from "path";
 import readline from "readline/promises";
 import { readFileSync, existsSync } from "fs";
