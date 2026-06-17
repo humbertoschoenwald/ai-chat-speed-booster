@@ -1,4 +1,9 @@
 import { CHATGPT_NATIVE_ADAPTER } from "./chatgpt/ChatGptNativeAdapter";
+import { CLAUDE_NATIVE_ADAPTER } from "./claude/ClaudeNativeAdapter";
+import { DEEPSEEK_NATIVE_ADAPTER } from "./deepseek/DeepSeekNativeAdapter";
+import { GEMINI_NATIVE_ADAPTER } from "./gemini/GeminiNativeAdapter";
+import { GROK_NATIVE_ADAPTER } from "./grok/GrokNativeAdapter";
+import { SEARCH_AI_MODE_NATIVE_ADAPTER } from "./search-ai-mode/SearchAiModeNativeAdapter";
 
 export type NativeAdapterSupport = "enabled" | "planned";
 
@@ -36,41 +41,11 @@ const PLANNED_CAPABILITIES: NativeAdapterCapabilities = {
 
 export const NATIVE_SITE_ADAPTERS: readonly NativeSiteAdapter[] = [
     CHATGPT_NATIVE_ADAPTER,
-    {
-        siteId: "claude",
-        displayName: "Claude",
-        support: "planned",
-        supportReason: "Claude has a DOM adapter, but Native Mode is not yet enabled for it.",
-        capabilities: PLANNED_CAPABILITIES,
-    },
-    {
-        siteId: "gemini",
-        displayName: "Gemini",
-        support: "planned",
-        supportReason: "Gemini has dynamic rendering and needs separate Native Mode validation.",
-        capabilities: PLANNED_CAPABILITIES,
-    },
-    {
-        siteId: "deepseek",
-        displayName: "DeepSeek",
-        support: "planned",
-        supportReason: "DeepSeek support is DOM-only for now; Native Mode remains disabled.",
-        capabilities: PLANNED_CAPABILITIES,
-    },
-    {
-        siteId: "grok",
-        displayName: "Grok",
-        support: "planned",
-        supportReason: "Grok support is DOM-only for now; Native Mode remains disabled.",
-        capabilities: PLANNED_CAPABILITIES,
-    },
-    {
-        siteId: "search-ai-mode",
-        displayName: "Search AI Mode",
-        support: "planned",
-        supportReason: "Search AI Mode support is DOM-only for now; Native Mode remains disabled.",
-        capabilities: PLANNED_CAPABILITIES,
-    },
+    CLAUDE_NATIVE_ADAPTER,
+    GEMINI_NATIVE_ADAPTER,
+    DEEPSEEK_NATIVE_ADAPTER,
+    GROK_NATIVE_ADAPTER,
+    SEARCH_AI_MODE_NATIVE_ADAPTER,
 ];
 
 export function getNativeSiteAdapter(siteId: string): NativeSiteAdapter {
