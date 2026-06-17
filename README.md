@@ -10,12 +10,12 @@ Works on **ChatGPT**, **Claude**, **Gemini**, and any AI chat app you add to the
 
 | Browser | Version | Link |
 | --- | --- | --- |
-| Chrome | v1.4.5 | [chromewebstore](https://chromewebstore.google.com/detail/ai-chat-speed-booster/fgefgkfmapdjjjdekejanelknedclfik) | 
-| Firefox | v1.4.5 | [addons.mozilla.org](https://addons.mozilla.org/en-US/firefox/addon/ai-chat-speed-booster/?utm_source=addons.mozilla.org&utm_medium=referral&utm_content=search)
+| Chrome | v1.4.5 | [chromewebstore](https://chromewebstore.google.com/detail/ai-chat-speed-booster/fgefgkfmapdjjjdekejanelknedclfik) |
+| Firefox | v1.4.5 | [addons.mozilla.org](https://addons.mozilla.org/en-US/firefox/addon/ai-chat-speed-booster/?utm_source=addons.mozilla.org&utm_medium=referral&utm_content=search) |
 
 ## Install
 
-We suggest using your browser's official extension store because it updates automatically. If the extension is not available in your browser's store, either open an issue to let us know or download the extension and import it manually. Keep in mind that manually installed versions do not update automatically when a new release is published.  
+We suggest using your browser's official extension store because it updates automatically. If the extension is not available in your browser's store, either open an issue to let us know or download the extension and import it manually. Keep in mind that manually installed versions do not update automatically when a new release is published.
 
 1. Go to [Releases](https://github.com/Noah4ever/ai-chat-speed-booster/releases)
 2. Download the zip for your browser
@@ -82,6 +82,12 @@ The script refuses to run if the tag already exists, if you're already on that v
 pnpm run package
 ```
 
+For changelog and release metadata work, fetch tags before generating files:
+
+```bash
+git fetch --tags --force
+```
+
 Builds Chrome + Firefox, then writes three zips into `deploys/` (gitignored):
 
 | File | What it's for |
@@ -107,9 +113,11 @@ Then upload from `deploys/`:
 
 ### 4. After the stores publish
 
-Update the version numbers in the [Install via official browser extension store](#install-via-official-browser-extension-store) table at the top of this README. Store review can take days, so the listed version is allowed to lag behind the tag.
+The release workflow updates the version numbers in the [Install via official browser extension store](#install-via-official-browser-extension-store) table at the top of this README when a version tag is released. Store review can take days, so the listed version may still represent the submitted release before each store finishes review.
 
 ## Adding a new AI chat site
+
+Contributor note: run `git fetch --tags --force` before generating release metadata so changelog sections use the real release tags.
 
 All site definitions live in one file: [`sites.config.json`](sites.config.json).
 
@@ -195,7 +203,7 @@ pnpm run test:integration # live site tests (requires auth, see below)
 
 To test against real sites with your account:
 
-1. Copy `.env.example` to `.env` and fill in your credentials  
+1. Copy `.env.example` to `.env` and fill in your credentials
    (for ChatGPT via Google login, use your Google email/password)
 2. Run `pnpm run test:auth` — a browser opens, log in to each site, press Enter
 3. Run `pnpm run test:integration`
