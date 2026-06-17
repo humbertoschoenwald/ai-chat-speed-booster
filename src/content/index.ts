@@ -13,6 +13,8 @@ import {
 } from "../shared/types";
 import { logger } from "../shared/logger";
 
+const CONTENT_BOOTSTRAP_ATTR = "data-acsb-content-bootstrapped";
+
 let config: ExtensionConfig;
 let currentSite: SiteConfig;
 const messageManager = new MessageManager();
@@ -22,6 +24,7 @@ let domObserver: DOMObserver;
 let nativeModeController: NativeModeController | null = null;
 let conversationRetryTimer: ReturnType<typeof setTimeout> | null = null;
 let resumeHealthCheckTimer: ReturnType<typeof setTimeout> | null = null;
+let contentScriptOwnsBootstrap = false;
 const contentBootTime = Date.now();
 let contentLifecycleState: ContentLifecycleState = "initializing";
 let contentLastUiRefreshAt: number | null = null;
@@ -41,6 +44,12 @@ async function bootstrap(): Promise<void> {
         logger.info("no supported site detected, content script inactive");
         return;
     }
+    if (document.documentElement.getAttribute(CONTENT_BOOTSTRAP_ATTR) === "true") {
+        logger.warn("content script bootstrap skipped because another ACSB instance owns this page");
+        return;
+    }
+    document.documentElement.setAttribute(CONTENT_BOOTSTRAP_ATTR, "true");
+    contentScriptOwnsBootstrap = true;
     contentLifecycleState = "initializing";
     currentSite = site;
     logger.info(`bootstrapping content script for ${currentSite.name}`);
@@ -422,6 +431,7 @@ function findMessageContainer(): HTMLElement | null {
 }
 
 window.addEventListener("beforeunload", () => {
+    if (!contentScriptOwnsBootstrap) return;
     contentLifecycleState = "stopped";
     if (conversationRetryTimer) {
         clearTimeout(conversationRetryTimer);
@@ -436,6 +446,8 @@ window.addEventListener("beforeunload", () => {
     document.removeEventListener("visibilitychange", handleVisibilityResume);
     nativeModeController?.stop("content script unloading");
     nativeModeController = null;
+    document.documentElement.removeAttribute(CONTENT_BOOTSTRAP_ATTR);
+    contentScriptOwnsBootstrap = false;
     domObserver.stop();
     messageManager.destroy();
     loadMoreButton.destroy();
@@ -443,5 +455,11 @@ window.addEventListener("beforeunload", () => {
 });
 
 bootstrap().catch((err) => {
+    contentLifecycleState = "degraded";
+    contentLastRecoverableErrorClass = err instanceof Error ? err.name : "bootstrap-error";
+    if (contentScriptOwnsBootstrap) {
+        document.documentElement.removeAttribute(CONTENT_BOOTSTRAP_ATTR);
+        contentScriptOwnsBootstrap = false;
+    }
     logger.error("failed to bootstrap content script", err);
 });
