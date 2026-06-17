@@ -1,4 +1,5 @@
 import type { NativeSiteAdapter } from "../NativeSiteAdapter";
+import { CHATGPT_NATIVE_TUNING_PROFILE } from "./ChatGptNativeTuningProfile";
 
 export const CHATGPT_NATIVE_ADAPTER: NativeSiteAdapter = {
     siteId: "chatgpt",
@@ -12,4 +13,5 @@ export const CHATGPT_NATIVE_ADAPTER: NativeSiteAdapter = {
         toolCallGrouping: false,
         staleGenerationRecovery: false,
     },
+    tuningProfile: CHATGPT_NATIVE_TUNING_PROFILE,
 };
