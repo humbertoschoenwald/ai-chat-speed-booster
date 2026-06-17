@@ -11,7 +11,9 @@ const STORAGE_KEY = "ai_chat_speed_booster_config";
 const BRIDGE_KEY = "acsb_bridge_config";
 
 interface BridgePayload {
+    schemaVersion: 1;
     enabled: boolean;
+    performanceMode: "legacy" | "native";
     fetchInterceptEnabled: boolean;
     visibleMessageLimit: number;
     loadMoreBatchSize: number;
@@ -19,7 +21,9 @@ interface BridgePayload {
 
 function writeBridge(raw: Record<string, unknown> | undefined): void {
     const payload: BridgePayload = {
+        schemaVersion: 1,
         enabled: typeof raw?.enabled === "boolean" ? raw.enabled : true,
+        performanceMode: raw?.performanceMode === "native" ? "native" : "legacy",
         fetchInterceptEnabled:
             typeof raw?.fetchInterceptEnabled === "boolean"
                 ? raw.fetchInterceptEnabled

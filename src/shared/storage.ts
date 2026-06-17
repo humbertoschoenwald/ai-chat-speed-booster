@@ -7,6 +7,10 @@ function clamp(value: number, min: number, max: number): number {
     return Math.min(Math.max(Math.round(value), min), max);
 }
 
+function sanitisePerformanceMode(value: unknown): "legacy" | "native" {
+    return value === "native" ? "native" : "legacy";
+}
+
 function sanitiseConfig(raw: Partial<ExtensionConfig> | undefined): ExtensionConfig {
     const base = { ...DEFAULT_CONFIG, ...raw };
     return {
@@ -21,6 +25,7 @@ function sanitiseConfig(raw: Partial<ExtensionConfig> | undefined): ExtensionCon
             CONFIG_LIMITS.loadMoreBatchSize.max,
         ),
         enabled: typeof base.enabled === "boolean" ? base.enabled : DEFAULT_CONFIG.enabled,
+        performanceMode: sanitisePerformanceMode(base.performanceMode),
         showStatus: typeof base.showStatus === "boolean" ? base.showStatus : DEFAULT_CONFIG.showStatus,
         statusPosition: ["top-left", "top-right", "bottom-left", "bottom-right"].includes(base.statusPosition)
             ? base.statusPosition

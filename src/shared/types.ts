@@ -4,10 +4,14 @@ export type StatusPosition = "top-left" | "top-right" | "bottom-left" | "bottom-
 
 export type Theme = "light" | "dark";
 
+export type PerformanceMode = "legacy" | "native";
+
 export interface ExtensionConfig {
     readonly visibleMessageLimit: number;
     readonly loadMoreBatchSize: number;
     readonly enabled: boolean;
+    // Selects the performance architecture. Legacy preserves current behavior.
+    readonly performanceMode: PerformanceMode;
     // Controls whether the floating in-page status indicator is rendered.
     readonly showStatus: boolean;
     // Corner placement for the floating status badge.

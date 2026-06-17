@@ -6,6 +6,7 @@ export const DEFAULT_CONFIG: Readonly<ExtensionConfig> = Object.freeze({
     visibleMessageLimit: 3,
     loadMoreBatchSize: 3,
     enabled: true,
+    performanceMode: "legacy",
     showStatus: true,
     statusPosition: "top-right",
     fetchInterceptEnabled: true,
