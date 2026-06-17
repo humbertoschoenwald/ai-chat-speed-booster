@@ -14,6 +14,7 @@ export interface NativeDiagnosticSnapshot {
 }
 
 const MAX_EVENTS = 50;
+const MAX_DETAIL_LENGTH = 160;
 
 export class NativeDiagnostics {
     private readonly events: NativeDiagnosticEvent[] = [];
@@ -49,7 +50,20 @@ export class NativeDiagnostics {
     }
 
     private record(level: NativeDiagnosticLevel, code: string, detail: string): void {
-        this.events.push({ level, code, detail, timestamp: Date.now() });
+        this.events.push({
+            level,
+            code: this.sanitize(code),
+            detail: this.sanitize(detail),
+            timestamp: Date.now(),
+        });
         if (this.events.length > MAX_EVENTS) this.events.shift();
+    }
+
+    private sanitize(value: string): string {
+        return value
+            .replace(/[\r\n\t]+/g, " ")
+            .replace(/https?:\/\/\S+/gi, "[url]")
+            .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi, "[email]")
+            .slice(0, MAX_DETAIL_LENGTH);
     }
 }

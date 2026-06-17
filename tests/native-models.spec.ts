@@ -1,6 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { InputChunkPlanner } from "../src/content/native/InputChunkPlanner";
 import { MultiTabCoordinator } from "../src/content/native/MultiTabCoordinator";
+import { NativeDiagnostics } from "../src/content/native/NativeDiagnostics";
 import { StaleGenerationRecovery } from "../src/content/native/StaleGenerationRecovery";
 import { VirtualizationConflictDetector } from "../src/content/native/VirtualizationConflictDetector";
 import type { ScrollGeometryDelta } from "../src/content/native/ScrollGeometry";
@@ -89,5 +90,14 @@ test.describe("native model guards", () => {
             skippedWorkCount: 1,
             resumeCheckCount: 1,
         });
+    });
+
+    test("bounds native diagnostic event details", () => {
+        const diagnostics = new NativeDiagnostics();
+        diagnostics.warn("native\ncode", "long detail ".repeat(40));
+
+        const [event] = diagnostics.snapshot().events;
+        expect(event.code).toBe("native code");
+        expect(event.detail.length).toBeLessThanOrEqual(160);
     });
 });
