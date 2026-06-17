@@ -10,6 +10,7 @@ import {
     type WeeklyRequestCount,
 } from "../shared/types";
 import { SITES } from "../shared/sites";
+import { isNativeModeAllowedForSite } from "../shared/native-runtime-policy";
 
 const toggleEnabled = document.getElementById("toggle-enabled") as HTMLInputElement;
 const toggleStatus = document.getElementById("toggle-status") as HTMLInputElement;
@@ -35,11 +36,16 @@ const requestCountReset = document.getElementById("request-count-reset") as HTML
 const performanceModeSelect = document.getElementById("performance-mode") as HTMLSelectElement;
 const performanceModeHint = document.getElementById("performance-mode-hint") as HTMLElement;
 const nativeDiagnosticsBody = document.getElementById("native-diagnostics-body") as HTMLElement;
+const nativeAiSetting = document.getElementById("native-ai-setting") as HTMLElement;
+const nativeAiTarget = document.getElementById("native-ai-target") as HTMLSelectElement;
 const nativePanels = document.querySelectorAll<HTMLElement>(".native-panel");
+const legacyControls = document.querySelectorAll<HTMLElement>("[data-legacy-control]");
+const legacyControlInputs = document.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLButtonElement>("[data-legacy-control] input, [data-legacy-control] select, [data-legacy-control] button");
 
 let saveTimer: ReturnType<typeof setTimeout> | null = null;
 let limitSaveTimer: ReturnType<typeof setTimeout> | null = null;
 let currentSiteId: string | undefined;
+let currentConfig: ExtensionConfig = DEFAULT_CONFIG;
 let lastCount = 0;
 let lastWeekStart = 0;
 
@@ -74,13 +80,28 @@ async function init(): Promise<void> {
     await refreshStatus();
 }
 
-function renderPerformanceMode(mode: PerformanceMode): void {
-    const nativeMode = mode === "native";
+function renderPerformanceMode(mode: PerformanceMode, status?: ExtensionStatus): void {
+    const effectiveMode = status?.performanceMode ?? mode;
+    const nativeMode = effectiveMode === "native";
+    const nativeRequestedButUnavailable = mode === "native" && effectiveMode === "legacy";
+
+    performanceModeSelect.value = effectiveMode;
+    nativeAiTarget.value = "chatgpt";
     performanceModeHint.textContent = nativeMode
-        ? "Experimental guarded diagnostics"
-        : "Legacy mode";
+        ? "ChatGPT-only native runtime"
+        : nativeRequestedButUnavailable
+            ? "Legacy on this AI"
+            : "Legacy mode";
+
+    nativeAiSetting.hidden = !nativeMode;
     nativePanels.forEach((panel) => {
         panel.hidden = !nativeMode;
+    });
+    legacyControls.forEach((control) => {
+        control.hidden = nativeMode;
+    });
+    legacyControlInputs.forEach((input) => {
+        input.disabled = nativeMode;
     });
 }
 
@@ -130,6 +151,7 @@ function renderStatusText(status: ExtensionStatus): string {
 }
 
 function renderConfig(config: ExtensionConfig): void {
+    currentConfig = config;
     toggleEnabled.checked = config.enabled;
     toggleStatus.checked = config.showStatus;
     toggleAutoLoad.checked = config.autoLoad;
@@ -154,12 +176,14 @@ async function refreshStatus(): Promise<void> {
             statusText.textContent = renderStatusText(status);
             settingsSection.style.display = "flex"; // Set to flex only when the site is actually supported
             currentSiteId = status.siteId;
+            renderPerformanceMode(currentConfig.performanceMode, status);
             renderNativeDiagnostics(status);
             await refreshRequestCounter();
         } else {
             settingsSection.style.display = "none";
             statusText.textContent = "Open a supported AI chat to see status";
             currentSiteId = undefined;
+            renderPerformanceMode(currentConfig.performanceMode);
             renderNativeDiagnostics(undefined);
             requestCounter.hidden = true;
         }
@@ -267,10 +291,22 @@ toggleFetchIntercept.addEventListener("change", async () => {
 });
 
 performanceModeSelect.addEventListener("change", async () => {
-    const mode = performanceModeSelect.value as PerformanceMode;
+    const requestedMode = performanceModeSelect.value as PerformanceMode;
+    const mode: PerformanceMode = requestedMode === "native" && !isNativeModeAllowedForSite(currentSiteId)
+        ? "legacy"
+        : requestedMode;
+    const payload: Partial<ExtensionConfig> = mode === "native"
+        ? {
+            performanceMode: mode,
+            fetchInterceptEnabled: false,
+            autoLoad: false,
+            hideOldMessages: false,
+            showStatus: false,
+        }
+        : { performanceMode: mode };
     const config = await safeSendMessage<ExtensionConfig>({
         type: MessageType.SET_CONFIG,
-        payload: { performanceMode: mode },
+        payload,
     });
     if (config) renderConfig(config);
     await refreshStatus();

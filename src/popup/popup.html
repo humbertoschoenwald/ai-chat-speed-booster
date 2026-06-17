@@ -57,6 +57,16 @@
                 </select>
             </div>
 
+            <div class="setting native-only-setting" id="native-ai-setting" hidden data-tooltip="Native Mode currently supports ChatGPT only. Other AI sites use Legacy Mode until their native adapters are promoted.">
+                <div class="setting__info">
+                    <span class="setting__label">Native AI</span>
+                    <span class="setting__hint">ChatGPT only</span>
+                </div>
+                <select id="native-ai-target" class="setting__select" disabled>
+                    <option value="chatgpt">ChatGPT</option>
+                </select>
+            </div>
+
             <div class="native-panel" id="native-diagnostics" hidden>
                 <div class="native-panel__title">Native diagnostics</div>
                 <div class="native-panel__body" id="native-diagnostics-body">Waiting for page status…</div>
@@ -78,7 +88,7 @@
             </div>
 
             <!-- Fast mode + Auto load -->
-            <div class="setting-row">
+            <div class="setting-row" data-legacy-control>
                 <div class="setting" data-tooltip="Trims API responses before rendering. Faster than hiding after the fact. Disable if messages appear missing.">
                     <span class="setting__label">Fast mode</span>
                     <label class="toggle" aria-label="Enable or disable fetch interception">
@@ -99,7 +109,7 @@
             </div>
 
             <!-- Hide old messages toggle -->
-            <div class="setting" data-tooltip="Hide older turns from the DOM beyond the Visible limit. Turn this off if scrolling feels janky on ChatGPT (which has its own viewport-based rendering) — Fast mode still trims the API payload for speed.">
+            <div class="setting" data-legacy-control data-tooltip="Hide older turns from the DOM beyond the Visible limit. Turn this off if scrolling feels janky on ChatGPT (which has its own viewport-based rendering) — Fast mode still trims the API payload for speed.">
                 <div class="setting__info">
                     <span class="setting__label">Hide old turns</span>
                     <span class="setting__hint">Only keep the last N visible</span>
@@ -111,7 +121,7 @@
             </div>
 
             <!-- Visible messages + Batch size -->
-            <div class="setting-row">
+            <div class="setting-row" data-legacy-control>
                 <div class="setting" data-tooltip="Turns shown at once. Lower = faster in long chats. Hidden turns are accessible via Load More.">
                     <div class="setting__info">
                         <span class="setting__label" id="visible-limit-label">Visible</span>
@@ -129,7 +139,7 @@
             </div>
 
             <!-- Status indicator -->
-            <div class="setting" data-tooltip="Floating badge on the chat page showing hidden vs. visible turns. Pick which corner.">
+            <div class="setting" data-legacy-control data-tooltip="Floating badge on the chat page showing hidden vs. visible turns. Pick which corner.">
                 <div class="setting__info">
                     <span class="setting__label">Status indicator</span>
                     <span class="setting__hint">Floating badge position</span>

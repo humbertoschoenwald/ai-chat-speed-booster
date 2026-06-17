@@ -24,3 +24,7 @@ Derive a runtime config from saved settings and the current site before content 
 - Native Mode cannot accidentally reuse Legacy hiding or Fast Mode behavior.
 - Existing DOM-only adapters continue to work through Legacy Mode.
 - Request counters remain per site and are not part of the Legacy-control shutdown.
+
+## Popup separation
+
+The popup must not present Native Mode as a variant of Legacy Mode. When the effective mode is Native, Legacy-only controls for Fast Mode, Auto Load, hard hiding, visible-count limits, batch-size loading, and the floating status badge are hidden and disabled. The per-site request counter remains outside that Legacy-only block. The Native AI selector currently exposes ChatGPT as the only Native target.
