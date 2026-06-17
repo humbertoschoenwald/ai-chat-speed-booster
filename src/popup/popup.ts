@@ -49,6 +49,30 @@ let currentConfig: ExtensionConfig = DEFAULT_CONFIG;
 let lastCount = 0;
 let lastWeekStart = 0;
 
+const POPUP_CACHE_KEY = "acsb-popup-cache-v1";
+
+interface PopupRenderCache {
+    readonly config?: ExtensionConfig;
+    readonly status?: ExtensionStatus;
+}
+
+function readPopupCache(): PopupRenderCache | null {
+    try {
+        const raw = localStorage.getItem(POPUP_CACHE_KEY);
+        return raw ? JSON.parse(raw) as PopupRenderCache : null;
+    } catch {
+        return null;
+    }
+}
+
+function writePopupCache(cache: PopupRenderCache): void {
+    try {
+        localStorage.setItem(POPUP_CACHE_KEY, JSON.stringify(cache));
+    } catch {
+        // Best-effort only: popup cache must never block the UI.
+    }
+}
+
 function applyTheme(theme: Theme): void {
     document.documentElement.setAttribute("data-theme", theme);
     themeToggle.setAttribute("aria-pressed", String(theme === "light"));
@@ -72,6 +96,19 @@ async function safeSendMessage<T>(message: unknown): Promise<T | null> {
 async function init(): Promise<void> {
     const manifest = chrome.runtime.getManifest();
     versionText.textContent = `(v${manifest.version})`; // New: set the version text from manifest
+
+    const cached = readPopupCache();
+    if (cached?.config) {
+        applyTheme(cached.config.theme);
+        renderConfig(cached.config);
+    }
+    if (cached?.status && typeof cached.status.totalMessages === "number") {
+        statusText.textContent = renderStatusText(cached.status);
+        settingsSection.style.display = "flex";
+        currentSiteId = cached.status.siteId;
+        renderPerformanceMode(cached.config?.performanceMode ?? currentConfig.performanceMode, cached.status);
+        renderNativeDiagnostics(cached.status);
+    }
 
     const config = await safeSendMessage<ExtensionConfig>({ type: MessageType.GET_CONFIG });
     const finalConfig = config ?? DEFAULT_CONFIG;
@@ -152,6 +189,7 @@ function renderStatusText(status: ExtensionStatus): string {
 
 function renderConfig(config: ExtensionConfig): void {
     currentConfig = config;
+    writePopupCache({ ...readPopupCache(), config });
     toggleEnabled.checked = config.enabled;
     toggleStatus.checked = config.showStatus;
     toggleAutoLoad.checked = config.autoLoad;
@@ -176,6 +214,7 @@ async function refreshStatus(): Promise<void> {
             statusText.textContent = renderStatusText(status);
             settingsSection.style.display = "flex"; // Set to flex only when the site is actually supported
             currentSiteId = status.siteId;
+            writePopupCache({ ...readPopupCache(), config: currentConfig, status });
             renderPerformanceMode(currentConfig.performanceMode, status);
             renderNativeDiagnostics(status);
             await refreshRequestCounter();
@@ -330,6 +369,10 @@ positionPicker.addEventListener("click", async (e) => {
 themeToggle.addEventListener("click", async () => {
     const currentTheme = document.documentElement.getAttribute("data-theme") as "light" | "dark" || "dark";
     const newTheme = currentTheme === "dark" ? "light" : "dark";
+    applyTheme(newTheme);
+    const optimisticConfig = { ...currentConfig, theme: newTheme };
+    renderConfig(optimisticConfig);
+
     const config = await safeSendMessage<ExtensionConfig>({
         type: MessageType.SET_CONFIG,
         payload: { theme: newTheme },
