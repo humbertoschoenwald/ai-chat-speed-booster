@@ -49,6 +49,8 @@ export function getMessageTestAttr(site: SiteConfig): { attr: string; prefix: st
             return { attr: "data-mock-id", prefix: "msg-" };
         case "deepseek":
             return { attr: "data-virtual-list-item-key", prefix: "" };
+        case "search-ai-mode":
+            return { attr: "data-xid", prefix: "aim-mars-turn-root-" };
         default: {
             const parsed = parseMessageSelector(site.selectors.messageTurn);
             return { attr: parsed.attrName, prefix: parsed.prefix };
@@ -130,6 +132,13 @@ function generateMessageHtml(site: SiteConfig, idx: number): string {
                 `        </div>`,
             ].join("\n");
         }
+
+        case "search-ai-mode":
+            return [
+                `        <div data-xid="aim-mars-turn-root-${idx}" data-asrc="true">`,
+                `            <p>Mock Search AI Mode turn ${idx} on ${site.name}</p>`,
+                `        </div>`,
+            ].join("\n");
 
         default: {
             // Generic fallback using selector parsing

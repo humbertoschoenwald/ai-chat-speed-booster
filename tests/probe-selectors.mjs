@@ -15,6 +15,7 @@ const AUTH_PROFILE = path.resolve("tests", ".auth-profile");
 const sites = JSON.parse(readFileSync("sites.config.json", "utf8"));
 const probeUrls = {
     deepseek: process.env.ACSB_DEEPSEEK_PROBE_URL,
+    "search-ai-mode": process.env.ACSB_SEARCH_AI_MODE_PROBE_URL,
 };
 const siteSpecificPatterns = {
     deepseek: [
@@ -23,6 +24,14 @@ const siteSpecificPatterns = {
         ".ds-assistant-message-main-content",
         ".ds-virtual-list.ds-scroll-area",
         ".ds-scroll-area",
+    ],
+    "search-ai-mode": [
+        'div[data-xid^="aim-mars-turn-root"]',
+        'div[data-asrc^="true"]',
+        '[data-xid*="aim"]',
+        '[id*="aim"]',
+        '[role="main"]',
+        "body",
     ],
 };
 

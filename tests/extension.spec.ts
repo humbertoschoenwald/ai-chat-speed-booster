@@ -35,7 +35,7 @@ for (const site of SITES) {
 
         function getMockUrl(): string {
             if (site.id === "deepseek") return `https://${site.hostnames[0]}/a/chat/s/mock`;
-            if (site.id === "search-ai") return `https://${site.hostnames[0]}/search?q=mock&udm=50`;
+            if (site.id === "search-ai-mode") return `https://${site.hostnames[0]}/search?q=mock-test&udm=50`;
             return `https://${site.hostnames[0]}/mock-test`;
         }
 
@@ -167,6 +167,35 @@ for (const site of SITES) {
 
             expect(scrollContainers).toBe(1);
             expect(allScrollAreas).toBeGreaterThanOrEqual(2);
+        });
+
+        test("search mode stays off without the required query flag (#23)", async ({ page }) => {
+            test.skip(site.id !== "search-ai-mode");
+            const mockHtml = generateMockPage(site, MESSAGE_COUNT);
+            await page.route(`**/${site.hostnames[0]}/**`, (route) =>
+                route.fulfill({ contentType: "text/html", body: mockHtml }),
+            );
+            await page.goto(`https://${site.hostnames[0]}/search?q=mock-test`, {
+                waitUntil: "domcontentloaded",
+            });
+            await page.waitForTimeout(1000);
+
+            await expect(page.locator("[data-acsb-managed]")).toHaveCount(0);
+            await expect(page.locator(".acsb-status-indicator")).toHaveCount(0);
+        });
+
+        test("search mode manages turn roots instead of generic main content (#23)", async ({ page }) => {
+            test.skip(site.id !== "search-ai-mode");
+            await loadMockPage(page);
+            await page.evaluate(() => {
+                const main = document.createElement("div");
+                main.setAttribute("role", "main");
+                main.textContent = "Generic content that must not be managed";
+                document.body.appendChild(main);
+            });
+
+            await expect(page.locator('div[data-xid^="aim-mars-turn-root"]')).toHaveCount(MESSAGE_COUNT);
+            await expect(page.locator("[data-acsb-managed]")).toHaveCount(MESSAGE_COUNT);
         });
 
         test("no errors in extension service worker", async ({ extensionContext }) => {

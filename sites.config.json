@@ -133,15 +133,13 @@
         }
     },
     {
-        "id": "search-ai",
+        "id": "search-ai-mode",
         "name": "Search AI Mode",
         "hostnames": [
-            "www.g\u006f\u006fgle.com",
-            "g\u006f\u006fgle.com"
+            "www.g\u006f\u006fgle.com"
         ],
         "urlPatterns": [
-            "*://www.g\u006f\u006fgle.com/search*",
-            "*://g\u006f\u006fgle.com/search*"
+            "*://www.g\u006f\u006fgle.com/search*"
         ],
         "requiredSearchParams": [
             {
@@ -152,8 +150,14 @@
             }
         ],
         "selectors": {
-            "messageTurn": "div[data-asrc]",
+            "messageTurn": "div[data-xid^=\"aim-mars-turn-root\"]",
             "scrollContainer": "body"
+        },
+        "statusAnchors": {
+            "name": "Search AI Mode"
+        },
+        "ui": {
+            "loadMoreMargin": "4px 0"
         }
     }
 ]
