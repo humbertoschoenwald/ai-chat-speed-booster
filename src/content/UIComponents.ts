@@ -229,7 +229,15 @@ export class StatusIndicator {
      * Updates the displayed counts, position and theme. Creates the indicator if needed.
      */
     update(hidden: number, total: number, position: StatusPosition, fetchInterceptEnabled = false, lightTheme: boolean = false): void {
-        if (!this.container) this.mount();
+        if (!this.container || !this.container.isConnected) {
+            if (this.container) {
+                this.container.remove();
+            }
+            this.container = null;
+            this.label = null;
+            this.appliedLightTheme = null;
+            this.mount();
+        }
         if (this.position !== position) {
             this.position = position;
             this.applyPosition();

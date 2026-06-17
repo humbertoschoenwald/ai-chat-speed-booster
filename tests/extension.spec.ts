@@ -115,6 +115,17 @@ for (const site of SITES) {
             );
         });
 
+        test("status indicator recovers after host removal (#31)", async ({ page }) => {
+            await loadMockPage(page);
+
+            await expect(page.locator(".acsb-status-indicator")).toBeVisible();
+            await page.locator(".acsb-status-indicator").evaluate((element) => element.remove());
+            await expect(page.locator(".acsb-status-indicator")).toHaveCount(0);
+
+            await page.locator(".acsb-load-more-btn").click();
+            await expect(page.locator(".acsb-status-indicator")).toBeVisible();
+        });
+
         test("no errors in extension service worker", async ({ extensionContext }) => {
             const workers = extensionContext.serviceWorkers();
             expect(workers.length).toBeGreaterThan(0);
