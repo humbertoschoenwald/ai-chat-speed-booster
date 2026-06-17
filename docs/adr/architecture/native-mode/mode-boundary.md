@@ -1,4 +1,4 @@
-# ADR 0001: OpenAI Native (Imaginary) Mode Boundary
+# ADR: OpenAI Native (Imaginary) Mode Boundary
 
 ## Status
 

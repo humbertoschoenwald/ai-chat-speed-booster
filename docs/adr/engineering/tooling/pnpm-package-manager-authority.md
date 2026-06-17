@@ -1,4 +1,4 @@
-# ADR 0002: pnpm Package Manager Authority
+# ADR: pnpm Package Manager Authority
 
 ## Status
 
