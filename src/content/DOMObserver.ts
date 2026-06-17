@@ -12,6 +12,22 @@ export interface DOMObserverCallbacks {
     onScrollToTop(): void;
 }
 
+export type MutationBatchClass = "small" | "heavy" | "extreme";
+
+export interface DOMObserverDiagnostics {
+    readonly lastBatchClass: MutationBatchClass | null;
+    readonly lastBatchSize: number;
+    readonly lastScannedNodeCount: number;
+    readonly lastSkippedNodeCount: number;
+    readonly lastDurationMs: number;
+    readonly overBudgetCount: number;
+}
+
+const HEAVY_MUTATION_BATCH_SIZE = 50;
+const EXTREME_MUTATION_BATCH_SIZE = 250;
+const MUTATION_PROCESS_BUDGET_MS = 8;
+const EXTENSION_OWNED_SELECTOR = ".acsb-load-more-btn,.acsb-status-indicator";
+
 export class DOMObserver {
     private observer: MutationObserver | null = null;
     private debounceTimer: ReturnType<typeof setTimeout> | null = null;
@@ -27,6 +43,14 @@ export class DOMObserver {
     private scrollRaf: number | null = null;
     private autoLoadEnabled = false;
     private scrollRetryTimer: ReturnType<typeof setInterval> | null = null;
+    private diagnostics: DOMObserverDiagnostics = {
+        lastBatchClass: null,
+        lastBatchSize: 0,
+        lastScannedNodeCount: 0,
+        lastSkippedNodeCount: 0,
+        lastDurationMs: 0,
+        overBudgetCount: 0,
+    };
 
     constructor(currentSite: SiteConfig, callbacks: DOMObserverCallbacks) {
         this.currentSite = currentSite;
@@ -74,6 +98,10 @@ export class DOMObserver {
 
     queryAllMessages(): HTMLElement[] {
         return Array.from(document.querySelectorAll<HTMLElement>(this.selectors.messageTurn));
+    }
+
+    getDiagnostics(): DOMObserverDiagnostics {
+        return { ...this.diagnostics };
     }
 
     // Updates internal message counts based on the provided numbers.
@@ -172,30 +200,39 @@ export class DOMObserver {
     };
 
     private processMutations(mutations: MutationRecord[]): void {
+        const startedAt = performance.now();
+        const batchClass = this.classifyMutationBatch(mutations);
+        const scannedNodes = new WeakSet<HTMLElement>();
         const addedMessages: HTMLElement[] = [];
         const removedMessages: HTMLElement[] = [];
+        let scannedNodeCount = 0;
+        let skippedNodeCount = 0;
 
         for (const mutation of mutations) {
             for (const node of mutation.addedNodes) {
                 if (!(node instanceof HTMLElement)) continue;
-                if (this.isMessageTurn(node)) {
-                    addedMessages.push(node);
-                } else {
-                    const nested = node.querySelectorAll<HTMLElement>(this.selectors.messageTurn);
-                    addedMessages.push(...nested);
-                }
+                const collected = this.collectMessageTurns(node, scannedNodes);
+                addedMessages.push(...collected.elements);
+                scannedNodeCount += collected.scanned;
+                skippedNodeCount += collected.skipped;
             }
 
             for (const node of mutation.removedNodes) {
                 if (!(node instanceof HTMLElement)) continue;
-                if (this.isMessageTurn(node)) {
-                    removedMessages.push(node);
-                } else {
-                    const nested = node.querySelectorAll<HTMLElement>(this.selectors.messageTurn);
-                    removedMessages.push(...nested);
-                }
+                const collected = this.collectMessageTurns(node, scannedNodes);
+                removedMessages.push(...collected.elements);
+                scannedNodeCount += collected.scanned;
+                skippedNodeCount += collected.skipped;
             }
         }
+
+        this.recordMutationDiagnostics(
+            batchClass,
+            mutations.length,
+            scannedNodeCount,
+            skippedNodeCount,
+            performance.now() - startedAt,
+        );
 
         // Conversation changes are detected via URL monitoring (pushState,
         // replaceState, popstate, polling).  The previous DOM-based
@@ -230,6 +267,68 @@ export class DOMObserver {
                 this.callbacks.onMessagesReset();
             }
         }
+    }
+
+    private collectMessageTurns(
+        root: HTMLElement,
+        scannedNodes: WeakSet<HTMLElement>,
+    ): { elements: HTMLElement[]; scanned: number; skipped: number } {
+        if (this.isExtensionOwned(root) || scannedNodes.has(root)) {
+            return { elements: [], scanned: 0, skipped: 1 };
+        }
+
+        scannedNodes.add(root);
+        if (this.isMessageTurn(root)) {
+            return { elements: [root], scanned: 1, skipped: 0 };
+        }
+
+        const elements: HTMLElement[] = [];
+        let scanned = 1;
+        let skipped = 0;
+        for (const element of root.querySelectorAll<HTMLElement>(this.selectors.messageTurn)) {
+            if (this.isExtensionOwned(element) || scannedNodes.has(element)) {
+                skipped += 1;
+                continue;
+            }
+            scannedNodes.add(element);
+            scanned += 1;
+            elements.push(element);
+        }
+        return { elements, scanned, skipped };
+    }
+
+    private classifyMutationBatch(mutations: MutationRecord[]): MutationBatchClass {
+        if (mutations.length >= EXTREME_MUTATION_BATCH_SIZE) return "extreme";
+        if (mutations.length >= HEAVY_MUTATION_BATCH_SIZE) return "heavy";
+        return "small";
+    }
+
+    private recordMutationDiagnostics(
+        batchClass: MutationBatchClass,
+        batchSize: number,
+        scannedNodeCount: number,
+        skippedNodeCount: number,
+        durationMs: number,
+    ): void {
+        const overBudget = durationMs > MUTATION_PROCESS_BUDGET_MS;
+        this.diagnostics = {
+            lastBatchClass: batchClass,
+            lastBatchSize: batchSize,
+            lastScannedNodeCount: scannedNodeCount,
+            lastSkippedNodeCount: skippedNodeCount,
+            lastDurationMs: durationMs,
+            overBudgetCount: this.diagnostics.overBudgetCount + (overBudget ? 1 : 0),
+        };
+        if (overBudget || batchClass !== "small") {
+            logger.debug(
+                `Mutation batch ${batchClass}: ${batchSize} record(s), ` +
+                `${scannedNodeCount} scanned, ${skippedNodeCount} skipped, ${durationMs.toFixed(1)}ms`,
+            );
+        }
+    }
+
+    private isExtensionOwned(el: HTMLElement): boolean {
+        return el.closest(EXTENSION_OWNED_SELECTOR) !== null;
     }
 
     private isMessageTurn(el: HTMLElement): boolean {
