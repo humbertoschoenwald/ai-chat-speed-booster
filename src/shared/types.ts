@@ -109,6 +109,15 @@ export interface ExtensionStatus {
     readonly contentLastUiRefreshAt?: number | null;
     readonly contentOverlayPresent?: boolean;
     readonly contentLastRecoverableErrorClass?: string | null;
+    readonly editorInputActive?: boolean;
+    readonly editorInputComposing?: boolean;
+    readonly editorInputDeferredTaskCount?: number;
+    readonly editorInputEventCount?: number;
+    readonly editorInputLastEventType?: string | null;
+    readonly editorInputLastEventAt?: number | null;
+    readonly editorInputProtectedUntilMs?: number | null;
+    readonly editorInputLastPasteLength?: number | null;
+    readonly editorInputLastPasteChunkCount?: number | null;
     readonly observerLastBatchClass?: MutationBatchClass | null;
     readonly observerLastBatchSize?: number;
     readonly observerLastDurationMs?: number;

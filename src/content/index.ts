@@ -1,8 +1,10 @@
+// SCHOENWALD-LARGE-FILE owner=ai-chat-speed-booster reason="Content entrypoint coordinates lifecycle, mode policy, observer wiring, and popup status" split="Move editor latency/status wiring into a narrow coordinator if this grows further" validation="pnpm validate" review="No message text, clipboard text, secrets, or raw HTML are stored"
 import { decideContentBootstrapOwnership } from "./ContentBootstrapOwnership";
 import { DOMObserver } from "./DOMObserver";
 import { MessageManager } from "./MessageManager";
 import { RequestLifecycleTracker } from "./RequestLifecycleTracker";
 import { LoadMoreButton, StatusIndicator } from "./UIComponents";
+import { EditorInputOptimizer } from "./native/EditorInputOptimizer";
 import { NativeModeController } from "./native/NativeModeController";
 import { VirtualizationConflictDetector } from "./native/VirtualizationConflictDetector";
 import { ChatGptTextSnapshotRenderer } from "./native/chatgpt/ChatGptTextSnapshotRenderer";
@@ -29,6 +31,7 @@ const contentInstanceId = `${Date.now()}-${Math.random().toString(36).slice(2)}`
 let config: ExtensionConfig;
 let currentSite: SiteConfig;
 const messageManager = new MessageManager();
+const editorLatencyGuard = new EditorInputOptimizer();
 let requestLifecycleTracker: RequestLifecycleTracker | null = null;
 let loadMoreButton: LoadMoreButton;
 let statusIndicator: StatusIndicator;
@@ -91,6 +94,7 @@ async function bootstrap(): Promise<void> {
         chatGptTextSnapshotRenderer.start(document);
         window.addEventListener("resize", handleViewportResize);
     }
+    editorLatencyGuard.start();
     messageManager.updateConfig(config);
     if (currentSite.messageIdAttribute) {
         messageManager.setMessageIdAttribute(currentSite.messageIdAttribute);
@@ -111,8 +115,11 @@ async function bootstrap(): Promise<void> {
             messageManager.hasTrackedMessageId(id),
         onScrollToTop: loadOneMoreMessage,
         onObserverError: handleObserverError,
-        shouldDeferBackgroundWork: () => nativeModeController?.shouldDeferBackgroundWork() ?? false,
-        onBackgroundWorkDeferred: () => nativeModeController?.deferBackgroundWork(),
+        shouldDeferBackgroundWork: () => editorLatencyGuard.shouldDeferBackgroundWork() || (nativeModeController?.shouldDeferBackgroundWork() ?? false),
+        onBackgroundWorkDeferred: () => {
+            editorLatencyGuard.deferTask();
+            nativeModeController?.deferBackgroundWork();
+        },
     });
 
     domObserver.start();
@@ -375,6 +382,7 @@ function handleExtensionMessage(message: unknown): ExtensionStatus | undefined {
     const msg = message as { type?: string; payload?: unknown };
     if (msg.type === MessageType.GET_STATUS) {
         const nativeState = nativeModeController?.snapshot();
+        const editorInputSnapshot = editorLatencyGuard.snapshot();
         const observerDiagnostics = domObserver.getDiagnostics();
         const nativeConflictSnapshot = nativeVirtualizationConflicts.snapshot();
         const tokenEstimate = currentSite.id === "chatgpt"
@@ -404,6 +412,15 @@ function handleExtensionMessage(message: unknown): ExtensionStatus | undefined {
             contentLastUiRefreshAt,
             contentOverlayPresent: statusIndicator.isMounted(),
             contentLastRecoverableErrorClass,
+            editorInputActive: editorInputSnapshot.active,
+            editorInputComposing: editorInputSnapshot.composing,
+            editorInputDeferredTaskCount: editorInputSnapshot.deferredTaskCount,
+            editorInputEventCount: editorInputSnapshot.eventCount,
+            editorInputLastEventType: editorInputSnapshot.lastEventType,
+            editorInputLastEventAt: editorInputSnapshot.lastEventAt,
+            editorInputProtectedUntilMs: editorInputSnapshot.protectedUntilMs,
+            editorInputLastPasteLength: editorInputSnapshot.lastPasteLength,
+            editorInputLastPasteChunkCount: editorInputSnapshot.lastPasteChunkCount,
             observerLastBatchClass: observerDiagnostics.lastBatchClass,
             observerLastBatchSize: observerDiagnostics.lastBatchSize,
             observerLastDurationMs: observerDiagnostics.lastDurationMs,
@@ -602,6 +619,7 @@ window.addEventListener("beforeunload", () => {
     document.removeEventListener("visibilitychange", handleVisibilityResume);
     chatGptTextSnapshotRenderer?.stop();
     chatGptTextSnapshotRenderer = null;
+    editorLatencyGuard.stop();
     nativeModeController?.stop("content script unloading");
     nativeModeController = null;
     clearContentBootstrapOwnership();

@@ -1,3 +1,4 @@
+// SCHOENWALD-LARGE-FILE owner=ai-chat-speed-booster reason="Native model guard tests cover independent safety models in one fast suite" split="Split per native guard if this suite grows further" validation="pnpm validate" review="Model-only tests; no browser secrets or clipboard text"
 import { test, expect } from "@playwright/test";
 import { EditorInputOptimizer } from "../src/content/native/EditorInputOptimizer";
 import { InputChunkPlanner } from "../src/content/native/InputChunkPlanner";
@@ -175,4 +176,71 @@ test("native virtualization ignores normal monotonic scroll-height growth (#24)"
         scrollOscillationCount: 0,
         shouldDisableNativeVirtualization: false,
     });
+});
+
+
+test("editor optimizer protects typing and key events without scanning during active input", () => {
+    const optimizer = new EditorInputOptimizer({ quietWindowMs: 50 });
+
+    optimizer.markEvent("keydown", 10_000);
+
+    expect(optimizer.shouldDeferBackgroundWork(10_060)).toBe(true);
+    expect(optimizer.shouldDeferBackgroundWork(10_200)).toBe(false);
+    expect(optimizer.snapshot()).toMatchObject({
+        eventCount: 1,
+        lastEventType: "keydown",
+        lastEventAt: 10_000,
+        protectedUntilMs: 10_120,
+    });
+});
+
+test("editor optimizer treats copy cut and selection as protected windows without clipboard text", () => {
+    const optimizer = new EditorInputOptimizer({ quietWindowMs: 50 });
+
+    optimizer.markEvent("copy", 20_000);
+    expect(optimizer.shouldDeferBackgroundWork(20_200)).toBe(true);
+    expect(optimizer.shouldDeferBackgroundWork(20_400)).toBe(false);
+
+    optimizer.markEvent("selectionchange", 21_000);
+    expect(optimizer.shouldDeferBackgroundWork(21_100)).toBe(true);
+    expect(optimizer.snapshot()).toMatchObject({
+        eventCount: 2,
+        lastEventType: "selectionchange",
+        lastPasteLength: null,
+    });
+});
+
+test("small paste remains native while large paste opens a protected yield window", () => {
+    const optimizer = new EditorInputOptimizer({ quietWindowMs: 50 });
+
+    optimizer.recordPasteLength(128);
+    expect(optimizer.snapshot()).toMatchObject({
+        lastEventType: "paste",
+        lastPasteLength: 128,
+        lastPasteChunkCount: 1,
+    });
+
+    optimizer.recordPasteLength(25_000);
+    expect(optimizer.snapshot()).toMatchObject({
+        lastEventType: "large-paste",
+        lastPasteLength: 25_000,
+        lastPasteChunkCount: 7,
+    });
+    expect(optimizer.shouldDeferBackgroundWork()).toBe(true);
+});
+
+test("IME composition prevents large paste chunking until composition ends", () => {
+    const optimizer = new EditorInputOptimizer({ quietWindowMs: 50 });
+
+    optimizer.markEvent("compositionstart", 30_000);
+    optimizer.recordPasteLength(25_000);
+
+    expect(optimizer.snapshot()).toMatchObject({
+        composing: true,
+        lastPasteChunkCount: 1,
+    });
+    expect(optimizer.shouldDeferBackgroundWork(31_000)).toBe(true);
+
+    optimizer.markEvent("compositionend", 32_000);
+    expect(optimizer.snapshot().composing).toBe(false);
 });

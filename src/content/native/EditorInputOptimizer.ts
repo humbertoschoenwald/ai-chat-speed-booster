@@ -1,11 +1,14 @@
+// SCHOENWALD-LARGE-FILE owner=ai-chat-speed-booster reason="Native editor latency guard keeps event capture, paste planning, and defer diagnostics together" split="Move DOM event policy into a separate model if this grows further" validation="pnpm validate" review="No clipboard text is stored; only event type, timestamps, counters, and paste length are retained"
 import { InputChunkPlanner } from "./InputChunkPlanner";
 
 export interface EditorInputSnapshot {
     readonly active: boolean;
     readonly composing: boolean;
     readonly deferredTaskCount: number;
+    readonly eventCount: number;
     readonly lastEventType: string | null;
     readonly lastEventAt: number | null;
+    readonly protectedUntilMs: number | null;
     readonly lastPasteLength: number | null;
     readonly lastPasteChunkCount: number | null;
 }
@@ -19,6 +22,8 @@ const DEFAULT_QUIET_WINDOW_MS = 120;
 const INPUT_EVENTS = [
     "beforeinput",
     "input",
+    "keydown",
+    "keyup",
     "paste",
     "copy",
     "cut",
@@ -29,6 +34,22 @@ const INPUT_EVENTS = [
     "focusin",
     "focusout",
 ] as const;
+
+const EVENT_PROTECTION_MS: Record<string, number> = {
+    beforeinput: 180,
+    input: 180,
+    keydown: 120,
+    keyup: 120,
+    paste: 500,
+    copy: 350,
+    cut: 350,
+    selectionchange: 250,
+    focusin: 120,
+    focusout: 120,
+    compositionstart: 2_000,
+    compositionupdate: 2_000,
+    compositionend: 250,
+};
 
 export class EditorInputOptimizer {
     private readonly root: Document | undefined;
@@ -42,6 +63,7 @@ export class EditorInputOptimizer {
     private lastPasteChunkCount: number | null = null;
     private protectedUntilMs = 0;
     private deferredTaskCount = 0;
+    private eventCount = 0;
     private listening = false;
 
     constructor(options: EditorInputOptimizerOptions = {}) {
@@ -72,16 +94,21 @@ export class EditorInputOptimizer {
         this.lastPasteLength = null;
         this.lastPasteChunkCount = null;
         this.protectedUntilMs = 0;
+        this.eventCount = 0;
     }
 
-    markEvent(type: string): void {
+    markEvent(type: string, now = Date.now()): void {
+        this.eventCount += 1;
         this.lastEventType = type;
-        this.lastEventAt = Date.now();
+        this.lastEventAt = now;
         if (type === "compositionstart") this.composing = true;
         if (type === "compositionend") this.composing = false;
+        const duration = EVENT_PROTECTION_MS[type] ?? this.quietWindowMs;
+        this.protectedUntilMs = Math.max(this.protectedUntilMs, now + duration);
     }
 
     markProtectedActivity(type: string, durationMs: number, now = Date.now()): void {
+        this.eventCount += 1;
         this.lastEventType = type;
         this.lastEventAt = now;
         this.protectedUntilMs = Math.max(this.protectedUntilMs, now + Math.max(0, durationMs));
@@ -91,7 +118,11 @@ export class EditorInputOptimizer {
         const plan = this.pastePlanner.plan(totalLength, this.composing);
         this.lastPasteLength = totalLength;
         this.lastPasteChunkCount = plan.chunkCount;
-        if (plan.chunked) this.markProtectedActivity("large-paste", Math.min(2_000, plan.chunkCount * 50));
+        if (plan.chunked) {
+            this.markProtectedActivity("large-paste", Math.min(2_000, plan.chunkCount * 50));
+        } else {
+            this.markEvent("paste");
+        }
     }
 
     shouldDeferBackgroundWork(now = Date.now()): boolean {
@@ -110,8 +141,10 @@ export class EditorInputOptimizer {
             active: this.shouldDeferBackgroundWork(),
             composing: this.composing,
             deferredTaskCount: this.deferredTaskCount,
+            eventCount: this.eventCount,
             lastEventType: this.lastEventType,
             lastEventAt: this.lastEventAt,
+            protectedUntilMs: this.protectedUntilMs > 0 ? this.protectedUntilMs : null,
             lastPasteLength: this.lastPasteLength,
             lastPasteChunkCount: this.lastPasteChunkCount,
         };
@@ -119,6 +152,11 @@ export class EditorInputOptimizer {
 
     private markDomEvent(event: Event): void {
         if (!this.isEditorEvent(event)) return;
+        if (event.type === "paste" && typeof ClipboardEvent !== "undefined" && event instanceof ClipboardEvent) {
+            const length = event.clipboardData?.getData("text")?.length ?? 0;
+            this.recordPasteLength(length);
+            return;
+        }
         this.markEvent(event.type);
     }
 
