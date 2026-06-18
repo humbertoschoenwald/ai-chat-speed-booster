@@ -12,6 +12,7 @@ export interface DOMObserverCallbacks {
     hasTrackedMessageId(id: string): boolean;
     onScrollToTop(): void;
     onObserverError(error: unknown, phase: string): void;
+    onPageStateChanged?(elements: HTMLElement[]): void;
     shouldDeferBackgroundWork?(): boolean;
     onBackgroundWorkDeferred?(): void;
 }
@@ -217,12 +218,14 @@ export class DOMObserver {
         const scannedNodes = new WeakSet<HTMLElement>();
         const addedMessages: HTMLElement[] = [];
         const removedMessages: HTMLElement[] = [];
+        const pageStateElements: HTMLElement[] = [];
         let scannedNodeCount = 0;
         let skippedNodeCount = 0;
 
         for (const mutation of mutations) {
             for (const node of mutation.addedNodes) {
                 if (!(node instanceof HTMLElement)) continue;
+                pageStateElements.push(node);
                 const collected = this.collectMessageTurns(node, scannedNodes);
                 addedMessages.push(...collected.elements);
                 scannedNodeCount += collected.scanned;
@@ -245,6 +248,10 @@ export class DOMObserver {
             skippedNodeCount,
             performance.now() - startedAt,
         );
+
+        if (pageStateElements.length > 0) {
+            this.runCallback("page-state-changed", () => this.callbacks.onPageStateChanged?.(pageStateElements));
+        }
 
         // Conversation changes are detected via URL monitoring (pushState,
         // replaceState, popstate, polling).  The previous DOM-based

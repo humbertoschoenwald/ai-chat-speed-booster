@@ -115,6 +115,7 @@ async function bootstrap(): Promise<void> {
             messageManager.hasTrackedMessageId(id),
         onScrollToTop: loadOneMoreMessage,
         onObserverError: handleObserverError,
+        onPageStateChanged: handlePageStateChanged,
         shouldDeferBackgroundWork: () => editorLatencyGuard.shouldDeferBackgroundWork() || (nativeModeController?.shouldDeferBackgroundWork() ?? false),
         onBackgroundWorkDeferred: () => {
             editorLatencyGuard.deferTask();
@@ -216,10 +217,17 @@ function countNewUserRequests(elements: HTMLElement[]): void {
     requestLifecycleTracker?.observeAddedTurns(elements);
 }
 
+function handlePageStateChanged(elements: HTMLElement[]): void {
+    const tracker = requestLifecycleTracker;
+    if (!tracker) return;
+    for (const element of elements) tracker.observeFailureState(element);
+}
+
 /**
  * Cleans up removed turn references to keep manager state aligned with DOM.
  */
 function handleMessagesRemoved(elements: HTMLElement[]): void {
+    requestLifecycleTracker?.observeRemovedTurns(elements);
     messageManager.removeMessages(elements);
     refreshUI();
 }

@@ -96,3 +96,19 @@ test("duplicate accepted response mutation is ignored (#30)", () => {
 
     expect(reports).toEqual([1]);
 });
+
+
+test("global non-turn rejected UI cancels pending accepted counter (#30)", async () => {
+    const reports: number[] = [];
+    const tracker = new RequestLifecycleTracker("chatgpt", "user", (_siteId, count) => reports.push(count), 20);
+    const rejectedUi = {
+        matches: () => false,
+        querySelector: (selector: string) => (selector.includes("alert") ? {} : null),
+    } as unknown as HTMLElement;
+
+    tracker.observeAddedTurns([node("user"), node("assistant")]);
+    tracker.observeFailureState(rejectedUi);
+    await wait(30);
+
+    expect(reports).toEqual([]);
+});
