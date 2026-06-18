@@ -29,11 +29,15 @@ const canRunInteractively =
 /*  simple .env parser (no dependency)  */
 function loadEnv() {
     const vars = {};
-    if (!existsSync(".env")) return vars;
+    if (!existsSync(".env")) {
+        return vars;
+    }
     try {
         for (const line of readFileSync(".env", "utf8").split("\n")) {
             const m = line.match(/^\s*([A-Z_][A-Z0-9_]*)\s*=\s*(.+)/i);
-            if (m) vars[m[1]] = m[2].trim().replace(/^["']|["']$/g, "");
+            if (m) {
+                vars[m[1]] = m[2].trim().replace(/^["']|["']$/g, "");
+            }
         }
     } catch { /* ignore */ }
     return vars;
@@ -52,7 +56,9 @@ async function tryAutoFill(page, email, password) {
         }
     } catch { /* auto-fill failed, user will do it manually */ }
 
-    if (!password) return;
+    if (!password) {
+        return;
+    }
     try {
         const passInput = page.locator('input[type="password"]').first();
         if (await passInput.isVisible({ timeout: 3000 })) {

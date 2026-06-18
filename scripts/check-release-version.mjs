@@ -2,7 +2,9 @@
 import { readFileSync } from "fs";
 
 const tag = process.env.GITHUB_REF_TYPE === "tag" ? process.env.GITHUB_REF_NAME || "" : "";
-if (!tag) process.exit(0);
+if (!tag) {
+    process.exit(0);
+}
 
 const version = tag.replace(/^v/, "");
 if (!/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/.test(version)) {
@@ -21,7 +23,9 @@ const files = [
 const mismatches = [];
 for (const file of files) {
     const actual = JSON.parse(readFileSync(file, "utf8")).version;
-    if (actual !== version) mismatches.push(`${file} has ${actual}`);
+    if (actual !== version) {
+        mismatches.push(`${file} has ${actual}`);
+    }
 }
 
 if (mismatches.length > 0) {

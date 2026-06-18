@@ -37,7 +37,9 @@ function zipDir(srcDir, outZip) {
         console.error(`missing ${srcDir} — run a build first (or drop --skip-build)`);
         process.exit(1);
     }
-    if (existsSync(outZip)) rmSync(outZip);
+    if (existsSync(outZip)) {
+        rmSync(outZip);
+    }
     // -r recurse, -q quiet, -X strip OS-specific extra attrs for reproducibility.
     // -x excludes stray archive files left in dist/ from older release runs.
     run(`zip -rqX "${outZip}" . -x "*.zip" "*.xpi" "*.crx"`, srcDir);
@@ -57,7 +59,9 @@ const sourceZip = resolve(DEPLOYS, `firefox-source-v${VERSION}.zip`);
 zipDir(resolve(ROOT, "dist", "chrome"), chromeZip);
 zipDir(resolve(ROOT, "dist", "firefox"), firefoxZip);
 
-if (existsSync(sourceZip)) rmSync(sourceZip);
+if (existsSync(sourceZip)) {
+    rmSync(sourceZip);
+}
 run(`git archive --format=zip --output="${sourceZip}" HEAD`);
 
 console.log("\npackaged:");

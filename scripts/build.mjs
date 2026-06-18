@@ -33,7 +33,7 @@ function esbuildOptions(browser, entryName, entryPath) {
         target: ["es2022"],
         format: "esm",
         platform: "browser",
-        define: { "__DEV__": watch ? "true" : "false" },
+        define: { __DEV__: watch ? "true" : "false" },
         logLevel: "info",
     };
 }
@@ -53,7 +53,7 @@ function copyAssets(browser) {
             cs.matches = allUrlPatterns;
         }
     }
-    writeFileSync(resolve(outdir, "manifest.json"), JSON.stringify(manifest, null, 4) + "\n");
+    writeFileSync(resolve(outdir, "manifest.json"), `${JSON.stringify(manifest, null, 4)}\n`);
 
     cpSync(resolve(ROOT, "src", "popup", "popup.html"), resolve(outdir, "popup.html"));
     cpSync(resolve(ROOT, "src", "popup", "popup.css"), resolve(outdir, "popup.css"));
@@ -98,8 +98,12 @@ async function buildBrowser(browser) {
 
 (async () => {
     try {
-        for (const browser of targets) await buildBrowser(browser);
-        if (watch) console.log("\nwatching for changes...");
+        for (const browser of targets) {
+            await buildBrowser(browser);
+        }
+        if (watch) {
+            console.log("\nwatching for changes...");
+        }
     } catch (err) {
         console.error("build failed:", err);
         process.exit(1);

@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* global document, getComputedStyle */
 /**
  * License: MIT. See LICENSE in the repository root.
  * Responsibility: run an optional scroll-position diagnostic against a provided chat URL.
@@ -87,11 +88,17 @@ async function metrics() {
         let used = null;
         for (const sel of selectors) {
             const found = document.querySelector(sel);
-            if (found) { el = found; used = sel; break; }
+            if (found) {
+                el = found;
+                used = sel;
+                break;
+            }
         }
         const turns = document.querySelectorAll('section[data-testid^="conversation-turn-"], [data-test-render-count], user-query, model-response').length;
         const hidden = document.querySelectorAll(".acsb-hidden").length;
-        if (!el) return { ok: false, used: null, turns, hidden };
+        if (!el) {
+            return { ok: false, used: null, turns, hidden };
+        }
         return {
             ok: true,
             used,
@@ -99,7 +106,7 @@ async function metrics() {
             scrollHeight: el.scrollHeight,
             clientHeight: el.clientHeight,
             atTopPct: el.scrollHeight - el.clientHeight > 0
-                ? +(el.scrollTop / (el.scrollHeight - el.clientHeight) * 100).toFixed(1)
+                ? Number((el.scrollTop / (el.scrollHeight - el.clientHeight) * 100).toFixed(1))
                 : 100,
             turns,
             hidden,
@@ -114,7 +121,7 @@ try {
     // Wait for conversation turns to render.
     log("waiting for conversation to render…");
     await page.waitForTimeout(8_000);
-    let m = await metrics();
+    const m = await metrics();
     log(`after load: ${JSON.stringify(m)}`);
 
     if (!m.ok) {
@@ -143,7 +150,10 @@ try {
     await page.evaluate((selectors) => {
         for (const sel of selectors) {
             const el = document.querySelector(sel);
-            if (el) { el.scrollTop = el.scrollHeight; break; }
+            if (el) {
+                el.scrollTop = el.scrollHeight;
+                break;
+            }
         }
     }, SCROLL_SELECTORS);
     await page.waitForTimeout(1_500);

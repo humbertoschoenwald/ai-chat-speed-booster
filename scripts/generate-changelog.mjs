@@ -74,13 +74,17 @@ function tags() {
 
 function releaseRefs() {
     const localTags = tags().filter(exists).map((tag) => [tag, tag]);
-    if (localTags.length > 0) return localTags;
+    if (localTags.length > 0) {
+        return localTags;
+    }
     return fallbackReleaseRefs.filter(([, ref]) => exists(ref));
 }
 
 function parsed(subject) {
     const match = subject.match(/^([a-z]+)(?:\(([^)]+)\))?(!)?:\s+(.+)$/);
-    if (!match) return null;
+    if (!match) {
+        return null;
+    }
     return { type: match[1], scope: match[2], breaking: Boolean(match[3]), text: match[4] };
 }
 
@@ -93,16 +97,24 @@ const authorProfiles = new Map([
 ]);
 
 function authorProfile(commit) {
-    if (authorProfiles.has(commit.author)) return authorProfiles.get(commit.author);
+    if (authorProfiles.has(commit.author)) {
+        return authorProfiles.get(commit.author);
+    }
     const emailMatch = commit.email?.match(/^(?:\d+\+)?([^@]+)@users\.noreply\.github\.com$/);
-    if (emailMatch) return { name: emailMatch[1], handle: emailMatch[1] };
-    if (/^[A-Za-z0-9-]+$/.test(commit.author || "")) return { name: commit.author, handle: commit.author };
+    if (emailMatch) {
+        return { name: emailMatch[1], handle: emailMatch[1] };
+    }
+    if (/^[A-Za-z0-9-]+$/.test(commit.author || "")) {
+        return { name: commit.author, handle: commit.author };
+    }
     return { name: commit.author || "", handle: "" };
 }
 
 function byline(commit) {
     const profile = authorProfile(commit);
-    if (!profile.name) return "";
+    if (!profile.name) {
+        return "";
+    }
     if (profile.handle) {
         return ` ([${profile.name} (@${profile.handle})](https://github.com/${profile.handle}))`;
     }
@@ -111,18 +123,24 @@ function byline(commit) {
 
 function line(commit) {
     const p = parsed(commit.subject);
-    if (!p) return ["Other", `- ${commit.subject}${byline(commit)} (${commit.hash})`];
+    if (!p) {
+        return ["Other", `- ${commit.subject}${byline(commit)} (${commit.hash})`];
+    }
     const scope = p.scope ? `**${p.scope}:** ` : "";
     const breaking = p.breaking ? " **BREAKING**" : "";
     return [headings.get(p.type) || "Other", `- ${scope}${p.text}${breaking}${byline(commit)} (${commit.hash})`];
 }
 
 function renderCommits(commits) {
-    if (commits.length === 0) return "- No changes.\n";
+    if (commits.length === 0) {
+        return "- No changes.\n";
+    }
     const groups = new Map();
     for (const commit of commits.slice().reverse()) {
         const [group, text] = line(commit);
-        if (!groups.has(group)) groups.set(group, []);
+        if (!groups.has(group)) {
+            groups.set(group, []);
+        }
         groups.get(group).push(text);
     }
     return [...headings.values(), "Other"].filter((group) => groups.has(group)).map((group) => `### ${group}\n\n${groups.get(group).join("\n")}\n`).join("\n");
@@ -145,7 +163,9 @@ function sectionsFromReleaseRefs(refs) {
 
 function versionFrom(subject) {
     const lower = subject.toLowerCase();
-    if (!lower.includes("version") && !lower.includes("bump")) return "";
+    if (!lower.includes("version") && !lower.includes("bump")) {
+        return "";
+    }
     const found = subject.match(/1\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?/);
     return found ? `v${found[0]}` : "";
 }
@@ -154,14 +174,18 @@ function newer(version, latest) {
     const left = version.replace(/^v/, "").split(".").map(Number);
     const right = latest.replace(/^v/, "").split(".").map(Number);
     for (let i = 0; i < 3; i += 1) {
-        if ((left[i] || 0) !== (right[i] || 0)) return (left[i] || 0) > (right[i] || 0);
+        if ((left[i] || 0) !== (right[i] || 0)) {
+            return (left[i] || 0) > (right[i] || 0);
+        }
     }
     return false;
 }
 
 function inferredSections() {
     const pkg = JSON.parse(readFileSync(resolve(root, "package.json"), "utf8"));
-    if (Number(String(pkg.version).split(".")[0]) >= 2) throw new Error("Version tags are required from v2.0.0 onward.");
+    if (Number(String(pkg.version).split(".")[0]) >= 2) {
+        throw new Error("Version tags are required from v2.0.0 onward.");
+    }
     const released = [];
     const seen = new Set();
     let latest = "v0.0.0";
@@ -169,7 +193,9 @@ function inferredSections() {
     for (const commit of log("HEAD")) {
         bucket.push(commit);
         const version = versionFrom(commit.subject);
-        if (!version || seen.has(version) || !newer(version, latest)) continue;
+        if (!version || seen.has(version) || !newer(version, latest)) {
+            continue;
+        }
         released.push([version, bucket]);
         seen.add(version);
         latest = version;

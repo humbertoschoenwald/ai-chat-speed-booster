@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+/* global document */
 /**
  * Probes the actual DOM structure of each configured site to discover
  * which selectors match. Requires a saved auth profile (pnpm run test:auth).
@@ -122,14 +123,18 @@ for (const site of sites) {
             for (const sel of patterns) {
                 try {
                     const count = document.querySelectorAll(sel).length;
-                    if (count > 0) results.selectorProbe[sel] = count;
+                    if (count > 0) {
+                        results.selectorProbe[sel] = count;
+                    }
                 } catch { /* invalid selector */ }
             }
 
             for (const sel of cfg.siteSpecificPatterns ?? []) {
                 try {
                     const count = document.querySelectorAll(sel).length;
-                    if (count > 0) results.selectorProbe[sel] = count;
+                    if (count > 0) {
+                        results.selectorProbe[sel] = count;
+                    }
                 } catch { /* invalid selector */ }
             }
 
@@ -149,7 +154,9 @@ for (const site of sites) {
             for (const sel of scrollPatterns) {
                 try {
                     const count = document.querySelectorAll(sel).length;
-                    if (count > 0) results.scrollProbe[sel] = count;
+                    if (count > 0) {
+                        results.scrollProbe[sel] = count;
+                    }
                 } catch { /* invalid selector */ }
             }
 

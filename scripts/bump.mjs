@@ -75,7 +75,9 @@ for (const file of TARGETS) {
         console.error(`couldn't find a "version" field in ${file}`);
         process.exit(1);
     }
-    if (!dry) writeFileSync(path, updated);
+    if (!dry) {
+        writeFileSync(path, updated);
+    }
     console.log(`  ${file}`);
 }
 
