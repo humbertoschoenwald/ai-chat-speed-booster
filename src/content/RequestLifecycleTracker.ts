@@ -38,6 +38,29 @@ export class RequestLifecycleTracker {
         this.pendingAcceptanceTimers.clear();
     }
 
+    observeRemovedTurns(elements: readonly HTMLElement[]): void {
+        for (const element of elements) {
+            const timer = this.pendingAcceptanceTimers.get(element);
+            if (!timer) continue;
+            clearTimeout(timer);
+            this.pendingAcceptanceTimers.delete(element);
+        }
+    }
+
+    observeFailureState(root: ParentNode): void {
+        if (this.pendingAcceptanceTimers.size === 0 && this.pendingAcceptedSlots === 0) return;
+        const maybeElement = root as ParentNode & Partial<Element>;
+        if (typeof maybeElement.matches === "function" && this.isFailureTurn(maybeElement as Element)) {
+            this.cancelLatestPendingAcceptance();
+            this.pendingAcceptedSlots = Math.max(0, this.pendingAcceptedSlots - 1);
+            return;
+        }
+        if (root.querySelector?.(FAILURE_SELECTOR)) {
+            this.cancelLatestPendingAcceptance();
+            this.pendingAcceptedSlots = Math.max(0, this.pendingAcceptedSlots - 1);
+        }
+    }
+
     observeAddedTurns(elements: readonly HTMLElement[]): void {
         if (!this.userMessageSelector) return;
 

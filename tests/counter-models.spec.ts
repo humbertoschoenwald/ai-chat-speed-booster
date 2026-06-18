@@ -50,3 +50,49 @@ test("successful delayed response increments once after quiet window (#30)", asy
 
     expect(reports).toEqual([1]);
 });
+
+
+test("removed pending response does not increment accepted counter (#30)", async () => {
+    const reports: number[] = [];
+    const tracker = new RequestLifecycleTracker("chatgpt", "user", (_siteId, count) => reports.push(count), 20);
+    const response = node("assistant");
+
+    tracker.observeAddedTurns([node("user"), response]);
+    tracker.observeRemovedTurns([response]);
+    await wait(30);
+
+    expect(reports).toEqual([]);
+});
+
+test("global rejected state cancels pending accepted counter (#30)", async () => {
+    const reports: number[] = [];
+    const tracker = new RequestLifecycleTracker("chatgpt", "user", (_siteId, count) => reports.push(count), 20);
+
+    tracker.observeAddedTurns([node("user"), node("assistant")]);
+    tracker.observeFailureState(node("assistant", true));
+    await wait(30);
+
+    expect(reports).toEqual([]);
+});
+
+test("retry after rejected request increments once after success (#30)", async () => {
+    const reports: number[] = [];
+    const tracker = new RequestLifecycleTracker("chatgpt", "user", (_siteId, count) => reports.push(count), 0);
+
+    tracker.observeAddedTurns([node("user"), node("assistant", true)]);
+    tracker.observeAddedTurns([node("user"), node("assistant")]);
+
+    expect(reports).toEqual([1]);
+});
+
+test("duplicate accepted response mutation is ignored (#30)", () => {
+    const reports: number[] = [];
+    const tracker = new RequestLifecycleTracker("chatgpt", "user", (_siteId, count) => reports.push(count), 0);
+    const user = node("user");
+    const assistant = node("assistant");
+
+    tracker.observeAddedTurns([user, assistant]);
+    tracker.observeAddedTurns([user, assistant]);
+
+    expect(reports).toEqual([1]);
+});
