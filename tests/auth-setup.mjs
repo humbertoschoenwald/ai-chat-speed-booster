@@ -1,5 +1,10 @@
 #!/usr/bin/env node
 /**
+ * License: MIT. See LICENSE in the repository root.
+ * Responsibility: prepare an optional browser auth profile for extension integration tests.
+ * Boundary: this script skips non-interactive runs unless auth setup is explicitly requested.
+ * ADR: docs/adr/engineering/tooling/pnpm-package-manager-authority.md.
+ *
  * Interactive auth setup – launches a browser with the extension loaded.
  * Log in to each AI chat site, then press Enter to save the auth profile.
  *
@@ -17,6 +22,9 @@ import { readFileSync, existsSync } from "fs";
 const EXTENSION_PATH = path.resolve("dist", "chrome");
 const AUTH_DIR = path.resolve("tests", ".auth-profile");
 const sites = JSON.parse(readFileSync("sites.config.json", "utf8"));
+const canRunInteractively =
+    process.env.AUTH_SETUP_INTERACTIVE === "1" ||
+    (process.env.CI !== "true" && process.stdin.isTTY && process.stdout.isTTY);
 
 /*  simple .env parser (no dependency)  */
 function loadEnv() {
@@ -60,6 +68,12 @@ async function main() {
     if (!existsSync(EXTENSION_PATH)) {
         console.error("Extension not built. Run: pnpm run build:chrome");
         process.exit(1);
+    }
+
+    if (!canRunInteractively) {
+        console.log("Skipping auth setup because no interactive terminal is available.");
+        console.log("Set AUTH_SETUP_INTERACTIVE=1 and run `pnpm run test:auth` to refresh auth.");
+        return;
     }
 
     const env = loadEnv();

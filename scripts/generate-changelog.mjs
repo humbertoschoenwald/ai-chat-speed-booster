@@ -7,6 +7,12 @@ import { fileURLToPath } from "url";
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const out = resolve(root, "CHANGELOG.md");
 const headings = new Map([["feat", "Features"], ["fix", "Fixes"], ["perf", "Performance"], ["test", "Tests"], ["ci", "CI"], ["build", "Build"], ["docs", "Docs"], ["refactor", "Refactors"], ["chore", "Maintenance"]]);
+const ignoredSubjectPatterns = [
+    /^(?:docs(?:\([^)]+\))?:\s*)?update readme\.md$/i,
+    /^(?:update\s+)?changelog(?:\.md)?$/i,
+    /^(?:docs|chore)(?:\([^)]+\))?:\s*(?:update\s+)?changelog(?:\.md)?$/i,
+    /^chore\(changelog\):/i,
+];
 const fallbackReleaseRefs = [
     ["v1.0.0", "4a6ea5d"],
     ["v1.1.0", "8a1b18e"],
@@ -49,12 +55,16 @@ function exists(ref) {
     return safeGit(["rev-parse", "--verify", `${ref}^{commit}`]) !== "";
 }
 
+function isIgnoredSubject(subject) {
+    return ignoredSubjectPatterns.some((pattern) => pattern.test(subject.trim()));
+}
+
 function log(range) {
     const raw = safeGit(["log", "--reverse", range, "--pretty=format:%H%x1f%an%x1f%ae%x1f%s"]);
     return raw ? raw.split("\n").map((row) => {
         const [hash, author, email, subject] = row.split("\x1f");
         return { hash: hash.slice(0, 7), author, email, subject };
-    }) : [];
+    }).filter((commit) => !isIgnoredSubject(commit.subject)) : [];
 }
 
 function tags() {

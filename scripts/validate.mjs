@@ -1,14 +1,29 @@
 #!/usr/bin/env node
+/**
+ * License: MIT. See LICENSE in the repository root.
+ * Responsibility: run the public package validation sequence.
+ * Boundary: this script invokes repository scripts only and leaves stricter operator checks to
+ * external validation wrappers.
+ * ADR: docs/adr/engineering/tooling/pnpm-package-manager-authority.md.
+ */
 import { spawnSync } from "child_process";
 
-const node = process.execPath;
-const CI_PROJECTS = ["build", "extension", "safari"];
-const includeIntegration = process.env.INTEGRATION_TESTS === "1";
-const projects = includeIntegration ? [...CI_PROJECTS, "integration"] : CI_PROJECTS;
+function quoteWindowsCommandPart(part) {
+    if (/^[A-Za-z0-9_./:=@-]+$/.test(part)) {
+        return part;
+    }
+    return `"${part.replace(/(["^&|<>])/g, "^$1")}"`;
+}
 
 function run(command, args) {
     console.log(`\n$ ${[command, ...args].join(" ")}`);
-    const result = spawnSync(command, args, {
+    const spawnCommand = process.platform === "win32"
+        ? process.env.ComSpec ?? "cmd.exe"
+        : command;
+    const spawnArgs = process.platform === "win32"
+        ? ["/d", "/s", "/c", [command, ...args].map(quoteWindowsCommandPart).join(" ")]
+        : args;
+    const result = spawnSync(spawnCommand, spawnArgs, {
         stdio: "inherit",
         shell: false,
     });
@@ -23,11 +38,24 @@ function run(command, args) {
     }
 }
 
-const playwrightInstallArgs = process.env.CI === "true" && process.platform === "linux"
-    ? ["node_modules/@playwright/test/cli.js", "install", "--with-deps", "chromium"]
-    : ["node_modules/@playwright/test/cli.js", "install", "chromium"];
+const playwrightInstallArgs =
+    process.env.CI === "true" && process.platform === "linux"
+        ? ["exec", "playwright", "install", "--with-deps", "chromium"]
+        : ["exec", "playwright", "install", "chromium"];
+const pnpm = "pnpm";
 
-run(node, ["node_modules/typescript/bin/tsc", "--noEmit"]);
-run(node, ["scripts/build.mjs", "--all"]);
-run(node, playwrightInstallArgs);
-run(node, ["node_modules/@playwright/test/cli.js", "test", ...projects.flatMap((project) => ["--project", project])]);
+const STEPS = [
+    [pnpm, ["run", "build"]],
+    [pnpm, ["run", "typecheck"]],
+    [pnpm, ["run", "lint"]],
+    [pnpm, playwrightInstallArgs],
+    [pnpm, ["run", "test:auth"]],
+    [pnpm, ["run", "test:build"]],
+    [pnpm, ["run", "test:extension"]],
+    [pnpm, ["run", "test:integration"]],
+    [pnpm, ["run", "diagnose:scroll"]],
+];
+
+for (const [command, args] of STEPS) {
+    run(command, args);
+}

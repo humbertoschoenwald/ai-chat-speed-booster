@@ -1,5 +1,10 @@
 #!/usr/bin/env node
 /**
+ * License: MIT. See LICENSE in the repository root.
+ * Responsibility: run an optional scroll-position diagnostic against a provided chat URL.
+ * Boundary: this diagnostic skips when no URL is configured and only writes its local log file.
+ * ADR: docs/adr/engineering/tooling/pnpm-package-manager-authority.md.
+ *
  * Scroll diagnostic – opens a chat URL with the extension loaded, lets it
  * settle, then repeatedly scrolls the conversation container up while logging
  * the scroll position (scrollTop / scrollHeight / clientHeight) before and
@@ -14,15 +19,17 @@
  *
  * Output: scroll-diagnostic.log in the repo root.
  */
-import { chromium } from "playwright";
+import { chromium } from "@playwright/test";
 import path from "path";
 import os from "os";
 import { readFileSync, existsSync, cpSync, mkdtempSync, writeFileSync, appendFileSync } from "fs";
 
-const URL = process.argv[2];
+const URL = process.argv[2] ?? process.env.SCROLL_DIAGNOSTIC_URL;
 if (!URL) {
-    console.error('Usage: node tests/scroll-diagnostic.mjs "<chat-url>"');
-    process.exit(1);
+    console.log(
+        'Skipping scroll diagnostic because no URL was provided. Set SCROLL_DIAGNOSTIC_URL or pass "<chat-url>".',
+    );
+    process.exit(0);
 }
 
 const EXTENSION_PATH = path.resolve("dist", "chrome");
