@@ -50,7 +50,7 @@ export class RequestLifecycleTracker {
     observeFailureState(root: ParentNode): void {
         if (this.pendingAcceptanceTimers.size === 0 && this.pendingAcceptedSlots === 0) return;
         const maybeElement = root as ParentNode & Partial<Element>;
-        if (typeof maybeElement.matches === "function" && this.isFailureTurn(maybeElement as Element)) {
+        if (typeof maybeElement.matches === "function" && this.isFailureElement(maybeElement as Element)) {
             this.cancelLatestPendingAcceptance();
             this.pendingAcceptedSlots = Math.max(0, this.pendingAcceptedSlots - 1);
             return;
@@ -72,7 +72,7 @@ export class RequestLifecycleTracker {
             }
 
             if (this.seenResponses.has(element)) continue;
-            if (this.isFailureTurn(element)) {
+            if (this.isFailureElement(element)) {
                 this.cancelLatestPendingAcceptance();
                 this.pendingAcceptedSlots = Math.max(0, this.pendingAcceptedSlots - 1);
                 this.seenResponses.add(element);
@@ -111,7 +111,7 @@ export class RequestLifecycleTracker {
         return element.matches(this.userMessageSelector!) || element.querySelector(this.userMessageSelector!) !== null;
     }
 
-    private isFailureTurn(element: HTMLElement): boolean {
+    private isFailureElement(element: Element): boolean {
         return element.matches(FAILURE_SELECTOR) || element.querySelector(FAILURE_SELECTOR) !== null;
     }
 }
