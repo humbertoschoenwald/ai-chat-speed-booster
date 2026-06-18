@@ -198,7 +198,7 @@ export class LoadMoreButton {
         );
         if (label) {
             const hidden = this.hiddenCount;
-            const perClick = Math.min(this.loadMoreBatchSize, hidden);
+            const perClick = Math.min(this.loadMoreBatchSize * 2, hidden);
             label.textContent = `Load ${perClick} more (${hidden} hidden)`;
         }
     }
