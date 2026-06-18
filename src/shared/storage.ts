@@ -1,5 +1,5 @@
 import { storageGet, storageSet, storageGetSync, storageSetSync, onStorageChanged } from "./browser-api";
-import { STORAGE_KEY, DEFAULT_CONFIG, CONFIG_LIMITS, REQUEST_COUNTS_KEY, AUTO_LOAD_RESET_KEY, FAST_MODE_RESET_KEY, MODE_PROFILES_KEY } from "./constants";
+import { STORAGE_KEY, DEFAULT_CONFIG, CONFIG_LIMITS, REQUEST_COUNTS_KEY, AUTO_LOAD_RESET_KEY, MODE_PROFILES_KEY } from "./constants";
 import type { ExtensionConfig, WeeklyRequestCount } from "./types";
 import { logger } from "./logger";
 
@@ -82,7 +82,7 @@ export async function loadConfig(): Promise<ExtensionConfig> {
     try {
         const raw = await storageGet<Partial<ExtensionConfig>>(STORAGE_KEY);
         const config = sanitiseConfig(raw);
-        return await applyFastModeSafetyReset(await applyAutoLoadReset(config));
+        return await applyAutoLoadReset(config);
     } catch (error) {
         logger.error("failed to load config, using defaults", error);
         return { ...DEFAULT_CONFIG };
@@ -109,20 +109,6 @@ async function applyAutoLoadReset(config: ExtensionConfig): Promise<ExtensionCon
     }
 }
 
-async function applyFastModeSafetyReset(config: ExtensionConfig): Promise<ExtensionConfig> {
-    try {
-        const done = await storageGet<boolean>(FAST_MODE_RESET_KEY);
-        if (done) return config;
-        await storageSet(FAST_MODE_RESET_KEY, true);
-        if (!config.fetchInterceptEnabled) return config;
-        const reset: ExtensionConfig = { ...config, fetchInterceptEnabled: false };
-        await storageSet(STORAGE_KEY, reset);
-        logger.debug("fast-mode reset applied (one-time)");
-        return reset;
-    } catch {
-        return config;
-    }
-}
 
 export async function saveConfig(partial: Partial<ExtensionConfig>): Promise<ExtensionConfig> {
     const current = await loadConfig();

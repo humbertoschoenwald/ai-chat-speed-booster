@@ -10,7 +10,7 @@ export const DEFAULT_CONFIG: Readonly<ExtensionConfig> = Object.freeze({
     performanceMode: "legacy",
     showStatus: true,
     statusPosition: "top-right",
-    fetchInterceptEnabled: false,
+    fetchInterceptEnabled: true,
     theme: "dark",
     autoLoad: false,
     weeklyRequestLimit: 3000,

@@ -174,8 +174,10 @@ function renderNativeDiagnostics(status: ExtensionStatus | undefined): void {
 }
 
 function renderStatusText(status: ExtensionStatus): string {
-    const countText = `${status.visibleMessages}/${status.totalMessages} messages visible` +
-        (status.hiddenMessages > 0 ? ` · ${status.hiddenMessages} hidden` : "");
+    const countText = currentConfig.fetchInterceptEnabled
+        ? "Fast Mode active · message counts disabled"
+        : `${status.visibleMessages}/${status.totalMessages} messages visible` +
+            (status.hiddenMessages > 0 ? ` · ${status.hiddenMessages} hidden` : "");
 
     switch (status.contentLifecycleState) {
         case "initializing":
@@ -202,6 +204,13 @@ function renderConfig(config: ExtensionConfig): void {
     toggleAutoLoad.checked = config.autoLoad;
     toggleHideOld.checked = config.hideOldMessages;
     toggleFetchIntercept.checked = config.fetchInterceptEnabled;
+    const fastModeSetting = toggleFetchIntercept.closest<HTMLElement>("[data-legacy-control]");
+    if (fastModeSetting && !fastModeSetting.querySelector(".fast-mode-counts-hint")) {
+        const hint = document.createElement("p");
+        hint.className = "hint fast-mode-counts-hint";
+        hint.textContent = "Fast Mode disables message counts because the page only renders a trimmed window.";
+        fastModeSetting.appendChild(hint);
+    }
     visibleLimitInput.value = String(config.visibleMessageLimit);
     batchSizeInput.value = String(config.loadMoreBatchSize);
     requestLimitInput.value = String(config.weeklyRequestLimit);

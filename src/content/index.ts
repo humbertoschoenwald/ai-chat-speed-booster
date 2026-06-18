@@ -514,10 +514,10 @@ function refreshUI(): void {
         domObserver.updateMessageStats(status.totalMessages, status.visibleMessages);
         domObserver.SetAutoLoad(config.autoLoad); // Update auto-load state in DOM observer based on latest config
 
-        if (!config.enabled || !config.showStatus || displayStatus.totalMessages === 0) {
+        if (!config.enabled || !config.showStatus || currentConversationTrimmed || displayStatus.totalMessages === 0) {
             statusIndicator.hide();
         } else {
-            statusIndicator.update(displayStatus.hiddenMessages, displayStatus.totalMessages, config.statusPosition, config.fetchInterceptEnabled, config.theme === "light");
+            statusIndicator.update(displayStatus.hiddenMessages, displayStatus.totalMessages, config.statusPosition, false, config.theme === "light");
         }
 
         syncChatGptNativeSnapshots();
