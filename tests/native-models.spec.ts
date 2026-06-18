@@ -180,18 +180,21 @@ test("native virtualization ignores normal monotonic scroll-height growth (#24)"
 });
 
 
-test("editor optimizer protects typing and key events without scanning during active input", () => {
+test("editor optimizer protects beforeinput and key events without scanning during active input", () => {
     const optimizer = new EditorInputOptimizer({ quietWindowMs: 50 });
 
-    optimizer.markEvent("keydown", 10_000);
+    optimizer.markEvent("beforeinput", 10_000);
+    expect(optimizer.shouldDeferBackgroundWork(10_120)).toBe(true);
 
-    expect(optimizer.shouldDeferBackgroundWork(10_060)).toBe(true);
-    expect(optimizer.shouldDeferBackgroundWork(10_200)).toBe(false);
+    optimizer.markEvent("keydown", 10_200);
+
+    expect(optimizer.shouldDeferBackgroundWork(10_260)).toBe(true);
+    expect(optimizer.shouldDeferBackgroundWork(10_400)).toBe(false);
     expect(optimizer.snapshot()).toMatchObject({
-        eventCount: 1,
+        eventCount: 2,
         lastEventType: "keydown",
-        lastEventAt: 10_000,
-        protectedUntilMs: 10_120,
+        lastEventAt: 10_200,
+        protectedUntilMs: 10_320,
     });
 });
 
