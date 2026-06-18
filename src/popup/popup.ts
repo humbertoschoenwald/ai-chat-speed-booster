@@ -174,8 +174,8 @@ function renderNativeDiagnostics(status: ExtensionStatus | undefined): void {
 }
 
 function renderStatusText(status: ExtensionStatus): string {
-    const countText = `${Math.floor(status.visibleMessages / 2)}/${Math.floor(status.totalMessages / 2)} messages visible` +
-        (status.hiddenMessages > 0 ? ` · ${Math.floor(status.hiddenMessages / 2)} hidden` : "");
+    const countText = `${status.visibleMessages}/${status.totalMessages} messages visible` +
+        (status.hiddenMessages > 0 ? ` · ${status.hiddenMessages} hidden` : "");
 
     switch (status.contentLifecycleState) {
         case "initializing":

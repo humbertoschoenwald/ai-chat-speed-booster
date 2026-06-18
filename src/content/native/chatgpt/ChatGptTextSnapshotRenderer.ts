@@ -21,6 +21,7 @@ export interface ChatGptTextSnapshotRenderResult {
 const HOST_ATTR = "data-acsb-native-snapshot-host";
 const SNAPSHOT_SELECTOR = '[data-acsb-native-snapshot="true"]';
 const STYLE_ID = "acsb-native-text-snapshot-style";
+const MAX_SNAPSHOT_WRITES_PER_SYNC = 8;
 
 export class ChatGptTextSnapshotRenderer {
     private readonly cache = new ChatGptTextSnapshotCache();
@@ -53,13 +54,28 @@ export class ChatGptTextSnapshotRenderer {
         const liveKeys = computeLiveKeys(turns, options.liveWindowSize, options.nearestWindow);
         let snapshotHosts = 0;
         let hydratedHosts = 0;
+        let snapshotWrites = 0;
         turns.forEach((turn, index) => {
             const key = getTurnKey(turn, index);
-            if (liveKeys.has(key) || isPinnedTurn(turn)) {
+            const shouldCheckPin = index >= Math.max(0, turns.length - options.liveWindowSize - options.nearestWindow - 2);
+            if (liveKeys.has(key) || (shouldCheckPin && isPinnedTurn(turn))) {
                 this.restore(turn);
                 hydratedHosts += 1;
-            } else if (this.snapshot(turn, key, options.nowMs)) {
+                return;
+            }
+            if (turn.getAttribute(HOST_ATTR) === "true") {
                 snapshotHosts += 1;
+                return;
+            }
+            if (snapshotWrites >= MAX_SNAPSHOT_WRITES_PER_SYNC) {
+                hydratedHosts += 1;
+                return;
+            }
+            if (this.snapshot(turn, key, options.nowMs)) {
+                snapshotHosts += 1;
+                snapshotWrites += 1;
+            } else {
+                hydratedHosts += 1;
             }
         });
         return { snapshotHosts, hydratedHosts, cache: this.cache.snapshot() };
@@ -129,12 +145,14 @@ function addLatestRole(turns: readonly HTMLElement[], live: Set<string>, role: s
 
 function findViewportTurnIndex(turns: readonly HTMLElement[]): number {
     if (turns.length === 0) return 0;
-    const center = window.innerHeight / 2;
-    return turns.reduce((best, turn, index) => {
-        const rect = turn.getBoundingClientRect();
-        const distance = Math.abs((rect.top + rect.bottom) / 2 - center);
-        return distance < best.distance ? { index, distance } : best;
-    }, { index: turns.length - 1, distance: Number.POSITIVE_INFINITY }).index;
+    const root = turns[0].ownerDocument;
+    const centerElement = root.elementFromPoint(window.innerWidth / 2, window.innerHeight / 2);
+    const currentTurn = centerElement?.closest<HTMLElement>(`[${HOST_ATTR}="true"],[data-turn-id],[data-testid^="conversation-turn-"]`);
+    if (currentTurn) {
+        const index = turns.findIndex((turn) => turn === currentTurn || turn.contains(currentTurn));
+        if (index >= 0) return index;
+    }
+    return turns.length - 1;
 }
 
 function isPinnedTurn(turn: HTMLElement): boolean {

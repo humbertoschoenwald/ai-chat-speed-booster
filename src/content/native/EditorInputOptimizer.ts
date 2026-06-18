@@ -31,7 +31,7 @@ const INPUT_EVENTS = [
 ] as const;
 
 export class EditorInputOptimizer {
-    private readonly root: Document;
+    private readonly root: Document | undefined;
     private readonly quietWindowMs: number;
     private readonly pastePlanner = new InputChunkPlanner();
     private readonly cleanupCallbacks: Array<() => void> = [];
@@ -45,17 +45,19 @@ export class EditorInputOptimizer {
     private listening = false;
 
     constructor(options: EditorInputOptimizerOptions = {}) {
-        this.root = options.root ?? document;
+        this.root = options.root ?? (typeof document === "undefined" ? undefined : document);
         this.quietWindowMs = options.quietWindowMs ?? DEFAULT_QUIET_WINDOW_MS;
     }
 
     start(): void {
+        const root = this.root;
+        if (!root) return;
         if (this.listening) return;
         this.listening = true;
         for (const type of INPUT_EVENTS) {
             const listener = (event: Event): void => this.markDomEvent(event);
-            this.root.addEventListener(type, listener, true);
-            this.cleanupCallbacks.push(() => this.root.removeEventListener(type, listener, true));
+            root.addEventListener(type, listener, true);
+            this.cleanupCallbacks.push(() => root.removeEventListener(type, listener, true));
         }
     }
 
@@ -127,6 +129,7 @@ export class EditorInputOptimizer {
     }
 
     private hasEditorSelection(): boolean {
+        if (!this.root) return false;
         const selection = this.root.getSelection();
         const node = selection?.anchorNode;
         const element = node instanceof Element ? node : node?.parentElement;

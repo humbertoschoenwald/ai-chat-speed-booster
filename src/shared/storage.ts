@@ -1,5 +1,5 @@
 import { storageGet, storageSet, storageGetSync, storageSetSync, onStorageChanged } from "./browser-api";
-import { STORAGE_KEY, DEFAULT_CONFIG, CONFIG_LIMITS, REQUEST_COUNTS_KEY, AUTO_LOAD_RESET_KEY } from "./constants";
+import { STORAGE_KEY, DEFAULT_CONFIG, CONFIG_LIMITS, REQUEST_COUNTS_KEY, AUTO_LOAD_RESET_KEY, MODE_PROFILES_KEY } from "./constants";
 import type { ExtensionConfig, WeeklyRequestCount } from "./types";
 import { logger } from "./logger";
 
@@ -9,6 +9,46 @@ function clamp(value: number, min: number, max: number): number {
 
 function sanitisePerformanceMode(value: unknown): "legacy" | "native" {
     return value === "native" ? "native" : "legacy";
+}
+
+type ModeProfile = Pick<ExtensionConfig,
+    "visibleMessageLimit" |
+    "loadMoreBatchSize" |
+    "showStatus" |
+    "statusPosition" |
+    "fetchInterceptEnabled" |
+    "autoLoad" |
+    "hideOldMessages"
+>;
+
+type ModeProfiles = Partial<Record<"legacy" | "native", Partial<ModeProfile>>>;
+
+function extractModeProfile(config: ExtensionConfig): ModeProfile {
+    return {
+        visibleMessageLimit: config.visibleMessageLimit,
+        loadMoreBatchSize: config.loadMoreBatchSize,
+        showStatus: config.showStatus,
+        statusPosition: config.statusPosition,
+        fetchInterceptEnabled: config.fetchInterceptEnabled,
+        autoLoad: config.autoLoad,
+        hideOldMessages: config.hideOldMessages,
+    };
+}
+
+async function loadModeProfiles(): Promise<ModeProfiles> {
+    try {
+        return (await storageGet<ModeProfiles>(MODE_PROFILES_KEY)) ?? {};
+    } catch {
+        return {};
+    }
+}
+
+async function saveModeProfiles(profiles: ModeProfiles): Promise<void> {
+    try {
+        await storageSet(MODE_PROFILES_KEY, profiles);
+    } catch (error) {
+        logger.debug("failed to save mode profiles", error);
+    }
 }
 
 function sanitiseConfig(raw: Partial<ExtensionConfig> | undefined): ExtensionConfig {
@@ -71,8 +111,26 @@ async function applyAutoLoadReset(config: ExtensionConfig): Promise<ExtensionCon
 
 export async function saveConfig(partial: Partial<ExtensionConfig>): Promise<ExtensionConfig> {
     const current = await loadConfig();
-    const merged = sanitiseConfig({ ...current, ...partial });
+    const profiles = await loadModeProfiles();
+    const currentMode = current.performanceMode;
+    const targetMode = sanitisePerformanceMode(partial.performanceMode ?? currentMode);
+    const changedMode = targetMode !== currentMode;
+
+    profiles[currentMode] = {
+        ...profiles[currentMode],
+        ...extractModeProfile(current),
+    };
+
+    const restoredProfile = changedMode ? profiles[targetMode] : undefined;
+    const merged = sanitiseConfig({ ...current, ...restoredProfile, ...partial, performanceMode: targetMode });
+
+    profiles[merged.performanceMode] = {
+        ...profiles[merged.performanceMode],
+        ...extractModeProfile(merged),
+    };
+
     await storageSet(STORAGE_KEY, merged);
+    await saveModeProfiles(profiles);
     logger.debug("config saved", merged);
     return merged;
 }

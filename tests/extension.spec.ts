@@ -84,12 +84,11 @@ for (const site of SITES) {
 
             const hiddenCount = MESSAGE_COUNT - DEFAULT_VISIBLE_LIMIT;
             await expect(page.locator(".acsb-load-more-wrapper")).toBeVisible();
-            // Label divides by 2 to show conversation pairs, not raw turns
             await expect(page.locator(".acsb-load-more-label")).toContainText(
-                `${hiddenCount / 2} hidden`,
+                `${hiddenCount} hidden`,
             );
             await expect(page.locator(".acsb-load-more-label")).toContainText(
-                `${DEFAULT_BATCH_SIZE / 2} more`
+                `${DEFAULT_BATCH_SIZE} more`
             );
         });
 
@@ -116,7 +115,7 @@ for (const site of SITES) {
             await loadMockPage(page);
 
             await expect(page.locator(".acsb-status-indicator")).toBeVisible();
-            const hiddenCount = (MESSAGE_COUNT - DEFAULT_VISIBLE_LIMIT) / 2;
+            const hiddenCount = MESSAGE_COUNT - DEFAULT_VISIBLE_LIMIT;
             await expect(page.locator(".acsb-status-label")).toContainText(
                 `${hiddenCount} hidden`,
             );

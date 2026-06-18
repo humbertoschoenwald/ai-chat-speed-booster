@@ -197,7 +197,7 @@ export class LoadMoreButton {
             `.${CSS_PREFIX}-load-more-label`,
         );
         if (label) {
-            const hidden = Math.floor(this.hiddenCount / 2);
+            const hidden = this.hiddenCount;
             const perClick = Math.min(this.loadMoreBatchSize, hidden);
             label.textContent = `Load ${perClick} more (${hidden} hidden)`;
         }
@@ -244,8 +244,8 @@ export class StatusIndicator {
         }
         if (this.label) {
             this.label.textContent = fetchInterceptEnabled
-                ? `${Math.floor(hidden / 2)} hidden`
-                : `${Math.floor(hidden / 2)} hidden · ${Math.floor(total / 2)} total`;
+                ? `${hidden} hidden`
+                : `${hidden} hidden · ${total} total`;
         }
         // Avoid rewriting inline theme styles on every refresh frame.
         if (this.appliedLightTheme !== lightTheme) {

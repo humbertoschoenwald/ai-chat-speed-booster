@@ -188,7 +188,7 @@ function scheduleInitialScan(): void {
             }
             return;
         }
-        setTimeout(attempt, 500);
+        setTimeout(attempt, 100);
     };
     attempt();
 }
@@ -377,8 +377,9 @@ function handleExtensionMessage(message: unknown): ExtensionStatus | undefined {
         const tokenEstimate = currentSite.id === "chatgpt"
             ? estimateChatGptPromptTokens(readChatGptComposerText(document))
             : null;
+        const displayStatus = getDisplayStatus(messageManager.getStatus());
         return {
-            ...messageManager.getStatus(),
+            ...displayStatus,
             siteId: currentSite.id,
             performanceMode: config.performanceMode,
             nativeModeActive: nativeState?.active ?? false,
@@ -459,6 +460,19 @@ function handleFullLoad(): void {
  * Central renderer for load-more and status-indicator visibility states.
  */
 let rafPending = false;
+function getDisplayStatus(status: ExtensionStatus): ExtensionStatus {
+    if (currentSite.id !== "chatgpt") return status;
+    const messages = Array.from(document.querySelectorAll<HTMLElement>("[data-message-author-role][data-message-id]"));
+    if (messages.length === 0) return status;
+    const visibleMessages = messages.filter((message) => !message.closest(".acsb-hidden")).length;
+    return {
+        ...status,
+        totalMessages: messages.length,
+        visibleMessages,
+        hiddenMessages: Math.max(0, messages.length - visibleMessages),
+    };
+}
+
 function refreshUI(): void {
     if (rafPending) return;
     rafPending = true;
@@ -466,6 +480,7 @@ function refreshUI(): void {
         rafPending = false;
         contentLastUiRefreshAt = Date.now();
         const status = messageManager.getStatus();
+        const displayStatus = getDisplayStatus(status);
 
         // Consume the DOM attribute written by the MAIN-world fetch
         // interceptor.  Once consumed we store the flag internally so
@@ -496,13 +511,13 @@ function refreshUI(): void {
             loadMoreButton.hide();
         }
 
-        domObserver.updateMessageStats(Math.floor(status.totalMessages / 2), Math.floor(status.visibleMessages / 2)); // Divide by 2 to convert from turns to conversations
+        domObserver.updateMessageStats(status.totalMessages, status.visibleMessages);
         domObserver.SetAutoLoad(config.autoLoad); // Update auto-load state in DOM observer based on latest config
 
-        if (!config.enabled || !config.showStatus || status.totalMessages === 0) {
+        if (!config.enabled || !config.showStatus || displayStatus.totalMessages === 0) {
             statusIndicator.hide();
         } else {
-            statusIndicator.update(status.hiddenMessages, status.totalMessages, config.statusPosition, config.fetchInterceptEnabled, config.theme === "light");
+            statusIndicator.update(displayStatus.hiddenMessages, displayStatus.totalMessages, config.statusPosition, config.fetchInterceptEnabled, config.theme === "light");
         }
 
         syncChatGptNativeSnapshots();

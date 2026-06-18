@@ -1,6 +1,7 @@
 import type { ExtensionConfig } from "./types";
 
 export const STORAGE_KEY = "ai_chat_speed_booster_config" as const;
+export const MODE_PROFILES_KEY = "ai_chat_speed_booster_mode_profiles" as const;
 
 export const DEFAULT_CONFIG: Readonly<ExtensionConfig> = Object.freeze({
     visibleMessageLimit: 3,
