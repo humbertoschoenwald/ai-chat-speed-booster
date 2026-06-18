@@ -10,7 +10,7 @@ export const DEFAULT_CONFIG: Readonly<ExtensionConfig> = Object.freeze({
     performanceMode: "legacy",
     showStatus: true,
     statusPosition: "top-right",
-    fetchInterceptEnabled: true,
+    fetchInterceptEnabled: false,
     theme: "dark",
     autoLoad: false,
     weeklyRequestLimit: 3000,
@@ -29,6 +29,7 @@ export const REQUEST_COUNTS_KEY = "acsb_request_counts" as const;
  * load after this version we force it off for everyone. Users can opt back in.
  */
 export const AUTO_LOAD_RESET_KEY = "acsb_auto_load_reset_v1" as const;
+export const FAST_MODE_RESET_KEY = "acsb_fast_mode_reset_v1" as const;
 
 export const CONFIG_LIMITS = Object.freeze({
     visibleMessageLimit: { min: 1, max: 200 },
