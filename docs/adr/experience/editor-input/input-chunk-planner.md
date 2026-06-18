@@ -22,3 +22,7 @@ This slice is planning-only. It does not intercept clipboard contents, dispatch 
 - IME composition stays protected because chunking is disabled while composing.
 - Diagnostics remain content-free.
 - Legacy `.acsb-hidden` / `display:none!important` behavior remains unchanged.
+
+## Update: optimizer diagnostics
+
+The editor input optimizer records only paste length and planned chunk count. It does not store pasted text and does not mutate clipboard contents. Large paste plans open a protected background-work window so observer, snapshot, cache, and layout work can yield while the host editor processes the paste.

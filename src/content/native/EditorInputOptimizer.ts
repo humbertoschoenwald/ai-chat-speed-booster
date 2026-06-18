@@ -1,9 +1,13 @@
+import { InputChunkPlanner } from "./InputChunkPlanner";
+
 export interface EditorInputSnapshot {
     readonly active: boolean;
     readonly composing: boolean;
     readonly deferredTaskCount: number;
     readonly lastEventType: string | null;
     readonly lastEventAt: number | null;
+    readonly lastPasteLength: number | null;
+    readonly lastPasteChunkCount: number | null;
 }
 
 export interface EditorInputOptimizerOptions {
@@ -29,10 +33,13 @@ const INPUT_EVENTS = [
 export class EditorInputOptimizer {
     private readonly root: Document;
     private readonly quietWindowMs: number;
+    private readonly pastePlanner = new InputChunkPlanner();
     private readonly cleanupCallbacks: Array<() => void> = [];
     private composing = false;
     private lastEventType: string | null = null;
     private lastEventAt: number | null = null;
+    private lastPasteLength: number | null = null;
+    private lastPasteChunkCount: number | null = null;
     private protectedUntilMs = 0;
     private deferredTaskCount = 0;
     private listening = false;
@@ -60,6 +67,8 @@ export class EditorInputOptimizer {
         this.composing = false;
         this.lastEventType = null;
         this.lastEventAt = null;
+        this.lastPasteLength = null;
+        this.lastPasteChunkCount = null;
         this.protectedUntilMs = 0;
     }
 
@@ -74,6 +83,13 @@ export class EditorInputOptimizer {
         this.lastEventType = type;
         this.lastEventAt = now;
         this.protectedUntilMs = Math.max(this.protectedUntilMs, now + Math.max(0, durationMs));
+    }
+
+    recordPasteLength(totalLength: number): void {
+        const plan = this.pastePlanner.plan(totalLength, this.composing);
+        this.lastPasteLength = totalLength;
+        this.lastPasteChunkCount = plan.chunkCount;
+        if (plan.chunked) this.markProtectedActivity("large-paste", Math.min(2_000, plan.chunkCount * 50));
     }
 
     shouldDeferBackgroundWork(now = Date.now()): boolean {
@@ -94,6 +110,8 @@ export class EditorInputOptimizer {
             deferredTaskCount: this.deferredTaskCount,
             lastEventType: this.lastEventType,
             lastEventAt: this.lastEventAt,
+            lastPasteLength: this.lastPasteLength,
+            lastPasteChunkCount: this.lastPasteChunkCount,
         };
     }
 

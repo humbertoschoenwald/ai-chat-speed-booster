@@ -132,3 +132,17 @@ test("virtualization diagnostics disable future native virtualization after repe
         lastReason: "host-revealed-hidden-turn",
     });
 });
+
+
+test("editor optimizer records large paste chunk planning without storing text", () => {
+    const optimizer = new EditorInputOptimizer({ quietWindowMs: 50 });
+
+    optimizer.recordPasteLength(25_000);
+
+    expect(optimizer.snapshot()).toMatchObject({
+        lastEventType: "large-paste",
+        lastPasteLength: 25_000,
+        lastPasteChunkCount: 7,
+    });
+    expect(optimizer.shouldDeferBackgroundWork()).toBe(true);
+});
