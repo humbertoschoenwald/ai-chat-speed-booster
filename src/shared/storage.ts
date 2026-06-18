@@ -121,7 +121,9 @@ export async function saveConfig(partial: Partial<ExtensionConfig>): Promise<Ext
         ...extractModeProfile(current),
     };
 
-    const restoredProfile = changedMode ? profiles[targetMode] : undefined;
+    const restoredProfile = changedMode
+        ? (profiles[targetMode] || (targetMode === "legacy" ? extractModeProfile(DEFAULT_CONFIG) : undefined))
+        : undefined;
     const merged = sanitiseConfig({ ...current, ...restoredProfile, ...partial, performanceMode: targetMode });
 
     profiles[merged.performanceMode] = {
