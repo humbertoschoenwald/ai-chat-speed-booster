@@ -49,11 +49,11 @@ const STEPS = [
     [pnpm, ["run", "typecheck"]],
     [pnpm, ["run", "lint"]],
     [pnpm, playwrightInstallArgs],
-    [pnpm, ["run", "test:auth"]],
-    [pnpm, ["run", "test:build"]],
-    [pnpm, ["run", "test:extension"]],
-    [pnpm, ["run", "test:integration"]],
-    [pnpm, ["run", "diagnose:scroll"]],
+    ["node", ["tests/auth-setup.mjs"]],
+    [pnpm, ["exec", "playwright", "test", "--project=build"]],
+    [pnpm, ["exec", "playwright", "test", "--project=extension"]],
+    [pnpm, ["exec", "playwright", "test", "--project=integration"]],
+    ["node", ["tests/scroll-diagnostic.mjs"]],
 ];
 
 for (const [command, args] of STEPS) {
