@@ -196,8 +196,16 @@ export class MessageManager {
     }
 
     private deriveId(el: HTMLElement): string {
-        if (this.messageIdAttribute) {
-            const attrValue = el.getAttribute(this.messageIdAttribute);
+        const attributes = [
+            this.messageIdAttribute,
+            "data-turn-id-container",
+            "data-turn-id",
+            "data-testid",
+            "data-message-id",
+        ];
+        for (const attr of attributes) {
+            if (!attr) continue;
+            const attrValue = el.getAttribute(attr);
             if (attrValue) return attrValue;
         }
         return `msg-${this.messages.length}-${Date.now()}`;

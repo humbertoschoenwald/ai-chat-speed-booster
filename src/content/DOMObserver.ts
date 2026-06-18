@@ -99,7 +99,9 @@ export class DOMObserver {
     }
 
     queryAllMessages(): HTMLElement[] {
-        return Array.from(document.querySelectorAll<HTMLElement>(this.selectors.messageTurn));
+        return this.dedupeNestedMessageTurns(
+            Array.from(document.querySelectorAll<HTMLElement>(this.selectors.messageTurn)),
+        );
     }
 
     getDiagnostics(): DOMObserverDiagnostics {
@@ -304,7 +306,9 @@ export class DOMObserver {
         const elements: HTMLElement[] = [];
         let scanned = 1;
         let skipped = 0;
-        for (const element of root.querySelectorAll<HTMLElement>(this.selectors.messageTurn)) {
+        for (const element of this.dedupeNestedMessageTurns(
+            Array.from(root.querySelectorAll<HTMLElement>(this.selectors.messageTurn)),
+        )) {
             if (this.isExtensionOwned(element) || scannedNodes.has(element)) {
                 skipped += 1;
                 continue;
@@ -314,6 +318,10 @@ export class DOMObserver {
             elements.push(element);
         }
         return { elements, scanned, skipped };
+    }
+
+    private dedupeNestedMessageTurns(elements: HTMLElement[]): HTMLElement[] {
+        return elements.filter((element) => !elements.some((candidate) => candidate !== element && candidate.contains(element)));
     }
 
     private classifyMutationBatch(mutations: MutationRecord[]): MutationBatchClass {
