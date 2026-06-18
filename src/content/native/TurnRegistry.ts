@@ -30,9 +30,16 @@ export interface TurnRegistrySnapshot {
 
 export class TurnRegistry {
     private readonly keyToRecord = new Map<string, NativeTurnRecord>();
-    private readonly elementToRecord = new WeakMap<HTMLElement, NativeTurnRecord>();
-    private readonly placeholderToRecord = new WeakMap<HTMLElement, NativeTurnRecord>();
+    private elementToRecord = new WeakMap<HTMLElement, NativeTurnRecord>();
+    private placeholderToRecord = new WeakMap<HTMLElement, NativeTurnRecord>();
     private readonly dirtyMeasurements = new Set<string>();
+
+    reset(): void {
+        this.keyToRecord.clear();
+        this.elementToRecord = new WeakMap<HTMLElement, NativeTurnRecord>();
+        this.placeholderToRecord = new WeakMap<HTMLElement, NativeTurnRecord>();
+        this.dirtyMeasurements.clear();
+    }
 
     track(element: HTMLElement, structuralIndex: number): NativeTurnRecord {
         const key = this.deriveKey(element, structuralIndex);

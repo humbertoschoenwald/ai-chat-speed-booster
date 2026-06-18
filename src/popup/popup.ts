@@ -170,12 +170,15 @@ function renderNativeDiagnostics(status: ExtensionStatus | undefined): void {
     const tokens = typeof status.nativeModeApproxInputTokens === "number"
         ? ` · prompt: ~${status.nativeModeApproxInputTokens}/${status.nativeModeTokenLimit ?? "?"} tokens${status.nativeModeTokenWarningLevel && status.nativeModeTokenWarningLevel !== "ok" ? ` ${status.nativeModeTokenWarningLevel}` : ""}`
         : "";
+    const renderUnits = typeof status.nativeModeRenderUnitCost === "number"
+        ? ` · render: cost ${status.nativeModeRenderUnitCost} turn ${status.nativeModeTurnNodeCost ?? 0} tool ${status.nativeModeToolNodeCost ?? 0} groups ${status.nativeModeToolGroupCount ?? 0} live ${status.nativeModeLiveWindowSize ?? "?"}`
+        : "";
     const virtualization = status.nativeModeVirtualizationDisabled
         ? ` · virtualization: disabled (${status.nativeModeVirtualizationConflictReason ?? "conflict"})`
         : typeof status.nativeModeRevealLoopCount === "number" || typeof status.nativeModeScrollOscillationCount === "number"
             ? ` · virtualization: reveal ${status.nativeModeRevealLoopCount ?? 0}/scroll ${status.nativeModeScrollOscillationCount ?? 0}`
             : "";
-    nativeDiagnosticsBody.textContent = `Adapter: ${adapter} · lifecycle: ${lifecycle} · selector: ${selectorHealth} · input: ${inputState} · features: ${featureCount} · observer: ${observer}${snapshots}${tokens}${virtualization}${plan}${budget}${blocked}`;
+    nativeDiagnosticsBody.textContent = `Adapter: ${adapter} · lifecycle: ${lifecycle} · selector: ${selectorHealth} · input: ${inputState} · features: ${featureCount} · observer: ${observer}${snapshots}${tokens}${renderUnits}${virtualization}${plan}${budget}${blocked}`;
 }
 
 function renderStatusText(status: ExtensionStatus): string {

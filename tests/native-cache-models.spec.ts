@@ -1,9 +1,10 @@
 import { test, expect } from "@playwright/test";
+import { createRenderUnitBudgetSnapshot } from "../src/content/native/RenderUnitBudget";
 import { ToolCallGroupController } from "../src/content/native/ToolCallGroupController";
 import { TurnMeasurementCache } from "../src/content/native/TurnMeasurementCache";
 import type { NativeTurnRecord } from "../src/content/native/TurnRegistry";
 
-const element = (kind: "tool" | "running" | "failed" | "expanded"): HTMLElement => ({
+const element = (kind: "tool" | "running" | "failed" | "expanded", childCount = 0): HTMLElement => ({
     matches: (selector: string) => {
         if (selector.includes("tool")) return true;
         if (kind === "failed" && selector.includes("error")) return true;
@@ -11,7 +12,7 @@ const element = (kind: "tool" | "running" | "failed" | "expanded"): HTMLElement 
         return false;
     },
     querySelector: () => null,
-    querySelectorAll: () => [],
+    querySelectorAll: () => Array.from({ length: childCount }),
     getAttribute: (name: string) => (name === "aria-expanded" && kind === "expanded" ? "true" : null),
 }) as unknown as HTMLElement;
 
@@ -49,5 +50,35 @@ test.describe("native cache and tool-call models", () => {
             measurementCount: 1,
             schemaVersion: 1,
         });
+    });
+});
+
+
+test("render-unit budget shrinks live window for tool-heavy turns without reading text", () => {
+    const controller = new ToolCallGroupController();
+    const heavyToolTurn = record("testid:conversation-turn-heavy", element("tool", 800), null);
+
+    controller.indexTurn(heavyToolTurn);
+    const budget = createRenderUnitBudgetSnapshot([heavyToolTurn.element], controller.snapshot(), 5);
+
+    expect(budget).toMatchObject({
+        turnCount: 1,
+        toolGroupCount: 1,
+        estimatedToolNodeCost: 801,
+        liveWindowSize: 3,
+    });
+    expect(budget.estimatedRenderUnitCost).toBeGreaterThan(budget.turnCount);
+});
+
+test("render-unit budget keeps normal turns in the configured native window", () => {
+    const controller = new ToolCallGroupController();
+    const normalTurns = [element("tool", 1), element("tool", 1), element("tool", 1)];
+    const budget = createRenderUnitBudgetSnapshot(normalTurns, controller.snapshot(), 5);
+
+    expect(budget).toMatchObject({
+        turnCount: 3,
+        toolGroupCount: 0,
+        estimatedToolNodeCost: 0,
+        liveWindowSize: 5,
     });
 });

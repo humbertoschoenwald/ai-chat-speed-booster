@@ -41,6 +41,10 @@ const RUNNING_SELECTOR = [
 export class ToolCallGroupController {
     private readonly groups = new Map<string, ToolCallGroupRecord>();
 
+    reset(): void {
+        this.groups.clear();
+    }
+
     indexTurn(record: NativeTurnRecord): readonly ToolCallGroupRecord[] {
         const elements = record.element.matches(TOOL_CALL_SELECTOR)
             ? [record.element]

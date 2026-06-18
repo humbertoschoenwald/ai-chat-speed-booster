@@ -127,6 +127,13 @@ export interface ExtensionStatus {
     readonly nativeModeApproxInputTokens?: number;
     readonly nativeModeTokenLimit?: number;
     readonly nativeModeTokenWarningLevel?: "ok" | "warn" | "critical";
+    readonly nativeModeRenderUnitCost?: number;
+    readonly nativeModeTurnNodeCost?: number;
+    readonly nativeModeToolNodeCost?: number;
+    readonly nativeModeToolGroupCount?: number;
+    readonly nativeModeRunningToolCount?: number;
+    readonly nativeModeFailedToolCount?: number;
+    readonly nativeModeLiveWindowSize?: number;
     readonly nativeModeRevealLoopCount?: number;
     readonly nativeModeScrollOscillationCount?: number;
     readonly nativeModeVirtualizationDisabled?: boolean;

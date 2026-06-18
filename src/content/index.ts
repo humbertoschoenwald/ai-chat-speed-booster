@@ -6,6 +6,9 @@ import { RequestLifecycleTracker } from "./RequestLifecycleTracker";
 import { LoadMoreButton, StatusIndicator } from "./UIComponents";
 import { EditorInputOptimizer } from "./native/EditorInputOptimizer";
 import { NativeModeController } from "./native/NativeModeController";
+import { createRenderUnitBudgetSnapshot, type RenderUnitBudgetSnapshot } from "./native/RenderUnitBudget";
+import { ToolCallGroupController } from "./native/ToolCallGroupController";
+import { TurnRegistry } from "./native/TurnRegistry";
 import { VirtualizationConflictDetector } from "./native/VirtualizationConflictDetector";
 import { ChatGptTextSnapshotRenderer } from "./native/chatgpt/ChatGptTextSnapshotRenderer";
 import { estimateChatGptPromptTokens, readChatGptComposerText } from "./native/chatgpt/ChatGptTokenEstimator";
@@ -41,6 +44,9 @@ let chatGptTextSnapshotRenderer: ChatGptTextSnapshotRenderer | null = null;
 let nativeSnapshotHosts = 0;
 let nativeSnapshotCacheBytes = 0;
 const nativeVirtualizationConflicts = new VirtualizationConflictDetector();
+const nativeTurnRegistry = new TurnRegistry();
+const nativeToolCallGroups = new ToolCallGroupController();
+let nativeRenderBudget: RenderUnitBudgetSnapshot | null = null;
 let conversationRetryTimer: ReturnType<typeof setTimeout> | null = null;
 let resumeHealthCheckTimer: ReturnType<typeof setTimeout> | null = null;
 let viewportResizeTimer: ReturnType<typeof setTimeout> | null = null;
@@ -256,6 +262,9 @@ function handleConversationChanged(): void {
     // Don't restore DOM visibility — the old nodes are about to be removed
     // by the framework.  Un-hiding them would cause a flash of all messages.
     messageManager.destroy(false);
+    nativeTurnRegistry.reset();
+    nativeToolCallGroups.reset();
+    nativeRenderBudget = null;
     loadMoreButton.hide();
     statusIndicator.hide();
 
@@ -376,6 +385,9 @@ function handleMessagesReset(): void {
     contentLifecycleState = "recovering";
     logger.debug("large batch detected, re-initialising message manager");
     messageManager.destroy();
+    nativeTurnRegistry.reset();
+    nativeToolCallGroups.reset();
+    nativeRenderBudget = null;
     loadMoreButton.hide();
     const messages = domObserver.queryAllMessages();
     messageManager.initialise(messages);
@@ -438,6 +450,13 @@ function handleExtensionMessage(message: unknown): ExtensionStatus | undefined {
             nativeModeApproxInputTokens: tokenEstimate?.approxTokens,
             nativeModeTokenLimit: tokenEstimate?.limitTokens,
             nativeModeTokenWarningLevel: tokenEstimate?.warningLevel,
+            nativeModeRenderUnitCost: nativeRenderBudget?.estimatedRenderUnitCost,
+            nativeModeTurnNodeCost: nativeRenderBudget?.estimatedTurnNodeCost,
+            nativeModeToolNodeCost: nativeRenderBudget?.estimatedToolNodeCost,
+            nativeModeToolGroupCount: nativeRenderBudget?.toolGroupCount,
+            nativeModeRunningToolCount: nativeRenderBudget?.runningToolCount,
+            nativeModeFailedToolCount: nativeRenderBudget?.failedToolCount,
+            nativeModeLiveWindowSize: nativeRenderBudget?.liveWindowSize,
             nativeModeRevealLoopCount: nativeConflictSnapshot.revealLoopCount,
             nativeModeScrollOscillationCount: nativeConflictSnapshot.scrollOscillationCount,
             nativeModeVirtualizationDisabled: nativeConflictSnapshot.shouldDisableNativeVirtualization,
@@ -561,6 +580,9 @@ function syncChatGptNativeSnapshots(): void {
     const nativeActive = config.performanceMode === "native" && controller?.snapshot().active === true;
     if (!chatGptTextSnapshotRenderer || !controller || currentSite.id !== "chatgpt" || !nativeActive) {
         chatGptTextSnapshotRenderer?.restoreAll(document);
+        nativeTurnRegistry.reset();
+        nativeToolCallGroups.reset();
+        nativeRenderBudget = null;
         nativeSnapshotHosts = 0;
         nativeSnapshotCacheBytes = 0;
         return;
@@ -579,10 +601,15 @@ function syncChatGptNativeSnapshots(): void {
         return;
     }
 
-    const liveWindowSize = Math.max(3, Math.min(5, config.visibleMessageLimit));
-    const result = chatGptTextSnapshotRenderer.sync(domObserver.queryAllMessages(), {
+    const turns = domObserver.queryAllMessages();
+    nativeToolCallGroups.reset();
+    const records = turns.map((turn, index) => nativeTurnRegistry.track(turn, index));
+    for (const record of records) nativeToolCallGroups.indexTurn(record);
+    nativeRenderBudget = createRenderUnitBudgetSnapshot(turns, nativeToolCallGroups.snapshot(), config.visibleMessageLimit);
+
+    const result = chatGptTextSnapshotRenderer.sync(turns, {
         enabled: true,
-        liveWindowSize,
+        liveWindowSize: nativeRenderBudget.liveWindowSize,
         nearestWindow: 2,
         nowMs: Date.now(),
     });
