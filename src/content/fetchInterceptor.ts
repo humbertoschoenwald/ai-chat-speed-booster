@@ -1,4 +1,10 @@
 /**
+ * License: MIT. Provenance: AI Chat Speed Booster extension source.
+ * Responsibility: patch supported conversation fetches and safely trim host responses.
+ * Boundary: MAIN-world fetch interception only; no browser extension APIs or persistent chat data.
+ * ADR: docs/adr/architecture/message-management/chatgpt-fetch-trim-reference-preservation.md.
+ * SCHOENWALD-LARGE-FILE owner=ai-chat-speed-booster reason="MAIN-world fetch patch and trim strategies must stay bundled without chrome API imports" split="Extract pure trim strategies if this grows further" validation="pnpm validate" review="ChatGPT Fast Mode compatibility fix"
+ *
  * Fetch Interceptor — runs in the MAIN world (same JS context as the page).
  *
  * It monkey-patches window.fetch so that conversation-loading API responses are
@@ -425,14 +431,20 @@ function cacheGet(key: string): CachedResponse | undefined {
         // Ordered kept chain (preserves root → current direction)
         const keptChain = chain.filter((id) => kept.has(id));
 
-        // Build trimmed mapping with reconnected parent/children pointers
+        // Preserve every original mapping entry so host-side lookups by node ID
+        // cannot crash after the current visible chain is shortened.
         const newMapping: Record<string, Record<string, unknown>> = {};
+        for (const [id, originalNode] of Object.entries(mapping)) {
+            newMapping[id] = JSON.parse(
+                JSON.stringify(originalNode),
+            ) as Record<string, unknown>;
+        }
+
+        // Reconnect the current chain while leaving older skipped nodes
+        // addressable as orphaned historical entries.
         for (let i = 0; i < keptChain.length; i++) {
             const id = keptChain[i];
-            // Deep-clone the node to avoid mutating the original response data
-            const node = JSON.parse(
-                JSON.stringify(mapping[id]),
-            ) as Record<string, unknown>;
+            const node = newMapping[id];
             node[tc.parentPointer] = i > 0 ? keptChain[i - 1] : null;
             node[tc.childrenKey] =
                 i < keptChain.length - 1 ? [keptChain[i + 1]] : [];

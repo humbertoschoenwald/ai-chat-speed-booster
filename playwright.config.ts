@@ -13,7 +13,7 @@ export default defineConfig({
         },
         {
             name: "extension",
-            testMatch: "extension.spec.ts",
+            testMatch: ["extension.spec.ts", "fetch-interceptor.spec.ts"],
         },
         {
             name: "safari",
