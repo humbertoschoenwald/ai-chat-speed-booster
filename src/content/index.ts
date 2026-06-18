@@ -1,3 +1,4 @@
+import { decideContentBootstrapOwnership } from "./ContentBootstrapOwnership";
 import { DOMObserver } from "./DOMObserver";
 import { MessageManager } from "./MessageManager";
 import { RequestLifecycleTracker } from "./RequestLifecycleTracker";
@@ -18,6 +19,11 @@ import {
 import { logger } from "../shared/logger";
 
 const CONTENT_BOOTSTRAP_ATTR = "data-acsb-content-bootstrapped";
+const CONTENT_INSTANCE_ATTR = "data-acsb-content-instance";
+const CONTENT_HEARTBEAT_ATTR = "data-acsb-content-heartbeat-at";
+const CONTENT_HEARTBEAT_MS = 1_000;
+const STALE_CONTENT_HEARTBEAT_MS = 5_000;
+const contentInstanceId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
 let config: ExtensionConfig;
 let currentSite: SiteConfig;
@@ -33,6 +39,7 @@ let nativeSnapshotCacheBytes = 0;
 let conversationRetryTimer: ReturnType<typeof setTimeout> | null = null;
 let resumeHealthCheckTimer: ReturnType<typeof setTimeout> | null = null;
 let viewportResizeTimer: ReturnType<typeof setTimeout> | null = null;
+let contentHeartbeatTimer: ReturnType<typeof setInterval> | null = null;
 let contentScriptOwnsBootstrap = false;
 const contentBootTime = Date.now();
 let contentLifecycleState: ContentLifecycleState = "initializing";
@@ -53,12 +60,22 @@ async function bootstrap(): Promise<void> {
         logger.info("no supported site detected, content script inactive");
         return;
     }
-    if (document.documentElement.getAttribute(CONTENT_BOOTSTRAP_ATTR) === "true") {
+    const heartbeatAt = Number(document.documentElement.getAttribute(CONTENT_HEARTBEAT_ATTR));
+    const ownership = decideContentBootstrapOwnership({
+        bootstrapped: document.documentElement.getAttribute(CONTENT_BOOTSTRAP_ATTR) === "true",
+        heartbeatAt: Number.isFinite(heartbeatAt) && heartbeatAt > 0 ? heartbeatAt : null,
+    }, Date.now(), STALE_CONTENT_HEARTBEAT_MS);
+    if (!ownership.acquire) {
         logger.warn("content script bootstrap skipped because another ACSB instance owns this page");
         return;
     }
+    if (ownership.reason === "stale-owner") {
+        logger.warn("content script taking over stale ACSB bootstrap ownership");
+    }
     document.documentElement.setAttribute(CONTENT_BOOTSTRAP_ATTR, "true");
+    document.documentElement.setAttribute(CONTENT_INSTANCE_ATTR, contentInstanceId);
     contentScriptOwnsBootstrap = true;
+    startContentHeartbeat();
     contentLifecycleState = "initializing";
     currentSite = site;
     logger.info(`bootstrapping content script for ${currentSite.name}`);
@@ -105,6 +122,30 @@ async function bootstrap(): Promise<void> {
     window.addEventListener("focus", handleWindowFocus);
     document.addEventListener("visibilitychange", handleVisibilityResume);
 
+}
+
+function startContentHeartbeat(): void {
+    const beat = (): void => {
+        if (!contentScriptOwnsBootstrap) return;
+        document.documentElement.setAttribute(CONTENT_HEARTBEAT_ATTR, String(Date.now()));
+        document.documentElement.setAttribute(CONTENT_INSTANCE_ATTR, contentInstanceId);
+    };
+    beat();
+    if (contentHeartbeatTimer) clearInterval(contentHeartbeatTimer);
+    contentHeartbeatTimer = setInterval(beat, CONTENT_HEARTBEAT_MS);
+}
+
+function clearContentBootstrapOwnership(): void {
+    if (contentHeartbeatTimer) {
+        clearInterval(contentHeartbeatTimer);
+        contentHeartbeatTimer = null;
+    }
+    if (document.documentElement.getAttribute(CONTENT_INSTANCE_ATTR) === contentInstanceId) {
+        document.documentElement.removeAttribute(CONTENT_BOOTSTRAP_ATTR);
+        document.documentElement.removeAttribute(CONTENT_INSTANCE_ATTR);
+        document.documentElement.removeAttribute(CONTENT_HEARTBEAT_ATTR);
+    }
+    contentScriptOwnsBootstrap = false;
 }
 
 /**
@@ -529,8 +570,7 @@ window.addEventListener("beforeunload", () => {
     chatGptTextSnapshotRenderer = null;
     nativeModeController?.stop("content script unloading");
     nativeModeController = null;
-    document.documentElement.removeAttribute(CONTENT_BOOTSTRAP_ATTR);
-    contentScriptOwnsBootstrap = false;
+    clearContentBootstrapOwnership();
     domObserver.stop();
     messageManager.destroy();
     loadMoreButton.destroy();
@@ -541,8 +581,7 @@ bootstrap().catch((err) => {
     contentLifecycleState = "degraded";
     contentLastRecoverableErrorClass = err instanceof Error ? err.name : "bootstrap-error";
     if (contentScriptOwnsBootstrap) {
-        document.documentElement.removeAttribute(CONTENT_BOOTSTRAP_ATTR);
-        contentScriptOwnsBootstrap = false;
+        clearContentBootstrapOwnership();
     }
     logger.error("failed to bootstrap content script", err);
 });
