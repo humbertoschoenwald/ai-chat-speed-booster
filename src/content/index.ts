@@ -4,6 +4,7 @@ import { MessageManager } from "./MessageManager";
 import { RequestLifecycleTracker } from "./RequestLifecycleTracker";
 import { LoadMoreButton, StatusIndicator } from "./UIComponents";
 import { NativeModeController } from "./native/NativeModeController";
+import { VirtualizationConflictDetector } from "./native/VirtualizationConflictDetector";
 import { ChatGptTextSnapshotRenderer } from "./native/chatgpt/ChatGptTextSnapshotRenderer";
 import { estimateChatGptPromptTokens, readChatGptComposerText } from "./native/chatgpt/ChatGptTokenEstimator";
 import { detectCurrentSite, type SiteConfig } from "../shared/sites";
@@ -36,6 +37,7 @@ let nativeModeController: NativeModeController | null = null;
 let chatGptTextSnapshotRenderer: ChatGptTextSnapshotRenderer | null = null;
 let nativeSnapshotHosts = 0;
 let nativeSnapshotCacheBytes = 0;
+const nativeVirtualizationConflicts = new VirtualizationConflictDetector();
 let conversationRetryTimer: ReturnType<typeof setTimeout> | null = null;
 let resumeHealthCheckTimer: ReturnType<typeof setTimeout> | null = null;
 let viewportResizeTimer: ReturnType<typeof setTimeout> | null = null;
@@ -374,6 +376,7 @@ function handleExtensionMessage(message: unknown): ExtensionStatus | undefined {
     if (msg.type === MessageType.GET_STATUS) {
         const nativeState = nativeModeController?.snapshot();
         const observerDiagnostics = domObserver.getDiagnostics();
+        const nativeConflictSnapshot = nativeVirtualizationConflicts.snapshot();
         const tokenEstimate = currentSite.id === "chatgpt"
             ? estimateChatGptPromptTokens(readChatGptComposerText(document))
             : null;
@@ -410,6 +413,10 @@ function handleExtensionMessage(message: unknown): ExtensionStatus | undefined {
             nativeModeApproxInputTokens: tokenEstimate?.approxTokens,
             nativeModeTokenLimit: tokenEstimate?.limitTokens,
             nativeModeTokenWarningLevel: tokenEstimate?.warningLevel,
+            nativeModeRevealLoopCount: nativeConflictSnapshot.revealLoopCount,
+            nativeModeScrollOscillationCount: nativeConflictSnapshot.scrollOscillationCount,
+            nativeModeVirtualizationDisabled: nativeConflictSnapshot.shouldDisableNativeVirtualization,
+            nativeModeVirtualizationConflictReason: nativeConflictSnapshot.lastReason,
         };
     }
     // Background also broadcasts CONFIG_UPDATED here (in addition to the
@@ -538,6 +545,15 @@ function syncChatGptNativeSnapshots(): void {
         return;
     }
 
+    const scrollRoot = domObserver.findScrollContainer() ?? document.documentElement;
+    nativeVirtualizationConflicts.recordScrollHeight(scrollRoot.scrollHeight);
+    if (nativeVirtualizationConflicts.snapshot().shouldDisableNativeVirtualization) {
+        chatGptTextSnapshotRenderer.restoreAll(document);
+        nativeSnapshotHosts = 0;
+        nativeSnapshotCacheBytes = 0;
+        return;
+    }
+
     const liveWindowSize = Math.max(3, Math.min(5, config.visibleMessageLimit));
     const result = chatGptTextSnapshotRenderer.sync(domObserver.queryAllMessages(), {
         enabled: true,
@@ -545,6 +561,9 @@ function syncChatGptNativeSnapshots(): void {
         nearestWindow: 2,
         nowMs: Date.now(),
     });
+    for (let i = 0; i < result.hostRevealLoops; i++) {
+        nativeVirtualizationConflicts.recordHostReveal(true, false);
+    }
     nativeSnapshotHosts = result.snapshotHosts;
     nativeSnapshotCacheBytes = result.cache.totalBytes;
 }

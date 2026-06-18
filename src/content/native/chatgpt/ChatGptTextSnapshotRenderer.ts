@@ -15,6 +15,7 @@ export interface ChatGptTextSnapshotRenderOptions {
 export interface ChatGptTextSnapshotRenderResult {
     readonly snapshotHosts: number;
     readonly hydratedHosts: number;
+    readonly hostRevealLoops: number;
     readonly cache: ChatGptTextSnapshotCacheSnapshot;
 }
 
@@ -48,22 +49,26 @@ export class ChatGptTextSnapshotRenderer {
     sync(turns: readonly HTMLElement[], options: ChatGptTextSnapshotRenderOptions): ChatGptTextSnapshotRenderResult {
         if (!options.enabled) {
             this.restoreAll(this.root ?? document);
-            return { snapshotHosts: 0, hydratedHosts: turns.length, cache: this.cache.snapshot() };
+            return { snapshotHosts: 0, hydratedHosts: turns.length, hostRevealLoops: 0, cache: this.cache.snapshot() };
         }
 
         const liveKeys = computeLiveKeys(turns, options.liveWindowSize, options.nearestWindow);
         let snapshotHosts = 0;
         let hydratedHosts = 0;
+        let hostRevealLoops = 0;
         let snapshotWrites = 0;
         turns.forEach((turn, index) => {
             const key = getTurnKey(turn, index);
+            const snapshotNodePresent = turn.querySelector(SNAPSHOT_SELECTOR) !== null;
+            const hostMarked = turn.getAttribute(HOST_ATTR) === "true";
+            if (snapshotNodePresent && !hostMarked) hostRevealLoops += 1;
             const shouldCheckPin = index >= Math.max(0, turns.length - options.liveWindowSize - options.nearestWindow - 2);
             if (liveKeys.has(key) || (shouldCheckPin && isPinnedTurn(turn))) {
                 this.restore(turn);
                 hydratedHosts += 1;
                 return;
             }
-            if (turn.getAttribute(HOST_ATTR) === "true") {
+            if (hostMarked) {
                 snapshotHosts += 1;
                 return;
             }
@@ -78,7 +83,7 @@ export class ChatGptTextSnapshotRenderer {
                 hydratedHosts += 1;
             }
         });
-        return { snapshotHosts, hydratedHosts, cache: this.cache.snapshot() };
+        return { snapshotHosts, hydratedHosts, hostRevealLoops, cache: this.cache.snapshot() };
     }
 
     restoreAll(root: ParentNode = document): void {

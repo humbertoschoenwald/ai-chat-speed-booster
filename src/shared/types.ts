@@ -118,6 +118,10 @@ export interface ExtensionStatus {
     readonly nativeModeApproxInputTokens?: number;
     readonly nativeModeTokenLimit?: number;
     readonly nativeModeTokenWarningLevel?: "ok" | "warn" | "critical";
+    readonly nativeModeRevealLoopCount?: number;
+    readonly nativeModeScrollOscillationCount?: number;
+    readonly nativeModeVirtualizationDisabled?: boolean;
+    readonly nativeModeVirtualizationConflictReason?: string | null;
     readonly legacyRevealLoopCount?: number;
     readonly legacyLastRevealLoopAt?: number | null;
 }

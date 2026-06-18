@@ -146,3 +146,33 @@ test("editor optimizer records large paste chunk planning without storing text",
     });
     expect(optimizer.shouldDeferBackgroundWork()).toBe(true);
 });
+
+
+test("native virtualization disables after scroll-height oscillation loops (#24)", () => {
+    const detector = new VirtualizationConflictDetector();
+
+    detector.recordScrollHeight(10_000, 1_000);
+    detector.recordScrollHeight(8_000, 1_100);
+    detector.recordScrollHeight(10_200, 1_200);
+    detector.recordScrollHeight(8_100, 1_300);
+
+    expect(detector.snapshot()).toMatchObject({
+        scrollOscillationCount: 3,
+        shouldDisableNativeVirtualization: true,
+        lastReason: "scroll-height-oscillation",
+    });
+});
+
+test("native virtualization ignores normal monotonic scroll-height growth (#24)", () => {
+    const detector = new VirtualizationConflictDetector();
+
+    detector.recordScrollHeight(10_000, 1_000);
+    detector.recordScrollHeight(10_200, 1_100);
+    detector.recordScrollHeight(10_500, 1_200);
+    detector.recordScrollHeight(10_900, 1_300);
+
+    expect(detector.snapshot()).toMatchObject({
+        scrollOscillationCount: 0,
+        shouldDisableNativeVirtualization: false,
+    });
+});
