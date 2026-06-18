@@ -210,12 +210,12 @@ To test against real sites with your account:
 
 The auth profile is saved to `tests/.auth-profile/` (git-ignored) and reused across runs.
 
-### Headless mode
+### Test browser visibility
 
-Set `HEADLESS=1` to run without a visible browser window:
+Validation and extension tests run Chromium hidden by default. To see the temporary test browser windows, opt in with `SHOW_TEST_BROWSER=1`:
 
 ```bash
-HEADLESS=1 pnpm test
+SHOW_TEST_BROWSER=1 pnpm test
 ```
 
 ## Browser support

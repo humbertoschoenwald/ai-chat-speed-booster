@@ -48,11 +48,11 @@ type WorkerFixtures = {
 export const test = base.extend<{ page: Page }, WorkerFixtures>({
     // eslint-disable-next-line no-empty-pattern
     extensionContext: [async ({ }, use) => {
-        const headless = process.env.HEADLESS === "1";
+        const showTestBrowser = process.env.SHOW_TEST_BROWSER === "1";
         const ctx = await chromium.launchPersistentContext("", {
-            headless: false, // must be false for extensions
+            headless: false, // Chromium extensions still need a persistent extension context.
             args: [
-                ...(headless ? ["--headless=new"] : []),
+                ...(showTestBrowser ? [] : ["--headless=new"]),
                 "--no-first-run",
                 "--no-default-browser-check",
                 `--disable-extensions-except=${EXTENSION_PATH}`,
@@ -84,7 +84,7 @@ export const test = base.extend<{ page: Page }, WorkerFixtures>({
 export const authTest = base.extend<{ page: Page }, WorkerFixtures>({
     // eslint-disable-next-line no-empty-pattern
     extensionContext: [async ({ }, use) => {
-        const headless = process.env.HEADLESS === "1";
+        const showTestBrowser = process.env.SHOW_TEST_BROWSER === "1";
         let userDataDir = "";
         if (existsSync(AUTH_PROFILE)) {
             userDataDir = mkdtempSync(path.join(os.tmpdir(), "acsb-test-"));
@@ -93,7 +93,7 @@ export const authTest = base.extend<{ page: Page }, WorkerFixtures>({
         const ctx = await chromium.launchPersistentContext(userDataDir, {
             headless: false,
             args: [
-                ...(headless ? ["--headless=new"] : []),
+                ...(showTestBrowser ? [] : ["--headless=new"]),
                 "--no-first-run",
                 "--no-default-browser-check",
                 `--disable-extensions-except=${EXTENSION_PATH}`,
