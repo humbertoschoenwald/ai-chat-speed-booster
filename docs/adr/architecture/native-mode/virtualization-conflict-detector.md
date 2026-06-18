@@ -12,7 +12,7 @@ Issue #24 reports that host-page virtualization can fight extension-managed hidi
 
 Add a model that records host reveal loops and scroll-height oscillation signals. The model reports whether future Native virtualization should be disabled after repeated conflict signals.
 
-This slice is diagnostic-only. It does not change Legacy hiding, add placeholders, compensate scroll, or mutate chat DOM.
+This slice is diagnostic-first. Legacy hiding still uses the existing hard-hide path; if a host page removes that class from a turn the extension still considers hidden, the extension records a reveal-loop counter and reapplies the existing class. It does not add placeholders, compensate scroll, or introduce Native virtualization.
 
 ## Consequences
 

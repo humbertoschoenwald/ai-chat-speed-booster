@@ -116,3 +116,19 @@ test("native send and stream activity opens a protected background-work window",
         lastEventAt: 10_000,
     });
 });
+
+
+test("virtualization diagnostics disable future native virtualization after repeated host reveal loops (#24)", () => {
+    const detector = new VirtualizationConflictDetector();
+
+    detector.recordHostReveal(true, false);
+    detector.recordHostReveal(true, false);
+    expect(detector.snapshot().shouldDisableNativeVirtualization).toBe(false);
+
+    detector.recordHostReveal(true, false);
+    expect(detector.snapshot()).toMatchObject({
+        revealLoopCount: 3,
+        shouldDisableNativeVirtualization: true,
+        lastReason: "host-revealed-hidden-turn",
+    });
+});

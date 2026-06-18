@@ -118,6 +118,8 @@ export interface ExtensionStatus {
     readonly nativeModeApproxInputTokens?: number;
     readonly nativeModeTokenLimit?: number;
     readonly nativeModeTokenWarningLevel?: "ok" | "warn" | "critical";
+    readonly legacyRevealLoopCount?: number;
+    readonly legacyLastRevealLoopAt?: number | null;
 }
 
 export interface WeeklyRequestCount {

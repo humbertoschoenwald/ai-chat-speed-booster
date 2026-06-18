@@ -34,6 +34,8 @@ export class MessageManager {
     /** O(1) id → TrackedMessage lookup for DOMObserver dedupe checks. */
     private idMap = new Map<string, TrackedMessage>();
     private visibleCounter = 0;
+    private legacyRevealLoopCount = 0;
+    private legacyLastRevealLoopAt: number | null = null;
 
     private get visibleCount(): number {
         return this.visibleCounter;
@@ -105,6 +107,8 @@ export class MessageManager {
             hiddenMessages: total - visible,
             showStatus: this.config.showStatus,
             statusPosition: this.config.statusPosition,
+            legacyRevealLoopCount: this.legacyRevealLoopCount,
+            legacyLastRevealLoopAt: this.legacyLastRevealLoopAt,
         };
     }
 
@@ -164,7 +168,14 @@ export class MessageManager {
     }
 
     private hideMessage(msg: TrackedMessage): void {
-        if (!msg.visible) return; // already hidden — skip DOM write
+        if (!msg.visible) {
+            if (!msg.element.classList.contains(HIDE_CLASS)) {
+                this.recordLegacyRevealLoop();
+                msg.element.classList.add(HIDE_CLASS);
+                msg.element.setAttribute("aria-hidden", "true");
+            }
+            return;
+        }
         msg.visible = false;
         this.visibleCounter--;
         msg.element.classList.add(HIDE_CLASS);
@@ -177,6 +188,11 @@ export class MessageManager {
         this.visibleCounter++;
         msg.element.classList.remove(HIDE_CLASS);
         msg.element.removeAttribute("aria-hidden");
+    }
+
+    private recordLegacyRevealLoop(): void {
+        this.legacyRevealLoopCount += 1;
+        this.legacyLastRevealLoopAt = Date.now();
     }
 
     private deriveId(el: HTMLElement): string {
