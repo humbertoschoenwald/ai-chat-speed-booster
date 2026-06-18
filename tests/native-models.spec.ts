@@ -156,6 +156,7 @@ test("native virtualization disables after scroll-height oscillation loops (#24)
     detector.recordScrollHeight(8_000, 1_100);
     detector.recordScrollHeight(10_200, 1_200);
     detector.recordScrollHeight(8_100, 1_300);
+    detector.recordScrollHeight(10_300, 1_400);
 
     expect(detector.snapshot()).toMatchObject({
         scrollOscillationCount: 3,
