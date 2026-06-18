@@ -463,7 +463,7 @@ let rafPending = false;
 function getDisplayStatus(status: ExtensionStatus): ExtensionStatus {
     if (currentSite.id !== "chatgpt") return status;
     const messages = Array.from(document.querySelectorAll<HTMLElement>("[data-message-author-role][data-message-id]"));
-    if (messages.length === 0) return status;
+    if (messages.length <= status.totalMessages) return status;
     const visibleMessages = messages.filter((message) => !message.closest(".acsb-hidden")).length;
     return {
         ...status,
