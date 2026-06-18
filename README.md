@@ -1,21 +1,44 @@
 # AI Chat Speed Booster
 
+<!-- ADR: docs/adr/engineering/tooling/pnpm-package-manager-authority.md -->
+
+[![CI](https://github.com/Noah4ever/ai-chat-speed-booster/actions/workflows/ci.yml/badge.svg)](https://github.com/Noah4ever/ai-chat-speed-booster/actions/workflows/ci.yml)
+[![Release](https://github.com/Noah4ever/ai-chat-speed-booster/actions/workflows/release.yml/badge.svg)](https://github.com/Noah4ever/ai-chat-speed-booster/actions/workflows/release.yml)
+![Node.js 18+](https://img.shields.io/badge/node-%3E%3D18-339933)
+![pnpm 10+](https://img.shields.io/badge/pnpm-%3E%3D10-f69220)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178c6)
+![Playwright](https://img.shields.io/badge/tests-Playwright-2ead33)
+![esbuild](https://img.shields.io/badge/bundler-esbuild-ffcf00)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 **Website:** [projects.thiering.org/ai-chat-speed-booster](https://projects.thiering.org/ai-chat-speed-booster/)
 
 Keeps long AI chat conversations responsive by showing only recent messages first, then letting you load older ones when you need them.
 
 Works on **ChatGPT**, **Claude**, **Gemini**, and any AI chat app you add to the config.
 
-## Install via official browser extension store
+## Install from the extension store
+
+Use your browser's official extension store when available. Store installs update automatically.
 
 | Browser | Version | Link |
 | --- | --- | --- |
-| Chrome | v1.4.5 | [chromewebstore](https://chromewebstore.google.com/detail/ai-chat-speed-booster/fgefgkfmapdjjjdekejanelknedclfik) |
-| Firefox | v1.4.5 | [addons.mozilla.org](https://addons.mozilla.org/en-US/firefox/addon/ai-chat-speed-booster/?utm_source=addons.mozilla.org&utm_medium=referral&utm_content=search) |
+| Chrome | v1.4.5 | [Chrome Web Store](https://chromewebstore.google.com/detail/ai-chat-speed-booster/fgefgkfmapdjjjdekejanelknedclfik) |
+| Firefox | v1.4.5 | [Firefox Add-ons](https://addons.mozilla.org/en-US/firefox/addon/ai-chat-speed-booster/?utm_source=addons.mozilla.org&utm_medium=referral&utm_content=search) |
 
-## Install
+Store listings can lag behind a release because review can take time.
 
-We suggest using your browser's official extension store because it updates automatically. If the extension is not available in your browser's store, either open an issue to let us know or download the extension and import it manually. Keep in mind that manually installed versions do not update automatically when a new release is published.
+## Safari install
+
+Safari requires a local Xcode build instead of a normal extension-store install.
+
+Start here: [Safari install guide](docs/install/safari.md)
+
+You will need macOS, Xcode, Node.js 18+, pnpm 10+, and a free Apple ID.
+
+## Manual install
+
+Manual installs are useful when your browser store does not have the extension yet. Manually installed versions do not update automatically.
 
 1. Go to [Releases](https://github.com/Noah4ever/ai-chat-speed-booster/releases)
 2. Download the zip for your browser
@@ -24,139 +47,6 @@ We suggest using your browser's official extension store because it updates auto
     - [Firefox install guide](docs/install/firefox.md)
     - [Edge install guide](docs/install/edge.md)
     - [Safari install guide](docs/install/safari.md)
-
-Store listings (Chrome/Firefox) may lag because review can take time.
-
-## Build it yourself
-
-### 1) Requirements
-
-- Node.js 18+
-- pnpm 10+
-
-### 2) Install
-
-```bash
-git clone https://github.com/Noah4ever/ai-chat-speed-booster.git
-cd ai-chat-speed-booster
-pnpm install
-```
-
-### 3) Build
-
-Build all targets:
-
-```bash
-pnpm run build:all
-```
-
-You can also just build one target (`chrome`, `firefox`, `safari`, `edge`):
-
-```bash
-pnpm run build:chrome
-```
-Build output goes to `dist/chrome/`.
-
-## Releasing a new version
-
-The two scripts under `scripts/` handle everything between editing code and uploading zips to the stores.
-
-### 1. Bump the version
-
-```bash
-pnpm run bump 1.4.5
-```
-
-Updates the version in `package.json` and all four browser manifests (`browsers/{chrome,edge,firefox,safari}/manifest.json`), stages only those five files, commits with `fix: update version to 1.4.5`, and creates the tag `v1.4.5`.
-
-Flags:
-
-- `pnpm run bump 1.4.5 -- --dry` — preview the changes, write nothing
-- `pnpm run bump 1.4.5 -- --no-tag` — commit but skip the tag
-
-The script refuses to run if the tag already exists, if you're already on that version, or if the version isn't semver-shaped (`X.Y.Z` or `X.Y.Z-beta.1`).
-
-### 2. Package the release zips
-
-```bash
-pnpm run package
-```
-
-For changelog and release metadata work, fetch tags before generating files:
-
-```bash
-git fetch --tags --force
-```
-
-Builds Chrome + Firefox, then writes three zips into `deploys/` (gitignored):
-
-| File | What it's for |
-| --- | --- |
-| `chrome-v<version>.zip` | Upload to the Chrome Web Store |
-| `firefox-v<version>.zip` | Upload to Firefox AMO |
-| `firefox-source-v<version>.zip` | Source archive AMO requires for review |
-
-The source zip is produced by `git archive HEAD`, so it always matches the last commit — **bump and commit before packaging**, otherwise the source archive will show the previous version's tree.
-
-Flag: `pnpm run package -- --skip-build` re-zips whatever's already in `dist/` without rebuilding.
-
-### 3. Push and upload
-
-```bash
-git push && git push --tags
-```
-
-Then upload from `deploys/`:
-
-- **Chrome Web Store** — upload `chrome-v<version>.zip`
-- **Firefox AMO** — upload `firefox-v<version>.zip`, then attach `firefox-source-v<version>.zip` when prompted for source code. AMO also asks for release notes — paste a short summary of what changed.
-
-### 4. After the stores publish
-
-The release workflow updates the version numbers in the [Install via official browser extension store](#install-via-official-browser-extension-store) table at the top of this README when a version tag is released. Store review can take days, so the listed version may still represent the submitted release before each store finishes review.
-
-## Adding a new AI chat site
-
-Contributor note: run `git fetch --tags --force` before generating release metadata so changelog sections use the real release tags.
-
-All site definitions live in one file: [`sites.config.json`](sites.config.json).
-
-To add a new site, add an entry to the array:
-
-```json
-{
-    "id": "mysite",
-    "name": "My AI Chat",
-    "hostnames": ["mysite.com"],
-    "urlPatterns": ["*://mysite.com/*"],
-    "selectors": {
-        "messageTurn": ".message-selector",
-        "scrollContainer": ".scroll-container"
-    },
-    "messageIdAttribute": "data-message-id"
-}
-```
-
-Then rebuild. The build script auto-injects the URL patterns into all browser manifests. No other files need to change.
-
-### Finding the right selectors
-
-1. Open the AI chat in your browser
-2. Right-click on a message → Inspect
-3. Find the repeating element wrapping each message turn → that's `messageTurn`
-4. Find the scrollable container → that's `scrollContainer`
-5. If there's a fallback scroll container, add `scrollContainerAlt`
-6. If messages have a unique ID attribute, set `messageIdAttribute` (defaults to `data-testid`)
-
-### Currently supported sites
-
-| Site | Status |
-| ---- | ------ |
-| [ChatGPT](https://chatgpt.com) | ✅ Tested |
-| [Claude](https://claude.ai) | ✅ Tested |
-| [Gemini](https://gemini.google.com) | ✅ Tested |
-
-PRs to add or fix site configs are welcome.
 
 ## How it works
 
@@ -171,52 +61,12 @@ PRs to add or fix site configs are welcome.
 
 Set these from the popup:
 
-| Setting            | Default   | Range   |
-| ------------------ | --------- | ------- |
-| Visible messages   | 3         | 1-200   |
-| Load more batch    | 3         | 1-50    |
-| Status indicator   | On        | On/Off  |
-| Badge position     | Top right | 4 corners |
-
-## Testing
-
-Automated tests use [Playwright](https://playwright.dev/) to validate build outputs and run the real extension in headless Chromium against mock pages.
-
-### Run all tests
-
-```bash
-pnpm test
-```
-
-This builds all browser targets, validates every `dist/` output, then loads the extension in Chromium and verifies it works for each configured site (60 tests, ~7s).
-
-### Individual test suites
-
-```bash
-pnpm run test:build       # validate dist/ outputs only
-pnpm run test:extension   # extension tests on mock pages
-pnpm run test:safari      # Safari build and manifest compatibility
-pnpm run test:integration # live site tests (requires auth, see below)
-```
-
-### Integration tests (live sites)
-
-To test against real sites with your account:
-
-1. Copy `.env.example` to `.env` and fill in your credentials
-   (for ChatGPT via Google login, use your Google email/password)
-2. Run `pnpm run test:auth` — a browser opens, log in to each site, press Enter
-3. Run `pnpm run test:integration`
-
-The auth profile is saved to `tests/.auth-profile/` (git-ignored) and reused across runs.
-
-### Test browser visibility
-
-Validation and extension tests run Chromium hidden by default. To see the temporary test browser windows, opt in with `SHOW_TEST_BROWSER=1`:
-
-```bash
-SHOW_TEST_BROWSER=1 pnpm test
-```
+| Setting | Default | Range |
+| --- | --- | --- |
+| Visible messages | 3 | 1-200 |
+| Load more batch | 3 | 1-50 |
+| Status indicator | On | On/Off |
+| Badge position | Top right | 4 corners |
 
 ## Browser support
 
@@ -231,29 +81,15 @@ SHOW_TEST_BROWSER=1 pnpm test
 - No analytics or tracking
 - Settings are stored locally in browser storage
 
-## Source code submission (Firefox)
+## CI/CD and tests
 
-This project is built from TypeScript source files and bundled with esbuild.
+This project uses Node.js, pnpm, TypeScript, esbuild, Playwright, and GitHub Actions.
 
-### Build environment
+- CI runs validation on pushes and pull requests to `main`
+- Release automation runs validation again for version tags and publishes GitHub release artifacts
+- Playwright checks build outputs, browser-extension behavior, live-site integration, and Safari compatibility
 
-- Operating systems: Linux, macOS, or Windows
-- Node.js: 18 or newer
-- pnpm: 10 or newer
-
-### Reproducible build steps (Firefox)
-
-```bash
-git clone https://github.com/Noah4ever/ai-chat-speed-booster.git
-cd ai-chat-speed-booster
-pnpm install --frozen-lockfile
-pnpm run build:firefox
-```
-
-The Firefox extension output is generated in `dist/firefox/`.
-The file to load or package is `dist/firefox/manifest.json`.
-
-Build script used by this project: `scripts/build.mjs`
+For local setup, build commands, tests, release packaging, and site-config contributions, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Credits
 
