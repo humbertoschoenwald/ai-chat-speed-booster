@@ -243,8 +243,9 @@ async function refreshStatus(): Promise<void> {
             requestCounter.hidden = true;
         }
     } catch {
-        statusText.textContent = "Content script unavailable or still initializing";
+        statusText.textContent = "Content script unavailable";
         renderNativeDiagnostics(undefined);
+        requestCounter.hidden = true;
     }
 }
 
