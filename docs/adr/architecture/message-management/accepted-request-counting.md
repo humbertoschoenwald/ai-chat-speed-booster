@@ -12,9 +12,9 @@ The counter must avoid storing raw prompt text and should not recount old histor
 
 ## Decision
 
-Add a content-side request lifecycle tracker. It records pending attempts when new user turns appear, then increments the weekly counter only when a later non-failure response turn appears for a pending attempt.
+Add a content-side request lifecycle tracker. It records pending attempts when new user turns appear, then schedules the weekly counter increment only when a later non-failure response turn appears for a pending attempt. The scheduled increment is delayed so a stream error, rejected send, or limit state can cancel the pending accepted count before it reaches storage.
 
-Duplicate DOM mutations are deduped with WeakSets. Structural failure indicators such as alert roles, error test ids, limit test ids, and error/danger classes consume a pending slot without incrementing the accepted counter.
+Duplicate DOM mutations are deduped with WeakSets. Structural failure indicators such as alert roles, error test ids, limit test ids, and error/danger classes consume a pending slot or cancel the most recent delayed accepted count without incrementing the accepted counter.
 
 ## Consequences
 
