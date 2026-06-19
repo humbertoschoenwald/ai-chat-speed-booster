@@ -30,6 +30,7 @@ const CONTENT_INSTANCE_ATTR = "data-acsb-content-instance";
 const CONTENT_HEARTBEAT_ATTR = "data-acsb-content-heartbeat-at";
 const CONTENT_HEARTBEAT_MS = 1_000;
 const STALE_CONTENT_HEARTBEAT_MS = 5_000;
+const NATIVE_SNAPSHOT_SYNC_FAILURE_COOLDOWN_MS = 1_500;
 const contentInstanceId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
 let config: ExtensionConfig;
@@ -49,6 +50,7 @@ const nativeVirtualizationConflicts = new VirtualizationConflictDetector();
 const nativeTurnRegistry = new TurnRegistry();
 const nativeToolCallGroups = new ToolCallGroupController();
 let nativeRenderBudget: RenderUnitBudgetSnapshot | null = null;
+let nativeSnapshotSyncCooldownUntilMs = 0;
 let conversationRetryTimer: ReturnType<typeof setTimeout> | null = null;
 let resumeHealthCheckTimer: ReturnType<typeof setTimeout> | null = null;
 let viewportResizeTimer: ReturnType<typeof setTimeout> | null = null;
@@ -652,7 +654,13 @@ function syncChatGptNativeSnapshots(): void {
         controller.deferBackgroundWork();
         return;
     }
+    const nowMs = Date.now();
+    if (nowMs < nativeSnapshotSyncCooldownUntilMs) {
+        controller.deferBackgroundWork();
+        return;
+    }
 
+    try {
     const scrollRoot = domObserver.findScrollContainer() ?? document.documentElement;
     nativeVirtualizationConflicts.recordScrollHeight(scrollRoot.scrollHeight);
     if (nativeVirtualizationConflicts.snapshot().shouldDisableNativeVirtualization) {
@@ -672,13 +680,29 @@ function syncChatGptNativeSnapshots(): void {
         enabled: true,
         liveWindowSize: nativeRenderBudget.liveWindowSize,
         nearestWindow: 2,
-        nowMs: Date.now(),
+        nowMs,
     });
     for (let i = 0; i < result.hostRevealLoops; i++) {
         nativeVirtualizationConflicts.recordHostReveal(true, false);
     }
     nativeSnapshotHosts = result.snapshotHosts;
     nativeSnapshotCacheBytes = result.cache.totalBytes;
+    } catch (error) {
+        handleNativeSnapshotSyncError(error);
+    }
+}
+
+function handleNativeSnapshotSyncError(error: unknown): void {
+    nativeSnapshotSyncCooldownUntilMs = Date.now() + NATIVE_SNAPSHOT_SYNC_FAILURE_COOLDOWN_MS;
+    chatGptTextSnapshotRenderer?.restoreAll(document);
+    ChatGptTextSnapshotRenderer.cleanupNativeArtifacts(document);
+    nativeTurnRegistry.reset();
+    nativeToolCallGroups.reset();
+    nativeRenderBudget = null;
+    nativeSnapshotHosts = 0;
+    nativeSnapshotCacheBytes = 0;
+    contentLastRecoverableErrorClass = error instanceof Error ? `native-snapshot-sync:${error.name}` : "native-snapshot-sync:error";
+    logger.warn("native snapshot sync failed; cooldown started", error);
 }
 
 function findFirstVisibleMessage(): HTMLElement | null {
