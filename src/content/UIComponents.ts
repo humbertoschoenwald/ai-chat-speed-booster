@@ -236,7 +236,7 @@ export class StatusIndicator {
             this.container = null;
             this.label = null;
             this.appliedLightTheme = null;
-            this.mount();
+            if (!this.mount()) return;
         }
         if (this.position !== position) {
             this.position = position;
@@ -348,7 +348,8 @@ export class StatusIndicator {
         }
     }
 
-    private mount(): void {
+    private mount(): boolean {
+        if (!document.body) return false;
         this.container = document.createElement("div");
         this.container.className = `${CSS_PREFIX}-status-indicator`;
         this.container.setAttribute("role", "status");
@@ -380,5 +381,6 @@ export class StatusIndicator {
 
         document.body.appendChild(this.container);
         logger.debug("status indicator mounted");
+        return true;
     }
 }
