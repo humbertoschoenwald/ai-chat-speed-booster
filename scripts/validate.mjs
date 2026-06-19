@@ -43,18 +43,33 @@ const playwrightInstallArgs =
         ? ["exec", "playwright", "install", "--with-deps", "chromium"]
         : ["exec", "playwright", "install", "chromium"];
 const pnpm = "pnpm";
+const includeBrowserSmoke = process.env.VALIDATE_BROWSER === "1" || process.env.VALIDATE_FULL === "1";
+const includeFullExtension = process.env.VALIDATE_FULL === "1";
+const includeLiveIntegration = process.env.VALIDATE_LIVE_INTEGRATION === "1" || process.env.VALIDATE_FULL === "1";
 
 const STEPS = [
-    [pnpm, ["run", "build"]],
+    [pnpm, ["run", "clean"]],
+    [pnpm, ["run", "build:all"]],
     [pnpm, ["run", "typecheck"]],
     [pnpm, ["run", "lint"]],
-    [pnpm, playwrightInstallArgs],
-    ["node", ["tests/auth-setup.mjs"]],
     [pnpm, ["exec", "playwright", "test", "--project=build"]],
-    [pnpm, ["exec", "playwright", "test", "--project=extension"]],
-    [pnpm, ["exec", "playwright", "test", "--project=integration"]],
+    ...(includeBrowserSmoke ? [[pnpm, playwrightInstallArgs], ["node", ["tests/auth-setup.mjs"]], [pnpm, ["exec", "playwright", "test", "--project=extension-smoke"]]] : []),
+    ...(includeFullExtension ? [[pnpm, ["exec", "playwright", "test", "--project=extension"]]] : []),
+    ...(includeLiveIntegration ? [[pnpm, ["exec", "playwright", "test", "--project=integration"]]] : []),
     ["node", ["tests/scroll-diagnostic.mjs"]],
 ];
+
+if (!includeBrowserSmoke) {
+    console.log("Skipping browser smoke tests. Set VALIDATE_BROWSER=1 to include them.");
+}
+
+if (!includeFullExtension) {
+    console.log("Skipping full extension regression tests. Set VALIDATE_FULL=1 to include them.");
+}
+
+if (!includeLiveIntegration) {
+    console.log("Skipping live integration tests. Set VALIDATE_LIVE_INTEGRATION=1 to include them.");
+}
 
 for (const [command, args] of STEPS) {
     run(command, args);
