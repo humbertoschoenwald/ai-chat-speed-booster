@@ -14,5 +14,5 @@ ai-chat-speed-booster-source-v*/
 tests/.auth-profile/
 test-results/
 playwright-report/
-.env
 scroll-diagnostic.log
+cache/
