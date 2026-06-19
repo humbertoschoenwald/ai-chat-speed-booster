@@ -59,6 +59,7 @@ let conversationRetryTimer: ReturnType<typeof setTimeout> | null = null;
 let deliveryTimeoutRefreshTimer: ReturnType<typeof setTimeout> | null = null;
 let resumeHealthCheckTimer: ReturnType<typeof setTimeout> | null = null;
 let viewportResizeTimer: ReturnType<typeof setTimeout> | null = null;
+let nativeScrollWorkRaf: number | null = null;
 let modeSwitchReloadTimer: ReturnType<typeof setTimeout> | null = null;
 let contentHeartbeatTimer: ReturnType<typeof setInterval> | null = null;
 let contentScriptOwnsBootstrap = false;
@@ -625,6 +626,14 @@ function refreshUI(): void {
             statusIndicator.update(displayStatus.hiddenMessages, displayStatus.totalMessages, config.statusPosition, false, config.theme === "light");
         }
 
+        scheduleNativeScrollWork();
+    });
+}
+
+function scheduleNativeScrollWork(): void {
+    if (nativeScrollWorkRaf !== null) return;
+    nativeScrollWorkRaf = requestAnimationFrame(() => {
+        nativeScrollWorkRaf = null;
         syncChatGptNativeSnapshots();
     });
 }
@@ -775,6 +784,10 @@ window.addEventListener("beforeunload", () => {
     if (modeSwitchReloadTimer) {
         clearTimeout(modeSwitchReloadTimer);
         modeSwitchReloadTimer = null;
+    }
+    if (nativeScrollWorkRaf !== null) {
+        cancelAnimationFrame(nativeScrollWorkRaf);
+        nativeScrollWorkRaf = null;
     }
     window.removeEventListener("pageshow", handlePageResume);
     window.removeEventListener("focus", handleWindowFocus);
