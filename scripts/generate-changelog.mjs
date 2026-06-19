@@ -116,7 +116,7 @@ function byline(commit) {
         return "";
     }
     if (profile.handle) {
-        return ` ([${profile.name} (@${profile.handle})](https://github.com/${profile.handle}))`;
+        return ` by ${profile.name} (@${profile.handle})`;
     }
     return ` (${profile.name})`;
 }
@@ -124,11 +124,11 @@ function byline(commit) {
 function line(commit) {
     const p = parsed(commit.subject);
     if (!p) {
-        return ["Other", `- ${commit.subject}${byline(commit)} (${commit.hash})`];
+        return ["Other", `- ${commit.subject} (${commit.hash})${byline(commit)}`];
     }
     const scope = p.scope ? `**${p.scope}:** ` : "";
     const breaking = p.breaking ? " **BREAKING**" : "";
-    return [headings.get(p.type) || "Other", `- ${scope}${p.text}${breaking}${byline(commit)} (${commit.hash})`];
+    return [headings.get(p.type) || "Other", `- ${scope}${p.text}${breaking} (${commit.hash})${byline(commit)}`];
 }
 
 function renderCommits(commits) {
