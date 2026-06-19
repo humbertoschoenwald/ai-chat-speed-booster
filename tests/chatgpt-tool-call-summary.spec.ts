@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import { readFileSync } from "node:fs";
 import { isStaticSummaryCandidate } from "../src/content/native/chatgpt/ChatGptToolCallSummaryController";
 import type { ToolCallGroupRecord } from "../src/content/native/ToolCallGroupController";
 import { classifyChatGptToolCallState } from "../src/content/native/chatgpt/ChatGptToolCallStateGuard";
@@ -20,6 +21,7 @@ test("open or user-owned tool-like nodes are not static summary candidates", () 
 
 test("ChatGPT guard identifies active text", () => {
     expect(classifyChatGptToolCallState(element({ text: "Calling tool" }))).toBe("active");
+    expect(readFileSync("src/content/native/chatgpt/ChatGptToolCallSummaryController.ts", "utf8")).toContain("RESTORE_SPIKE_LIMIT");
 });
 
 function group(state: ToolCallGroupRecord["state"], element: HTMLElement): ToolCallGroupRecord {

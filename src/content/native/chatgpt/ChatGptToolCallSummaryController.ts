@@ -4,6 +4,7 @@ import { canApplyStaticToolCallSummary } from "./ChatGptToolCallStateGuard";
 const HOST_ATTR = "data-acsb-tool-call-summary-host";
 const SUMMARY_ATTR = "data-acsb-tool-call-summary";
 const STYLE_ID = "acsb-tool-call-summary-style";
+const RESTORE_SPIKE_LIMIT = 50;
 const ACTIVE_SELECTOR = [
     ".loading-shimmer",
     ".animate-spin",
@@ -13,19 +14,37 @@ const ACTIVE_SELECTOR = [
 
 export class ChatGptToolCallSummaryController {
     private root: Document | null = null;
+    private restoreCount = 0;
+    private restoreDisabled = false;
 
     start(root: Document = document): void {
+        if (this.root) return;
         this.root = root;
         injectStyle(root);
+        root.addEventListener("pointerdown", this.restoreTarget, true);
+        root.addEventListener("focusin", this.restoreTarget, true);
+        root.addEventListener("keydown", this.restoreTarget, true);
     }
 
     stop(root: ParentNode = this.root ?? document): void {
+        const activeRoot = this.root;
+        if (activeRoot) {
+            activeRoot.removeEventListener("pointerdown", this.restoreTarget, true);
+            activeRoot.removeEventListener("focusin", this.restoreTarget, true);
+            activeRoot.removeEventListener("keydown", this.restoreTarget, true);
+        }
         this.restoreAll(root);
         this.root?.getElementById(STYLE_ID)?.remove();
         this.root = null;
+        this.restoreCount = 0;
+        this.restoreDisabled = false;
     }
 
     sync(groups: readonly ToolCallGroupRecord[]): number {
+        if (this.restoreDisabled) {
+            this.restoreAll(this.root ?? document);
+            return 0;
+        }
         let summarized = 0;
         const activeHosts = new Set<HTMLElement>();
 
@@ -48,6 +67,14 @@ export class ChatGptToolCallSummaryController {
     restoreAll(root: ParentNode = this.root ?? document): void {
         root.querySelectorAll<HTMLElement>(`[${HOST_ATTR}='true']`).forEach(restore);
     }
+
+    private readonly restoreTarget = (event: Event): void => {
+        const node = event.target instanceof Element ? event.target.closest<HTMLElement>(`[${HOST_ATTR}='true']`) : null;
+        if (!node) return;
+        restore(node);
+        this.restoreCount += 1;
+        if (this.restoreCount > RESTORE_SPIKE_LIMIT) this.restoreDisabled = true;
+    };
 }
 
 export function isStaticSummaryCandidate(group: ToolCallGroupRecord): boolean {
