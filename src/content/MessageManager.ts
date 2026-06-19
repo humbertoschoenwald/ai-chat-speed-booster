@@ -86,8 +86,7 @@ export class MessageManager {
     loadMore(toLoad?: number): number {
         if (!this.config.enabled || this.firstVisibleIndex <= 0) return 0;
         const requestedTurns = toLoad ?? this.config.loadMoreBatchSize;
-        const requestedElements = Math.max(1, requestedTurns) * 2;
-        const revealStart = Math.max(0, this.firstVisibleIndex - requestedElements);
+        const revealStart = Math.max(0, this.firstVisibleIndex - Math.max(1, requestedTurns));
         let revealed = 0;
 
         for (let i = revealStart; i < this.firstVisibleIndex; i++) {
@@ -165,7 +164,7 @@ export class MessageManager {
             this.firstVisibleIndex = 0;
             return;
         }
-        const limit = Math.max(this.cachedVisibleCount, this.config.visibleMessageLimit * 2);
+        const limit = Math.max(this.cachedVisibleCount, this.config.visibleMessageLimit);
         const total = this.messages.length;
         const firstVisible = Math.max(0, total - limit);
 

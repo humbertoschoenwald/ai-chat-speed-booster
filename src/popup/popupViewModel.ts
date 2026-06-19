@@ -2,7 +2,6 @@
  * License: MIT. Provenance: AI Chat Speed Booster extension source.
  * Responsibility: provide popup display text from config/status state.
  * Boundary: pure view-model helpers only; DOM events and storage messages stay in popup.ts.
- * ADR: docs/adr/experience/popup/lifecycle-status-text.md.
  */
 import type { ExtensionConfig, ExtensionStatus, PerformanceMode } from "../shared/types";
 
@@ -32,7 +31,9 @@ export function renderPopupStatusText(config: ExtensionConfig, status: Extension
         case "recovering":
             return `Recovering content script · ${countText}`;
         case "degraded":
-            return `Degraded content script · ${countText}`;
+            return status.totalMessages === 0
+                ? `Loading content script · ${countText}`
+                : `Degraded content script · ${countText}`;
         case "stopped":
             return `Content script stopped · ${countText}`;
         case "unsupported":

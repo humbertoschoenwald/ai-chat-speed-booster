@@ -75,6 +75,7 @@ test("stable load-more reveal path stays bounded to the requested batch", () => 
     expect(loadMoreBody).toContain("firstVisibleIndex");
     expect(loadMoreBody).not.toContain(".filter(");
     expect(loadMoreBody).not.toContain(".slice(");
+    expect(loadMoreBody).not.toContain("requestedElements");
 });
 
 test("popup does not render the retired Auto Load Beta control", () => {

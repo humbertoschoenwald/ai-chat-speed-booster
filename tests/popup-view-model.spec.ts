@@ -62,6 +62,13 @@ test.describe("popup mode view model", () => {
         )).toBe("3/12 messages visible · 9 hidden");
     });
 
+    test("empty degraded Stable status renders as loading", () => {
+        expect(renderPopupStatusText(
+            config({ performanceMode: "legacy", fetchInterceptEnabled: false }),
+            status({ performanceMode: "legacy", contentLifecycleState: "degraded", totalMessages: 0, visibleMessages: 0, hiddenMessages: 0 }),
+        )).toBe("Loading content script · 0/0 messages visible");
+    });
+
     test("lifecycle prefix composes with Native Mode without leaking Stable/Fast state", () => {
         expect(renderPopupStatusText(
             config({ performanceMode: "native", fetchInterceptEnabled: true }),
