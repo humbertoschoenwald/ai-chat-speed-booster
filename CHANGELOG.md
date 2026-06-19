@@ -267,6 +267,7 @@
 
 #### Chatgpt
 
+- reject token progress UI ([31fd22c](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/31fd22ce9ae786d6144ff717c2381a44909c20f9)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - add master technical spec ([6057f19](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/6057f190e38fa87f0420551cacb93b0c53986c0d)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 
 #### Contributing
@@ -330,7 +331,7 @@
 ### Features
 
 - weekly request counter for ChatGPT (#22) ([f30a546](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/f30a546fb66fa220af7f6fcdce6912760e564009)) by **[Noah Thiering (@Noah4ever)](https://github.com/Noah4ever)**
-- add auto-load on top scroll and fix Excel table bug ([8321bb4](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/8321bb4d1d19c0a931e83977f41bab550cf47400)) by **[dev (@dev)](https://github.com/dev)**
+- add auto-load on top scroll and fix Excel table bug ([8321bb4](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/8321bb4d1d19c0a931e83977f41bab550cf47400)) by **[infpdev (@infpdev)](https://github.com/infpdev)**
 
 ### Fixes
 
@@ -368,7 +369,7 @@
 
 #### Gemini
 
-- add dynamic reset handling and Gemini support; bump version to 1.3.5 ([c60fa37](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/c60fa377305806cefc6fb75027427dc1f7d73c1c)) by **[dev (@dev)](https://github.com/dev)**
+- add dynamic reset handling and Gemini support; bump version to 1.3.5 ([c60fa37](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/c60fa377305806cefc6fb75027427dc1f7d73c1c)) by **[infpdev (@infpdev)](https://github.com/infpdev)**
 
 ### Fixes
 
@@ -379,7 +380,7 @@
 
 - improve scroll handling for dynamic sites and update mock page generation ([f42dd5a](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/f42dd5a0e5357fa8881864cd730595d17ca2b99b)) by **[Noah Thiering (@Noah4ever)](https://github.com/Noah4ever)**
 - scrolling to the top on initial load and new messages ([ff00104](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/ff00104ed0ab58e9a57f0f41255ced9ce42f3b46)) by **[Noah Thiering (@Noah4ever)](https://github.com/Noah4ever)**
-- fix DOMObserver dynamic loading support and update README for clarity ([03dc191](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/03dc19140db8a2eb83a5a228fbfb0a7d21abd013)) by **[dev (@dev)](https://github.com/dev)**
+- fix DOMObserver dynamic loading support and update README for clarity ([03dc191](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/03dc19140db8a2eb83a5a228fbfb0a7d21abd013)) by **[infpdev (@infpdev)](https://github.com/infpdev)**
 
 ### Docs
 
@@ -397,19 +398,19 @@
 
 ### Features
 
-- add theme toggle with dark/light mode support ([6704372](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/6704372d2526c298371848dfcf48679e00c66c6f)) by **[dev (@dev)](https://github.com/dev)**
+- add theme toggle with dark/light mode support ([6704372](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/6704372d2526c298371848dfcf48679e00c66c6f)) by **[infpdev (@infpdev)](https://github.com/infpdev)**
 
 ### Fixes
 
-- make theme toggle keyboard accessible ([2fbeb47](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/2fbeb4771f09f14767ed18a1ed2fe274cedd2da0)) by **[dev (@dev)](https://github.com/dev)**
+- make theme toggle keyboard accessible ([2fbeb47](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/2fbeb4771f09f14767ed18a1ed2fe274cedd2da0)) by **[infpdev (@infpdev)](https://github.com/infpdev)**
 
 ### Performance
 
-- cache status indicator theme to avoid redundant style updates ([99aaf3d](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/99aaf3d775cd38c07210ac57f267578289f5639d)) by **[dev (@dev)](https://github.com/dev)**
+- cache status indicator theme to avoid redundant style updates ([99aaf3d](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/99aaf3d775cd38c07210ac57f267578289f5639d)) by **[infpdev (@infpdev)](https://github.com/infpdev)**
 
 ### Maintenance
 
-- update version to 1.3.4 in manifest and package files ([0b80db1](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/0b80db115e8817273ecb204f58b6623feaf9f5b3)) by **[dev (@dev)](https://github.com/dev)**
+- update version to 1.3.4 in manifest and package files ([0b80db1](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/0b80db115e8817273ecb204f58b6623feaf9f5b3)) by **[infpdev (@infpdev)](https://github.com/infpdev)**
 
 ### Other
 
@@ -487,7 +488,7 @@
 
 ### Fixes
 
-- correct status values, improve indicator positioning, hide settings on unsupported sites ([135e842](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/135e84226da0f4b00e2be051a81c731c2cdcddb4)) by **[dev (@dev)](https://github.com/dev)**
+- correct status values, improve indicator positioning, hide settings on unsupported sites ([135e842](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/135e84226da0f4b00e2be051a81c731c2cdcddb4)) by **[infpdev (@infpdev)](https://github.com/infpdev)**
 
 ### Refactors
 
@@ -514,7 +515,7 @@
 - overhaul selectors, SPA nav, visibility fixes, popup redesign ([3dcb0b3](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/3dcb0b36d9d76e5572d0382275c4b9d10614a1ce)) by **[Noah Thiering (@Noah4ever)](https://github.com/Noah4ever)**
 - green theme, rounded popup, and badge position picker ([3b174b6](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/3b174b613577ffe724e4d3f2e338dceb5245179d)) by **[Noah Thiering (@Noah4ever)](https://github.com/Noah4ever)**
 - redesign popup for generic AI, auto-save settings, fix scroll root ([8df3c1b](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/8df3c1bd408e12557f5378c33cc2a6193f979a5f)) by **[Noah Thiering (@Noah4ever)](https://github.com/Noah4ever)**
-- improve turn detection, conversation change handling, and status indicator sync ([fee037d](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/fee037d547bb64bf7a3fa67dad633be5caa9eefa)) by **[dev (@dev)](https://github.com/dev)**
+- improve turn detection, conversation change handling, and status indicator sync ([fee037d](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/fee037d547bb64bf7a3fa67dad633be5caa9eefa)) by **[infpdev (@infpdev)](https://github.com/infpdev)**
 
 ### Fixes
 
