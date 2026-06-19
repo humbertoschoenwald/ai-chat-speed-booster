@@ -75,7 +75,7 @@ Maintainers can install the optional local Git hook with:
 pnpm run hooks:install
 ```
 
-The hook refreshes CHANGELOG.md before publishing. When the file changes, it creates a changelog-only commit and asks you to run the publish command again so the new commit is included.
+The installer writes a local `post-commit` hook. After normal commits, the hook refreshes CHANGELOG.md and creates a changelog-only follow-up commit when the file changes. That keeps `git push` from failing just because a changelog commit had to be created.
 
 ## Validation
 

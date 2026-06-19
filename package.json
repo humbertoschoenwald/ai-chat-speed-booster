@@ -29,6 +29,7 @@
         "diagnose:scroll": "pnpm run build:chrome && node tests/scroll-diagnostic.mjs",
         "changelog": "node scripts/generate-changelog.mjs",
         "hooks:install": "node scripts/install-pre-push-hook.mjs",
+        "post-commit:changelog": "node scripts/post-commit-changelog.mjs",
         "pre-push:changelog": "node scripts/pre-push-changelog.mjs",
         "store:versions": "node scripts/update-store-versions.mjs",
         "package": "node scripts/package.mjs",
