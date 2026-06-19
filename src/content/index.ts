@@ -617,7 +617,7 @@ function ensureChatGptTextSnapshotRendererState(): void {
         }
         chatGptTextSnapshotRenderer?.stop();
         chatGptTextSnapshotRenderer = null;
-        ChatGptTextSnapshotRenderer.cleanupNativeArtifacts(document);
+        scrubStableChatGptNativeArtifacts();
         return;
     }
     if (!chatGptResizeListenerAttached) {
@@ -628,6 +628,11 @@ function ensureChatGptTextSnapshotRendererState(): void {
         chatGptTextSnapshotRenderer = new ChatGptTextSnapshotRenderer();
     }
     chatGptTextSnapshotRenderer.start(document);
+}
+
+function scrubStableChatGptNativeArtifacts(): void {
+    if (currentSite.id !== "chatgpt" || config.performanceMode === "native") return;
+    ChatGptTextSnapshotRenderer.cleanupNativeArtifacts(document);
 }
 
 function syncChatGptNativeSnapshots(): void {
