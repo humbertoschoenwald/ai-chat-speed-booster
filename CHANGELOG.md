@@ -120,6 +120,10 @@
 
 - bound managed hidden turn sizing ([16edb9d](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/16edb9d74d20aff4502ab867fa52aed288b80251)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 
+#### Status
+
+- guard missing indicator anchor ([f34cb32](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/f34cb321e3cf770176abaee62e52c31e83b1a146)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
+
 #### Streaming
 
 - add stale generation detector model ([2c5b617](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/2c5b61788d20ba10c4c2832c9a1e8bd11ed5bf64)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
