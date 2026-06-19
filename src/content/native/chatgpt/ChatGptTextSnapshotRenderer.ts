@@ -102,6 +102,7 @@ export class ChatGptTextSnapshotRenderer {
 
     private snapshot(turn: HTMLElement, key: string, nowMs: number): boolean {
         if (turn.getAttribute(HOST_ATTR) === "true") return true;
+        if (!isSafeSnapshotCandidate(turn)) return false;
         const text = (turn.innerText || turn.textContent || "").replace(/\s+/g, " ").trim();
         if (!text) return false;
         this.cache.put(key, text, nowMs);
@@ -168,6 +169,19 @@ function findViewportTurnIndex(turns: readonly HTMLElement[]): number {
         if (index >= 0) return index;
     }
     return turns.length - 1;
+}
+
+function isSafeSnapshotCandidate(turn: HTMLElement): boolean {
+    const text = (turn.innerText || turn.textContent || "").replace(/\s+/g, " ").trim();
+    if (!text) return false;
+    if (turn.contains(document.activeElement)) return false;
+    if (turn.closest("form, [contenteditable='true']")) return false;
+    if (turn.querySelector(".loading-shimmer, .animate-spin, [data-is-streaming='true'], [aria-busy='true']")) return false;
+    if (turn.querySelector(".text-token-text-error, [data-testid*='error'], [aria-label*='Regenerate'], [aria-label*='Retry']")) return false;
+    if (turn.querySelector("[data-testid*='tool'], [data-message-author-role='tool']")) return false;
+    const lower = text.toLowerCase();
+    if (lower.includes("calling tool") || lower.includes("working on it")) return false;
+    return true;
 }
 
 function isPinnedTurn(turn: HTMLElement): boolean {
