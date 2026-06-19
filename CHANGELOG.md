@@ -22,6 +22,7 @@
 
 #### Native
 
+- add turn containment controller ([ffd5739](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/ffd5739ca084414dffc336815e589f59ae6ce3d1)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - add retry state diagnostics ([fa4b36f](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/fa4b36f20d3c49aee3e8f6b79cefcd180da28169)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - budget snapshots by render-unit cost ([9416406](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/941640689c658b9108907de1a7e5fd7a5a385d9b)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - enforce chatgpt-only runtime ([01d95f9](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/01d95f940bd1cc59a2f2181216acb6cd9c619433)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
