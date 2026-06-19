@@ -196,8 +196,8 @@ function cacheGet(key: string): CachedResponse | undefined {
         if (localStorage.getItem(BYPASS_KEY) === "true") {
             localStorage.removeItem(BYPASS_KEY);
             document.documentElement.removeAttribute(TRIMMED_ATTR);
-            responseCache.delete(url);
-            if (__DEV__) console.debug(PREFIX, "one-shot bypass active, skipping trim");
+            responseCache.clear();
+            if (__DEV__) console.debug(PREFIX, "one-shot bypass active, cleared response cache and skipped trim");
             return originalFetch.call(this, input, init);
         }
 
