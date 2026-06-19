@@ -115,6 +115,8 @@
 
 ### CI
 
+- **release:** ignore release metadata changelog commit ([Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)) (d0f7829)
+- fix workflow setup order ([Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)) (e5109b5)
 - **release:** use Node 24 actions ([Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)) (4721ac8)
 - update workflow actions ([Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)) (dcc37c4)
 - **github:** add validation and release automation ([Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)) (6a7245b)
@@ -137,6 +139,9 @@
 
 ### Maintenance
 
+- **repo:** make hook installer portable ([Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)) (962fd06)
+- **repo:** update changelog helper ([Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)) (43f4a7e)
+- **repo:** update local hook setup ([Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)) (cfe1987)
 - **repo:** add local setup script ([Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)) (658d46c)
 - **repo:** add changelog updater ([Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)) (86bddc9)
 - **repo:** improve client readiness ([Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)) (041ac47)
