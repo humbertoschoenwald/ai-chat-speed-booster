@@ -4,7 +4,6 @@
  * Boundary: provider-specific ChatGPT behavior stays behind ChatGptContentRuntime.
  * ADR: docs/adr/architecture/native-mode/mode-boundary.md.
  */
-import { decideContentBootstrapOwnership } from "./ContentBootstrapOwnership";
 import { DOMObserver } from "./DOMObserver";
 import { MessageManager } from "./MessageManager";
 import { RequestLifecycleTracker } from "./RequestLifecycleTracker";
@@ -12,6 +11,7 @@ import { LoadMoreButton, StatusIndicator } from "./UIComponents";
 import { EditorInputOptimizer } from "./native/EditorInputOptimizer";
 import { NativeModeController } from "./native/NativeModeController";
 import { ChatGptContentRuntime } from "./native/chatgpt/ChatGptContentRuntime";
+import { ContentBootstrapLease } from "./runtime/ContentBootstrapLease";
 import { ContentReloadCoordinator } from "./runtime/ContentReloadCoordinator";
 import { createExtensionStatus } from "./status/ContentStatusPresenter";
 import { detectCurrentSite, type SiteConfig } from "../shared/sites";
@@ -27,12 +27,7 @@ import {
 } from "../shared/types";
 import { logger } from "../shared/logger";
 
-const CONTENT_BOOTSTRAP_ATTR = "data-acsb-content-bootstrapped";
-const CONTENT_INSTANCE_ATTR = "data-acsb-content-instance";
-const CONTENT_HEARTBEAT_ATTR = "data-acsb-content-heartbeat-at";
-const CONTENT_HEARTBEAT_MS = 1_000;
-const STALE_CONTENT_HEARTBEAT_MS = 5_000;
-const contentInstanceId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+const bootstrapLease = new ContentBootstrapLease({ document });
 const reloadCoordinator = new ContentReloadCoordinator({
     reload: () => window.location.reload(),
 });
@@ -50,8 +45,6 @@ let chatGptRuntime: ChatGptContentRuntime | null = null;
 let conversationRetryTimer: ReturnType<typeof setTimeout> | null = null;
 let resumeHealthCheckTimer: ReturnType<typeof setTimeout> | null = null;
 let viewportResizeTimer: ReturnType<typeof setTimeout> | null = null;
-let contentHeartbeatTimer: ReturnType<typeof setInterval> | null = null;
-let contentScriptOwnsBootstrap = false;
 const contentBootTime = Date.now();
 let contentLifecycleState: ContentLifecycleState = "initializing";
 let contentLastUiRefreshAt: number | null = null;
@@ -71,11 +64,7 @@ async function bootstrap(): Promise<void> {
         logger.info("no supported site detected, content script inactive");
         return;
     }
-    const heartbeatAt = Number(document.documentElement.getAttribute(CONTENT_HEARTBEAT_ATTR));
-    const ownership = decideContentBootstrapOwnership({
-        bootstrapped: document.documentElement.getAttribute(CONTENT_BOOTSTRAP_ATTR) === "true",
-        heartbeatAt: Number.isFinite(heartbeatAt) && heartbeatAt > 0 ? heartbeatAt : null,
-    }, Date.now(), STALE_CONTENT_HEARTBEAT_MS);
+    const ownership = bootstrapLease.acquire();
     if (!ownership.acquire) {
         logger.warn("content script bootstrap skipped because another ACSB instance owns this page");
         return;
@@ -83,10 +72,6 @@ async function bootstrap(): Promise<void> {
     if (ownership.reason === "stale-owner") {
         logger.warn("content script taking over stale ACSB bootstrap ownership");
     }
-    document.documentElement.setAttribute(CONTENT_BOOTSTRAP_ATTR, "true");
-    document.documentElement.setAttribute(CONTENT_INSTANCE_ATTR, contentInstanceId);
-    contentScriptOwnsBootstrap = true;
-    startContentHeartbeat();
     contentLifecycleState = "initializing";
     currentSite = site;
     logger.info(`bootstrapping content script for ${currentSite.name}`);
@@ -149,31 +134,6 @@ async function bootstrap(): Promise<void> {
     document.addEventListener("keydown", cancelDeliveryTimeoutRefresh, true);
 
 }
-
-function startContentHeartbeat(): void {
-    const beat = (): void => {
-        if (!contentScriptOwnsBootstrap) return;
-        document.documentElement.setAttribute(CONTENT_HEARTBEAT_ATTR, String(Date.now()));
-        document.documentElement.setAttribute(CONTENT_INSTANCE_ATTR, contentInstanceId);
-    };
-    beat();
-    if (contentHeartbeatTimer) clearInterval(contentHeartbeatTimer);
-    contentHeartbeatTimer = setInterval(beat, CONTENT_HEARTBEAT_MS);
-}
-
-function clearContentBootstrapOwnership(): void {
-    if (contentHeartbeatTimer) {
-        clearInterval(contentHeartbeatTimer);
-        contentHeartbeatTimer = null;
-    }
-    if (document.documentElement.getAttribute(CONTENT_INSTANCE_ATTR) === contentInstanceId) {
-        document.documentElement.removeAttribute(CONTENT_BOOTSTRAP_ATTR);
-        document.documentElement.removeAttribute(CONTENT_INSTANCE_ATTR);
-        document.documentElement.removeAttribute(CONTENT_HEARTBEAT_ATTR);
-    }
-    contentScriptOwnsBootstrap = false;
-}
-
 /**
  * Waits for the first conversation turns to appear before initialising manager/UI.
  */
@@ -578,7 +538,7 @@ function findMessageContainer(): HTMLElement | null {
 }
 
 window.addEventListener("beforeunload", () => {
-    if (!contentScriptOwnsBootstrap) return;
+    if (!bootstrapLease.ownsBootstrap()) return;
     contentLifecycleState = "stopped";
     if (conversationRetryTimer) {
         clearTimeout(conversationRetryTimer);
@@ -603,7 +563,7 @@ window.addEventListener("beforeunload", () => {
     editorLatencyGuard.stop();
     nativeModeController?.stop("content script unloading");
     nativeModeController = null;
-    clearContentBootstrapOwnership();
+    bootstrapLease.release();
     domObserver.stop();
     messageManager.destroy();
     loadMoreButton.destroy();
@@ -613,8 +573,8 @@ window.addEventListener("beforeunload", () => {
 bootstrap().catch((err) => {
     contentLifecycleState = "degraded";
     contentLastRecoverableErrorClass = err instanceof Error ? err.name : "bootstrap-error";
-    if (contentScriptOwnsBootstrap) {
-        clearContentBootstrapOwnership();
+    if (bootstrapLease.ownsBootstrap()) {
+        bootstrapLease.release();
     }
     logger.error("failed to bootstrap content script", err);
 });

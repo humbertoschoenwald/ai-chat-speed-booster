@@ -40,6 +40,20 @@ test("content entrypoint delegates popup status DTO shaping", () => {
     }
 });
 
+test("content entrypoint delegates bootstrap leasing", () => {
+    const source = readFileSync(path.resolve("src/content/index.ts"), "utf8");
+
+    expect(source).toContain("new ContentBootstrapLease");
+    for (const marker of [
+        "data-acsb-content-bootstrapped",
+        "data-acsb-content-instance",
+        "data-acsb-content-heartbeat-at",
+        "contentHeartbeatTimer",
+    ]) {
+        expect(source, `${marker} belongs in ContentBootstrapLease`).not.toContain(marker);
+    }
+});
+
 test("auto-load observer never forces the scroll position away from the top", () => {
     const source = readFileSync(path.resolve("src/content/DOMObserver.ts"), "utf8");
 
