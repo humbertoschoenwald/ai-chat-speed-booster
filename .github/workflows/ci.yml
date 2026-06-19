@@ -27,16 +27,17 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v6.0.9
+        with:
+          run_install: false
+
       - name: Setup Node.js
         uses: actions/setup-node@v6.4.0
         with:
           node-version: 24
           cache: pnpm
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v6.0.9
-        with:
-          run_install: false
+          cache-dependency-path: pnpm-lock.yaml
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
