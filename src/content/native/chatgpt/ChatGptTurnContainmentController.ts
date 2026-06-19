@@ -36,14 +36,21 @@ export class ChatGptTurnContentVisibilityController {
 
     sync(turns: readonly HTMLElement[], options: ChatGptTurnContentVisibilityOptions): ChatGptTurnContentVisibilityResult {
         const live = computeLiveIndexes(turns, options.liveWindowSize, options.nearestWindow);
+        const decisions = turns.map((turn, index) => {
+            const shouldContain = !live.has(index) && isSafeCompletedTurn(turn);
+            return {
+                turn,
+                shouldContain,
+                height: shouldContain ? this.readCachedHeight(turn, index) : 0,
+            };
+        });
         let containedTurns = 0;
-        turns.forEach((turn, index) => {
-            if (live.has(index) || !isSafeCompletedTurn(turn)) {
+        decisions.forEach(({ turn, shouldContain, height }) => {
+            if (!shouldContain) {
                 turn.removeAttribute(CONTAINED_ATTR);
                 turn.style.removeProperty("--acsb-contained-turn-height");
                 return;
             }
-            const height = this.readCachedHeight(turn, index);
             turn.style.setProperty("--acsb-contained-turn-height", `${height}px`);
             turn.setAttribute(CONTAINED_ATTR, "true");
             containedTurns += 1;
