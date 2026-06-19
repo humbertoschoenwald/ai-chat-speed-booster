@@ -2,6 +2,8 @@ import { SiteConfig, type SiteSelectors } from "../shared/sites";
 import { MUTATION_DEBOUNCE_MS } from "../shared/constants";
 import type { MutationBatchClass } from "../shared/types";
 import { logger } from "../shared/logger";
+import { filterMessageTurns } from "../shared/messageTurnFilter";
+import { AutoLoadScrollGate } from "./scroll/AutoLoadScrollGate";
 
 export interface DOMObserverCallbacks {
     onMessagesAdded(elements: HTMLElement[]): void;
@@ -49,6 +51,7 @@ export class DOMObserver {
     private scrollRaf: number | null = null;
     private autoLoadEnabled = false;
     private scrollRetryTimer: ReturnType<typeof setInterval> | null = null;
+    private readonly scrollGate = new AutoLoadScrollGate();
     private diagnostics: DOMObserverDiagnostics = {
         lastBatchClass: null,
         lastBatchSize: 0,
@@ -62,7 +65,8 @@ export class DOMObserver {
         this.currentSite = currentSite;
         this.selectors = currentSite.selectors;
         this.callbacks = callbacks;
-        this.scrollEl = this.findScrollContainer();    }
+        this.scrollEl = this.findScrollContainer();
+    }
 
     start(): void {
         if (this.observer) {
@@ -109,7 +113,10 @@ export class DOMObserver {
 
     queryAllMessages(): HTMLElement[] {
         return this.dedupeNestedMessageTurns(
-            Array.from(document.querySelectorAll<HTMLElement>(this.selectors.messageTurn)),
+            filterMessageTurns(
+                Array.from(document.querySelectorAll<HTMLElement>(this.selectors.messageTurn)),
+                this.selectors,
+            ),
         );
     }
 
@@ -140,6 +147,7 @@ export class DOMObserver {
             if (this.scrollEl) this.scrollEl.removeEventListener("scroll", this.handleScroll);
             if (this.scrollRaf) cancelAnimationFrame(this.scrollRaf);
             this.scrollRaf = null;
+            this.scrollGate.reset();
         }
     }
 
@@ -167,6 +175,7 @@ export class DOMObserver {
     resetAutoLoad(): void {
         if(this.autoLoadEnabled){
             logger.debug("Resetting auto-load state: temporarily disabling and re-enabling to reset internal state");
+            this.scrollGate.reset();
             this.SetAutoLoad(false);
             this.SetAutoLoad(true);
         }
@@ -325,15 +334,20 @@ export class DOMObserver {
 
         scannedNodes.add(root);
         if (this.isMessageTurn(root)) {
+            if (filterMessageTurns([root], this.selectors).length === 0) {
+                return { elements: [], scanned: 1, skipped: 1 };
+            }
             return { elements: [root], scanned: 1, skipped: 0 };
         }
 
         const elements: HTMLElement[] = [];
         let scanned = 1;
         let skipped = 0;
-        for (const element of this.dedupeNestedMessageTurns(
+        const candidates = filterMessageTurns(
             Array.from(root.querySelectorAll<HTMLElement>(this.selectors.messageTurn)),
-        )) {
+            this.selectors,
+        );
+        for (const element of this.dedupeNestedMessageTurns(candidates)) {
             if (this.isExtensionOwned(element) || scannedNodes.has(element)) {
                 skipped += 1;
                 continue;
@@ -387,73 +401,22 @@ export class DOMObserver {
         return el.matches?.(this.selectors.messageTurn) ?? false;
     }
 
-/*
     private readonly handleScroll = (): void => {
         if (this.scrollRaf) cancelAnimationFrame(this.scrollRaf);
-        if (this.visibleMessages >= this.totalMessages) return; // nothing hidden left to reveal
+        if (this.visibleMessages >= this.totalMessages) return;
+
         this.scrollRaf = requestAnimationFrame(() => {
             const el = this.scrollEl ?? this.findScrollContainer();
             if (!el) return;
-            const max = el.scrollHeight - el.clientHeight;
-            const percentFromTop = max > 0 ? (el.scrollTop / max) * 100 : 100;
-            if (percentFromTop > 10) return;
-            // Throttle so parking at the top reveals turns gradually instead of
-            // dumping them all at once. We intentionally do NOT force-scroll the
-            // user — browser scroll anchoring keeps their view stable when the
-            // newly revealed turn is prepended above the viewport.
-            const now = Date.now();
-            if (now - this.lastAutoLoadAt < DOMObserver.AUTO_LOAD_COOLDOWN_MS) return;
-            this.lastAutoLoadAt = now;
-            this.callbacks.onScrollToTop();
+
+            const shouldReveal = this.scrollGate.shouldRevealOlderTurn({
+                scrollTop: el.scrollTop,
+                scrollHeight: el.scrollHeight,
+                clientHeight: el.clientHeight,
+                totalMessages: this.totalMessages,
+                visibleMessages: this.visibleMessages,
+            });
+            if (shouldReveal) this.callbacks.onScrollToTop();
         });
     };
-*/
-
-	private readonly handleScroll = (): void => {
-		if (this.scrollRaf) cancelAnimationFrame(this.scrollRaf);
-		if (this.visibleMessages >= this.totalMessages) return; // nothing hidden left to reveal
-
-		this.scrollRaf = requestAnimationFrame(() => {
-			const el = this.scrollEl ?? this.findScrollContainer();
-			if (!el) return;
-
-			const max = el.scrollHeight - el.clientHeight;
-			const percentFromTop = max > 0 ? (el.scrollTop / max) * 100 : 100;
-
-			if (percentFromTop > 10) return;
-
-			// I still prefer this approach over the previous cooldown/debounce logic,
-			// since that depended on the previous scroll tick timing and could become
-			// unreliable while the user was actively scrolling near the top.
-			//
-			// In practice, users could end up needing to scroll down and back up again
-			// before auto-load would trigger, because all scroll events inside the
-			// cooldown window were ignored.
-			//
-			// This approach triggers auto-load immediately, then slightly scrolls down
-			// afterward only if the UI itself did not already shift the scroll position,
-			// as in Gemini, preventing repeated auto-load triggers while keeping
-			// scrolling responsive.
-			//
-			// Keeping the old implementation commented for now since it can easily be
-			// restored if needed.
-
-			this.callbacks.onScrollToTop();
-
-			requestAnimationFrame(() => {
-				const updatedMax = el.scrollHeight - el.clientHeight;
-				const updatedPercent =
-					updatedMax > 0 ? (el.scrollTop / updatedMax) * 100 : 100;
-
-				if (updatedPercent <= 10) {
-					el.scrollTo({
-						top: 0.12 * el.scrollHeight,
-						behavior: "smooth"
-					});
-
-					logger.debug("Auto scrolled down slightly to prevent multiple auto-load triggers");
-				}
-			});
-		});
-	};
 }

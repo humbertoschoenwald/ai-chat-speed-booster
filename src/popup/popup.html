@@ -45,26 +45,27 @@
 
         <section class="popup-settings" aria-label="Settings">
 
-            <!-- Performance mode -->
-            <div class="setting" data-tooltip="Stable preserves current proven behavior. Native is experimental and currently exposes guarded diagnostics before virtualization ships.">
+            <!-- Runtime mode -->
+            <div class="setting setting--mode" data-tooltip="Native Mode is experimental. Switching between Stable and Native reloads the active ChatGPT tab so the two runtimes never mix.">
                 <div class="setting__info">
-                    <span class="setting__label">Performance mode</span>
-                    <span class="setting__hint" id="performance-mode-hint">Stable mode</span>
+                    <span class="setting__label">Native Mode</span>
+                    <span class="setting__hint" id="performance-mode-hint">Stable runtime with optional speed controls.</span>
                 </div>
-                <select id="performance-mode" class="setting__select" aria-labelledby="performance-mode-hint">
-                    <option value="legacy">Stable</option>
-                    <option value="native">Native</option>
-                </select>
+                <label class="toggle" aria-label="Enable experimental Native Mode">
+                    <input type="checkbox" id="toggle-native-mode" class="toggle__input">
+                    <span class="toggle__slider"></span>
+                </label>
             </div>
 
-            <div class="setting native-only-setting" id="native-ai-setting" hidden data-tooltip="Native Mode currently supports ChatGPT only. Other AI sites use Stable Mode until their native adapters are promoted.">
+            <div class="setting" data-tooltip="Refreshes ChatGPT after the delivery-timeout retry UI remains visible briefly. Works in Stable and Native Mode.">
                 <div class="setting__info">
-                    <span class="setting__label">Native target</span>
-                    <span class="setting__hint">Current site</span>
+                    <span class="setting__label">Delivery-timeout refresh</span>
+                    <span class="setting__hint">Stable and Native</span>
                 </div>
-                <select id="native-ai-target" class="setting__select" disabled>
-                    <option value="chatgpt">ChatGPT</option>
-                </select>
+                <label class="toggle" aria-label="Enable or disable delivery-timeout auto-refresh">
+                    <input type="checkbox" id="toggle-delivery-timeout-refresh" class="toggle__input">
+                    <span class="toggle__slider"></span>
+                </label>
             </div>
 
             <div class="native-panel" id="native-diagnostics" hidden>
@@ -72,49 +73,30 @@
                 <div class="native-panel__body" id="native-diagnostics-body">Waiting for page status…</div>
             </div>
 
-            <div class="native-panel" id="native-toolcalls" hidden>
-                <div class="native-panel__title">Tool Calls / MCP</div>
-                <div class="native-panel__body">Coming later: completed tool-call grouping with running and failed tool calls pinned.</div>
-            </div>
-
-            <div class="native-panel" id="native-overrides" hidden>
-                <div class="native-panel__title">Native overrides</div>
-                <div class="native-panel__body">Virtualization, freezing, and scroll compensation are disabled until guarded tests prove they are safe.</div>
-            </div>
-
-            <div class="native-panel" id="native-safety" hidden>
-                <div class="native-panel__title">Safety / Reset</div>
-                <div class="native-panel__body">Native Mode is reversible. Text snapshots are in-memory and bounded; persistent caches store no chat text, raw HTML, tool output, or conversation identifiers.</div>
-            </div>
-
             <!-- Fast mode + Auto load -->
-            <div class="setting-row" data-legacy-control>
-                <div class="setting" data-tooltip="Trims API responses before rendering. Faster than hiding after the fact. Disable if messages appear missing.">
+                <div class="setting" data-legacy-control data-tooltip="Trims API responses before rendering. Faster than hiding after the fact. Disable if messages appear missing.">
+                    <div class="setting__info">
                     <span class="setting__label">Fast mode</span>
+                    <span class="setting__hint">Stable only; disables message counts</span>
+                    </div>
                     <label class="toggle" aria-label="Enable or disable fetch interception">
                         <input type="checkbox" id="toggle-fetch-intercept" class="toggle__input">
                         <span class="toggle__slider"></span>
                     </label>
                 </div>
-                <div class="setting" data-tooltip="Beta: reveals one older message when you scroll to the top. Disabled by default while we iron out scroll glitches.">
+                <div class="setting" data-legacy-control data-tooltip="Beta: reveals one older message when you scroll to the top. Disabled by default while we iron out scroll glitches.">
+                    <div class="setting__info">
                     <span class="setting__label">
                         Auto load
                         <span class="setting__badge">Beta</span>
                     </span>
+                    <span class="setting__hint">Stable only</span>
+                    </div>
                     <label class="toggle" aria-label="Enable or disable auto-load (Beta)">
                         <input type="checkbox" id="toggle-auto-load" class="toggle__input">
                         <span class="toggle__slider"></span>
                     </label>
                 </div>
-            </div>
-
-            <div class="setting" data-tooltip="Optional: refresh ChatGPT only after the delivery-timeout UI remains visible for a short grace period.">
-                <span class="setting__label">Auto-refresh delivery timeout</span>
-                <label class="toggle" aria-label="Enable or disable delivery-timeout auto-refresh">
-                    <input type="checkbox" id="toggle-delivery-timeout-refresh" class="toggle__input">
-                    <span class="toggle__slider"></span>
-                </label>
-            </div>
 
             <!-- Hide old messages toggle -->
             <div class="setting" data-legacy-control data-tooltip="Hide older turns from the DOM beyond the Visible limit. Turn this off if scrolling feels janky on ChatGPT (which has its own viewport-based rendering) — Fast mode still trims the API payload for speed.">

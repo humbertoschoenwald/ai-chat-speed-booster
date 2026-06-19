@@ -58,8 +58,20 @@ test("global rejected UI cancels pending accepted request in Stable and Native m
 });
 
 test("Stable hiding and Native virtualization conflict handling remain separate (#24)", () => {
-    const stableRuntime = deriveRuntimeConfigForSite({ ...DEFAULT_CONFIG, performanceMode: "legacy" }, "chatgpt");
-    const nativeRuntime = deriveRuntimeConfigForSite({ ...DEFAULT_CONFIG, performanceMode: "native" }, "chatgpt");
+    const stableRuntime = deriveRuntimeConfigForSite({
+        ...DEFAULT_CONFIG,
+        performanceMode: "legacy",
+        autoRefreshDeliveryTimeout: true,
+    }, "chatgpt");
+    const nativeRuntime = deriveRuntimeConfigForSite({
+        ...DEFAULT_CONFIG,
+        performanceMode: "native",
+        fetchInterceptEnabled: true,
+        autoLoad: true,
+        hideOldMessages: true,
+        showStatus: true,
+        autoRefreshDeliveryTimeout: true,
+    }, "chatgpt");
     const detector = new VirtualizationConflictDetector();
 
     expect(stableRuntime).toMatchObject({
@@ -67,6 +79,7 @@ test("Stable hiding and Native virtualization conflict handling remain separate 
         hideOldMessages: true,
         fetchInterceptEnabled: true,
         showStatus: true,
+        autoRefreshDeliveryTimeout: true,
     });
     expect(nativeRuntime).toMatchObject({
         performanceMode: "native",
@@ -74,6 +87,7 @@ test("Stable hiding and Native virtualization conflict handling remain separate 
         fetchInterceptEnabled: false,
         autoLoad: false,
         showStatus: false,
+        autoRefreshDeliveryTimeout: true,
     });
 
     detector.recordHostReveal(true, false);
@@ -84,4 +98,15 @@ test("Stable hiding and Native virtualization conflict handling remain separate 
         shouldDisableNativeVirtualization: true,
         lastReason: "host-revealed-hidden-turn",
     });
+});
+
+test("Native Mode is unavailable outside ChatGPT", () => {
+    const geminiRuntime = deriveRuntimeConfigForSite({
+        ...DEFAULT_CONFIG,
+        performanceMode: "native",
+    }, "gemini");
+
+    expect(geminiRuntime.performanceMode).toBe("legacy");
+    expect(geminiRuntime.fetchInterceptEnabled).toBe(DEFAULT_CONFIG.fetchInterceptEnabled);
+    expect(geminiRuntime.autoLoad).toBe(DEFAULT_CONFIG.autoLoad);
 });

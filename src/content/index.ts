@@ -1,4 +1,9 @@
-// Large-file note: content entrypoint coordinates lifecycle, mode policy, observer wiring, and popup status. Move editor latency and status wiring into a narrow coordinator if this grows further.
+/**
+ * License: MIT. Provenance: AI Chat Speed Booster extension source.
+ * Responsibility: bootstrap the content script and connect generic runtime slices.
+ * Boundary: provider-specific ChatGPT behavior stays behind ChatGptContentRuntime.
+ * ADR: docs/adr/architecture/native-mode/mode-boundary.md.
+ */
 import { decideContentBootstrapOwnership } from "./ContentBootstrapOwnership";
 import { DOMObserver } from "./DOMObserver";
 import { MessageManager } from "./MessageManager";
@@ -6,19 +11,13 @@ import { RequestLifecycleTracker } from "./RequestLifecycleTracker";
 import { LoadMoreButton, StatusIndicator } from "./UIComponents";
 import { EditorInputOptimizer } from "./native/EditorInputOptimizer";
 import { NativeModeController } from "./native/NativeModeController";
-import { createRenderUnitBudgetSnapshot, type RenderUnitBudgetSnapshot } from "./native/RenderUnitBudget";
-import { ToolCallGroupController } from "./native/ToolCallGroupController";
-import { TurnRegistry } from "./native/TurnRegistry";
-import { VirtualizationConflictDetector } from "./native/VirtualizationConflictDetector";
-import { detectChatGptDeliveryTimeout } from "./native/chatgpt/ChatGptDeliveryTimeoutDetector";
-import { detectChatGptMaxLengthReadonly } from "./native/chatgpt/ChatGptMaxLengthReadonlyDetector";
-import { ChatGptTextSnapshotRenderer } from "./native/chatgpt/ChatGptTextSnapshotRenderer";
-import { ChatGptTurnContentVisibilityController } from "./native/chatgpt/ChatGptTurnContainmentController";
-import { estimateChatGptPromptTokens, readChatGptComposerText } from "./native/chatgpt/ChatGptTokenEstimator";
+import { ChatGptContentRuntime } from "./native/chatgpt/ChatGptContentRuntime";
+import { ContentReloadCoordinator } from "./runtime/ContentReloadCoordinator";
 import { detectCurrentSite, type SiteConfig } from "../shared/sites";
 import { deriveRuntimeConfigForSite } from "../shared/native-runtime-policy";
 import { loadConfig, onConfigChanged } from "../shared/storage";
 import { onMessage } from "../shared/browser-api";
+import { filterMessageTurns } from "../shared/messageTurnFilter";
 import {
     MessageType,
     type ContentLifecycleState,
@@ -32,9 +31,10 @@ const CONTENT_INSTANCE_ATTR = "data-acsb-content-instance";
 const CONTENT_HEARTBEAT_ATTR = "data-acsb-content-heartbeat-at";
 const CONTENT_HEARTBEAT_MS = 1_000;
 const STALE_CONTENT_HEARTBEAT_MS = 5_000;
-const NATIVE_SNAPSHOT_SYNC_FAILURE_COOLDOWN_MS = 1_500;
-const DELIVERY_TIMEOUT_REFRESH_GRACE_MS = 3_000;
 const contentInstanceId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+const reloadCoordinator = new ContentReloadCoordinator({
+    reload: () => window.location.reload(),
+});
 
 let config: ExtensionConfig;
 let currentSite: SiteConfig;
@@ -45,22 +45,10 @@ let loadMoreButton: LoadMoreButton;
 let statusIndicator: StatusIndicator;
 let domObserver: DOMObserver;
 let nativeModeController: NativeModeController | null = null;
-let chatGptTextSnapshotRenderer: ChatGptTextSnapshotRenderer | null = null;
-let chatGptTurnContentVisibilityController: ChatGptTurnContentVisibilityController | null = null;
-let chatGptResizeListenerAttached = false;
-let nativeSnapshotHosts = 0;
-let nativeSnapshotCacheBytes = 0;
-const nativeVirtualizationConflicts = new VirtualizationConflictDetector();
-const nativeTurnRegistry = new TurnRegistry();
-const nativeToolCallGroups = new ToolCallGroupController();
-let nativeRenderBudget: RenderUnitBudgetSnapshot | null = null;
-let nativeSnapshotSyncCooldownUntilMs = 0;
+let chatGptRuntime: ChatGptContentRuntime | null = null;
 let conversationRetryTimer: ReturnType<typeof setTimeout> | null = null;
-let deliveryTimeoutRefreshTimer: ReturnType<typeof setTimeout> | null = null;
 let resumeHealthCheckTimer: ReturnType<typeof setTimeout> | null = null;
 let viewportResizeTimer: ReturnType<typeof setTimeout> | null = null;
-let nativeScrollWorkRaf: number | null = null;
-let modeSwitchReloadTimer: ReturnType<typeof setTimeout> | null = null;
 let contentHeartbeatTimer: ReturnType<typeof setInterval> | null = null;
 let contentScriptOwnsBootstrap = false;
 const contentBootTime = Date.now();
@@ -106,9 +94,6 @@ async function bootstrap(): Promise<void> {
     requestLifecycleTracker = new RequestLifecycleTracker(currentSite.id, currentSite.selectors.userMessageSelector);
     nativeModeController = new NativeModeController(currentSite);
     nativeModeController.updateConfig(config);
-    if (currentSite.id === "chatgpt") {
-        ensureChatGptTextSnapshotRendererState();
-    }
     editorLatencyGuard.start();
     messageManager.updateConfig(config);
     if (currentSite.messageIdAttribute) {
@@ -137,6 +122,19 @@ async function bootstrap(): Promise<void> {
             nativeModeController?.deferBackgroundWork();
         },
     });
+    chatGptRuntime = currentSite.id === "chatgpt"
+        ? new ChatGptContentRuntime({
+            document,
+            window,
+            queryTurns: () => domObserver.queryAllMessages(),
+            findScrollContainer: () => domObserver.findScrollContainer(),
+            onViewportResize: handleViewportResize,
+            onRecoverableError: (errorClass) => {
+                contentLastRecoverableErrorClass = errorClass;
+            },
+        })
+        : null;
+    chatGptRuntime?.updateConfig(config);
 
     domObserver.start();
     domObserver.SetAutoLoad(config.autoLoad);
@@ -225,7 +223,7 @@ function scheduleInitialScan(): void {
  */
 function handleMessagesAdded(elements: HTMLElement[]): void {
     nativeModeController?.protectBackgroundWork("messages-added", 1_000);
-    chatGptTurnContentVisibilityController?.invalidateAll();
+    chatGptRuntime?.invalidateTurnVisibility();
     messageManager.addMessages(elements);
     refreshUI();
     countNewUserRequests(elements);
@@ -245,7 +243,7 @@ function handlePageStateChanged(elements: HTMLElement[]): void {
  * Cleans up removed turn references to keep manager state aligned with DOM.
  */
 function handleMessagesRemoved(elements: HTMLElement[]): void {
-    chatGptTurnContentVisibilityController?.invalidateAll();
+    chatGptRuntime?.invalidateTurnVisibility();
     requestLifecycleTracker?.observeRemovedTurns(elements);
     messageManager.removeMessages(elements);
     refreshUI();
@@ -257,8 +255,7 @@ function handleMessagesRemoved(elements: HTMLElement[]): void {
  */
 function handleConversationChanged(): void {
     nativeModeController?.protectBackgroundWork("conversation-changed", 1_000);
-    chatGptTurnContentVisibilityController?.invalidateAll();
-    chatGptTextSnapshotRenderer?.restoreAll(document);
+    chatGptRuntime?.resetNativeTracking();
     contentLifecycleState = "recovering";
     logger.debug("conversation changed, re-initialising");
 
@@ -276,9 +273,6 @@ function handleConversationChanged(): void {
     // Don't restore DOM visibility — the old nodes are about to be removed
     // by the framework.  Un-hiding them would cause a flash of all messages.
     messageManager.destroy(false);
-    nativeTurnRegistry.reset();
-    nativeToolCallGroups.reset();
-    nativeRenderBudget = null;
     loadMoreButton.hide();
     statusIndicator.hide();
 
@@ -318,20 +312,11 @@ function handleConfigUpdated(newConfig: ExtensionConfig): void {
     config = deriveRuntimeConfigForSite(newConfig, currentSite.id);
     const modeChanged = previousMode !== config.performanceMode;
     nativeModeController?.updateConfig(config);
-    ensureChatGptTextSnapshotRendererState();
+    chatGptRuntime?.updateConfig(config);
     messageManager.updateConfig(config);
     refreshUI();
-    if (modeChanged) scheduleModeSwitchReload();
+    if (modeChanged) reloadCoordinator.scheduleModeSwitchReload();
     logger.debug("config updated from external source");
-}
-
-function scheduleModeSwitchReload(): void {
-    if (currentSite.id !== "chatgpt") return;
-    if (modeSwitchReloadTimer) clearTimeout(modeSwitchReloadTimer);
-    modeSwitchReloadTimer = setTimeout(() => {
-        modeSwitchReloadTimer = null;
-        window.location.reload();
-    }, 150);
 }
 
 function handlePageResume(): void {
@@ -350,7 +335,7 @@ function handleVisibilityResume(): void {
 
 function handleViewportResize(): void {
     nativeModeController?.protectBackgroundWork("viewport-resize", 250);
-    chatGptTurnContentVisibilityController?.invalidateAll();
+    chatGptRuntime?.invalidateTurnVisibility();
     if (viewportResizeTimer) clearTimeout(viewportResizeTimer);
     viewportResizeTimer = setTimeout(() => {
         viewportResizeTimer = null;
@@ -409,14 +394,10 @@ function handleObserverError(error: unknown, phase: string): void {
 
 function handleMessagesReset(): void {
     nativeModeController?.protectBackgroundWork("messages-reset", 1_000);
-    chatGptTurnContentVisibilityController?.invalidateAll();
-    chatGptTextSnapshotRenderer?.restoreAll(document);
+    chatGptRuntime?.resetNativeTracking();
     contentLifecycleState = "recovering";
     logger.debug("large batch detected, re-initialising message manager");
     messageManager.destroy();
-    nativeTurnRegistry.reset();
-    nativeToolCallGroups.reset();
-    nativeRenderBudget = null;
     loadMoreButton.hide();
     const messages = domObserver.queryAllMessages();
     messageManager.initialise(messages);
@@ -433,16 +414,8 @@ function handleExtensionMessage(message: unknown): ExtensionStatus | undefined {
         const nativeState = nativeModeController?.snapshot();
         const editorInputSnapshot = editorLatencyGuard.snapshot();
         const observerDiagnostics = domObserver.getDiagnostics();
-        const nativeConflictSnapshot = nativeVirtualizationConflicts.snapshot();
-        const tokenEstimate = currentSite.id === "chatgpt"
-            ? estimateChatGptPromptTokens(readChatGptComposerText(document))
-            : null;
-        const deliveryTimeout = currentSite.id === "chatgpt"
-            ? detectChatGptDeliveryTimeout(document)
-            : null;
-        const maxLengthReadonly = currentSite.id === "chatgpt"
-            ? detectChatGptMaxLengthReadonly(document)
-            : null;
+        const chatGptInspection = chatGptRuntime?.inspectPage();
+        const chatGptStatus = chatGptRuntime?.snapshot();
         const displayStatus = getDisplayStatus(messageManager.getStatus());
         return {
             ...displayStatus,
@@ -480,30 +453,30 @@ function handleExtensionMessage(message: unknown): ExtensionStatus | undefined {
             observerLastBatchSize: observerDiagnostics.lastBatchSize,
             observerLastDurationMs: observerDiagnostics.lastDurationMs,
             observerOverBudgetCount: observerDiagnostics.overBudgetCount,
-            nativeModeSnapshotHosts: nativeSnapshotHosts,
-            nativeModeSnapshotCacheBytes: nativeSnapshotCacheBytes,
-            nativeModeApproxInputTokens: tokenEstimate?.approxTokens,
-            nativeModeTokenLimit: tokenEstimate?.limitTokens,
-            nativeModeTokenWarningLevel: tokenEstimate?.warningLevel,
-            chatGptDeliveryTimeoutDetected: deliveryTimeout?.detected,
-            chatGptDeliveryTimeoutConfidence: deliveryTimeout?.confidence,
-            chatGptDeliveryTimeoutRetryButtonCount: deliveryTimeout?.retryButtonCount,
-            chatGptDeliveryTimeoutAssistantErrorCount: deliveryTimeout?.assistantErrorCount,
-            chatGptDeliveryTimeoutFirstMessageId: deliveryTimeout?.firstMessageId,
-            chatGptDeliveryTimeoutReason: deliveryTimeout?.reason,
-            chatGptMaxLengthReadonlyDetected: maxLengthReadonly?.detected,
-            chatGptMaxLengthReadonlyReason: maxLengthReadonly?.reason,
-            nativeModeRenderUnitCost: nativeRenderBudget?.estimatedRenderUnitCost,
-            nativeModeTurnNodeCost: nativeRenderBudget?.estimatedTurnNodeCost,
-            nativeModeToolNodeCost: nativeRenderBudget?.estimatedToolNodeCost,
-            nativeModeToolGroupCount: nativeRenderBudget?.toolGroupCount,
-            nativeModeRunningToolCount: nativeRenderBudget?.runningToolCount,
-            nativeModeFailedToolCount: nativeRenderBudget?.failedToolCount,
-            nativeModeLiveWindowSize: nativeRenderBudget?.liveWindowSize,
-            nativeModeRevealLoopCount: nativeConflictSnapshot.revealLoopCount,
-            nativeModeScrollOscillationCount: nativeConflictSnapshot.scrollOscillationCount,
-            nativeModeVirtualizationDisabled: nativeConflictSnapshot.shouldDisableNativeVirtualization,
-            nativeModeVirtualizationConflictReason: nativeConflictSnapshot.lastReason,
+            nativeModeSnapshotHosts: chatGptStatus?.nativeSnapshotHosts,
+            nativeModeSnapshotCacheBytes: chatGptStatus?.nativeSnapshotCacheBytes,
+            nativeModeApproxInputTokens: chatGptInspection?.tokenEstimate.approxTokens,
+            nativeModeTokenLimit: chatGptInspection?.tokenEstimate.limitTokens,
+            nativeModeTokenWarningLevel: chatGptInspection?.tokenEstimate.warningLevel,
+            chatGptDeliveryTimeoutDetected: chatGptInspection?.deliveryTimeout.detected,
+            chatGptDeliveryTimeoutConfidence: chatGptInspection?.deliveryTimeout.confidence,
+            chatGptDeliveryTimeoutRetryButtonCount: chatGptInspection?.deliveryTimeout.retryButtonCount,
+            chatGptDeliveryTimeoutAssistantErrorCount: chatGptInspection?.deliveryTimeout.assistantErrorCount,
+            chatGptDeliveryTimeoutFirstMessageId: chatGptInspection?.deliveryTimeout.firstMessageId,
+            chatGptDeliveryTimeoutReason: chatGptInspection?.deliveryTimeout.reason,
+            chatGptMaxLengthReadonlyDetected: chatGptInspection?.maxLengthReadonly.detected,
+            chatGptMaxLengthReadonlyReason: chatGptInspection?.maxLengthReadonly.reason,
+            nativeModeRenderUnitCost: chatGptStatus?.nativeRenderBudget?.estimatedRenderUnitCost,
+            nativeModeTurnNodeCost: chatGptStatus?.nativeRenderBudget?.estimatedTurnNodeCost,
+            nativeModeToolNodeCost: chatGptStatus?.nativeRenderBudget?.estimatedToolNodeCost,
+            nativeModeToolGroupCount: chatGptStatus?.nativeRenderBudget?.toolGroupCount,
+            nativeModeRunningToolCount: chatGptStatus?.nativeRenderBudget?.runningToolCount,
+            nativeModeFailedToolCount: chatGptStatus?.nativeRenderBudget?.failedToolCount,
+            nativeModeLiveWindowSize: chatGptStatus?.nativeRenderBudget?.liveWindowSize,
+            nativeModeRevealLoopCount: chatGptStatus?.nativeRevealLoopCount,
+            nativeModeScrollOscillationCount: chatGptStatus?.nativeScrollOscillationCount,
+            nativeModeVirtualizationDisabled: chatGptStatus?.nativeVirtualizationDisabled,
+            nativeModeVirtualizationConflictReason: chatGptStatus?.nativeVirtualizationConflictReason,
         };
     }
     // Background also broadcasts CONFIG_UPDATED here (in addition to the
@@ -555,16 +528,7 @@ function handleFullLoad(): void {
  */
 let rafPending = false;
 function getDisplayStatus(status: ExtensionStatus): ExtensionStatus {
-    if (currentSite.id !== "chatgpt") return status;
-    const messages = Array.from(document.querySelectorAll<HTMLElement>("[data-message-author-role][data-message-id]"));
-    if (messages.length <= status.totalMessages) return status;
-    const visibleMessages = messages.filter((message) => !message.closest(".acsb-hidden")).length;
-    return {
-        ...status,
-        totalMessages: messages.length,
-        visibleMessages,
-        hiddenMessages: Math.max(0, messages.length - visibleMessages),
-    };
+    return chatGptRuntime?.getDisplayStatus(status) ?? status;
 }
 
 function refreshUI(): void {
@@ -575,8 +539,9 @@ function refreshUI(): void {
         contentLastUiRefreshAt = Date.now();
         const status = messageManager.getStatus();
         const displayStatus = getDisplayStatus(status);
-        if (currentSite.id === "chatgpt") {
-            const deliveryTimeout = detectChatGptDeliveryTimeout(document);
+        const chatGptInspection = chatGptRuntime?.inspectPage();
+        if (chatGptInspection) {
+            const deliveryTimeout = chatGptInspection.deliveryTimeout;
             if (deliveryTimeout.detected) {
                 contentLifecycleState = "degraded";
                 contentLastRecoverableErrorClass = `chatgpt-delivery-timeout:${deliveryTimeout.confidence}`;
@@ -626,135 +591,27 @@ function refreshUI(): void {
             statusIndicator.update(displayStatus.hiddenMessages, displayStatus.totalMessages, config.statusPosition, false, config.theme === "light");
         }
 
-        scheduleNativeScrollWork();
+        chatGptRuntime?.scheduleNativeScrollWork(nativeModeController);
     });
-}
-
-function scheduleNativeScrollWork(): void {
-    if (nativeScrollWorkRaf !== null) return;
-    nativeScrollWorkRaf = requestAnimationFrame(() => {
-        nativeScrollWorkRaf = null;
-        syncChatGptNativeSnapshots();
-    });
-}
-
-function ensureChatGptTextSnapshotRendererState(): void {
-    if (currentSite.id !== "chatgpt") return;
-    if (config.performanceMode !== "native") {
-        if (chatGptResizeListenerAttached) {
-            window.removeEventListener("resize", handleViewportResize);
-            chatGptResizeListenerAttached = false;
-        }
-        chatGptTextSnapshotRenderer?.stop();
-        chatGptTextSnapshotRenderer = null;
-        chatGptTurnContentVisibilityController?.stop(document);
-        chatGptTurnContentVisibilityController = null;
-        scrubStableChatGptNativeArtifacts();
-        return;
-    }
-    if (!chatGptResizeListenerAttached) {
-        window.addEventListener("resize", handleViewportResize);
-        chatGptResizeListenerAttached = true;
-    }
-    if (!chatGptTextSnapshotRenderer) {
-        chatGptTextSnapshotRenderer = new ChatGptTextSnapshotRenderer();
-    }
-    if (!chatGptTurnContentVisibilityController) {
-        chatGptTurnContentVisibilityController = new ChatGptTurnContentVisibilityController();
-    }
-    chatGptTextSnapshotRenderer.start(document);
-    chatGptTurnContentVisibilityController.start(document);
-}
-
-function scrubStableChatGptNativeArtifacts(): void {
-    if (currentSite.id !== "chatgpt" || config.performanceMode === "native") return;
-    ChatGptTextSnapshotRenderer.cleanupNativeArtifacts(document);
-}
-
-function syncChatGptNativeSnapshots(): void {
-    const controller = nativeModeController;
-    const nativeActive = config.performanceMode === "native" && controller?.snapshot().active === true;
-    if (!chatGptTextSnapshotRenderer || !controller || currentSite.id !== "chatgpt" || !nativeActive) {
-        chatGptTextSnapshotRenderer?.restoreAll(document);
-        chatGptTurnContentVisibilityController?.restoreAll(document);
-        ChatGptTextSnapshotRenderer.cleanupNativeArtifacts(document);
-        nativeTurnRegistry.reset();
-        nativeToolCallGroups.reset();
-        nativeRenderBudget = null;
-        nativeSnapshotHosts = 0;
-        nativeSnapshotCacheBytes = 0;
-        return;
-    }
-    if (controller.shouldDeferBackgroundWork()) {
-        controller.deferBackgroundWork();
-        return;
-    }
-    const nowMs = Date.now();
-    if (nowMs < nativeSnapshotSyncCooldownUntilMs) {
-        controller.deferBackgroundWork();
-        return;
-    }
-
-    try {
-    const scrollRoot = domObserver.findScrollContainer() ?? document.documentElement;
-    nativeVirtualizationConflicts.recordScrollHeight(scrollRoot.scrollHeight);
-    if (nativeVirtualizationConflicts.snapshot().shouldDisableNativeVirtualization) {
-        chatGptTextSnapshotRenderer.restoreAll(document);
-        nativeSnapshotHosts = 0;
-        nativeSnapshotCacheBytes = 0;
-        return;
-    }
-
-    const turns = domObserver.queryAllMessages();
-    nativeToolCallGroups.reset();
-    const records = turns.map((turn, index) => nativeTurnRegistry.track(turn, index));
-    for (const record of records) nativeToolCallGroups.indexTurn(record);
-    nativeRenderBudget = createRenderUnitBudgetSnapshot(turns, nativeToolCallGroups.snapshot(), config.visibleMessageLimit);
-
-    chatGptTextSnapshotRenderer.restoreAll(document);
-    const result = chatGptTurnContentVisibilityController?.sync(turns, {
-        liveWindowSize: nativeRenderBudget.liveWindowSize,
-        nearestWindow: 2,
-    });
-    nativeSnapshotHosts = result?.containedTurns ?? 0;
-    nativeSnapshotCacheBytes = 0;
-    } catch (error) {
-        handleNativeSnapshotSyncError(error);
-    }
-}
-
-function handleNativeSnapshotSyncError(error: unknown): void {
-    nativeSnapshotSyncCooldownUntilMs = Date.now() + NATIVE_SNAPSHOT_SYNC_FAILURE_COOLDOWN_MS;
-    chatGptTextSnapshotRenderer?.restoreAll(document);
-    ChatGptTextSnapshotRenderer.cleanupNativeArtifacts(document);
-    nativeTurnRegistry.reset();
-    nativeToolCallGroups.reset();
-    nativeRenderBudget = null;
-    nativeSnapshotHosts = 0;
-    nativeSnapshotCacheBytes = 0;
-    contentLastRecoverableErrorClass = error instanceof Error ? `native-snapshot-sync:${error.name}` : "native-snapshot-sync:error";
-    logger.warn("native snapshot sync failed; cooldown started", error);
 }
 
 function scheduleDeliveryTimeoutRefresh(reason: string | null): void {
-    if (!config.autoRefreshDeliveryTimeout || currentSite.id !== "chatgpt" || deliveryTimeoutRefreshTimer) return;
-    deliveryTimeoutRefreshTimer = setTimeout(() => {
-        deliveryTimeoutRefreshTimer = null;
-        if (!config.autoRefreshDeliveryTimeout) return;
-        const snapshot = detectChatGptDeliveryTimeout(document);
-        if (!snapshot.detected || snapshot.reason !== reason) return;
-        window.location.reload();
-    }, DELIVERY_TIMEOUT_REFRESH_GRACE_MS);
+    reloadCoordinator.scheduleDeliveryTimeoutRefresh(
+        config.autoRefreshDeliveryTimeout,
+        reason,
+        () => chatGptRuntime?.inspectPage().deliveryTimeout ?? { detected: false, reason: null },
+    );
 }
 
 function cancelDeliveryTimeoutRefresh(): void {
-    if (!deliveryTimeoutRefreshTimer) return;
-    clearTimeout(deliveryTimeoutRefreshTimer);
-    deliveryTimeoutRefreshTimer = null;
+    reloadCoordinator.cancelDeliveryTimeoutRefresh();
 }
 
 function findFirstVisibleMessage(): HTMLElement | null {
-    const all = document.querySelectorAll<HTMLElement>(currentSite.selectors.messageTurn);
+    const all = filterMessageTurns(
+        Array.from(document.querySelectorAll<HTMLElement>(currentSite.selectors.messageTurn)),
+        currentSite.selectors,
+    );
     for (const el of all) {
         if (!el.classList.contains("acsb-hidden")) return el;
     }
@@ -762,7 +619,10 @@ function findFirstVisibleMessage(): HTMLElement | null {
 }
 
 function findMessageContainer(): HTMLElement | null {
-    const firstMsg = document.querySelector<HTMLElement>(currentSite.selectors.messageTurn);
+    const firstMsg = filterMessageTurns(
+        Array.from(document.querySelectorAll<HTMLElement>(currentSite.selectors.messageTurn)),
+        currentSite.selectors,
+    )[0];
     return firstMsg?.parentElement ?? null;
 }
 
@@ -781,28 +641,14 @@ window.addEventListener("beforeunload", () => {
         clearTimeout(viewportResizeTimer);
         viewportResizeTimer = null;
     }
-    if (modeSwitchReloadTimer) {
-        clearTimeout(modeSwitchReloadTimer);
-        modeSwitchReloadTimer = null;
-    }
-    if (nativeScrollWorkRaf !== null) {
-        cancelAnimationFrame(nativeScrollWorkRaf);
-        nativeScrollWorkRaf = null;
-    }
+    reloadCoordinator.dispose();
     window.removeEventListener("pageshow", handlePageResume);
     window.removeEventListener("focus", handleWindowFocus);
-    if (chatGptResizeListenerAttached) {
-        window.removeEventListener("resize", handleViewportResize);
-        chatGptResizeListenerAttached = false;
-    }
     document.removeEventListener("visibilitychange", handleVisibilityResume);
     document.removeEventListener("click", cancelDeliveryTimeoutRefresh, true);
     document.removeEventListener("keydown", cancelDeliveryTimeoutRefresh, true);
-    cancelDeliveryTimeoutRefresh();
-    chatGptTextSnapshotRenderer?.stop();
-    chatGptTextSnapshotRenderer = null;
-    chatGptTurnContentVisibilityController?.stop(document);
-    chatGptTurnContentVisibilityController = null;
+    chatGptRuntime?.dispose();
+    chatGptRuntime = null;
     editorLatencyGuard.stop();
     nativeModeController?.stop("content script unloading");
     nativeModeController = null;

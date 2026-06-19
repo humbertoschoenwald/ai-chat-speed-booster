@@ -1,3 +1,9 @@
+/**
+ * License: MIT. Provenance: AI Chat Speed Booster extension source.
+ * Responsibility: wire popup DOM controls to extension settings and page status.
+ * Boundary: DOM/event orchestration only; status text decisions live in popupViewModel.ts.
+ * ADR: docs/adr/experience/popup/native-mode-controls.md.
+ */
 import { sendMessage } from "../shared/browser-api";
 import { CONFIG_LIMITS, DEFAULT_CONFIG } from "../shared/constants";
 import {
@@ -11,6 +17,8 @@ import {
 } from "../shared/types";
 import { SITES } from "../shared/sites";
 import { isNativeModeAllowedForSite } from "../shared/native-runtime-policy";
+import { shouldShowNativeModeControl } from "./popupCapabilities";
+import { renderPerformanceModeHint, renderPopupStatusText } from "./popupViewModel";
 
 const toggleEnabled = document.getElementById("toggle-enabled") as HTMLInputElement;
 const toggleStatus = document.getElementById("toggle-status") as HTMLInputElement;
@@ -34,11 +42,10 @@ const requestLimitInput = document.getElementById("request-limit-input") as HTML
 const requestCountHint = document.getElementById("request-counter-hint") as HTMLElement;
 const requestCountReset = document.getElementById("request-count-reset") as HTMLButtonElement;
 const toggleDeliveryTimeoutRefresh = document.getElementById("toggle-delivery-timeout-refresh") as HTMLInputElement;
-const performanceModeSelect = document.getElementById("performance-mode") as HTMLSelectElement;
+const toggleNativeMode = document.getElementById("toggle-native-mode") as HTMLInputElement;
+const nativeModeSetting = document.querySelector(".setting--mode") as HTMLElement;
 const performanceModeHint = document.getElementById("performance-mode-hint") as HTMLElement;
 const nativeDiagnosticsBody = document.getElementById("native-diagnostics-body") as HTMLElement;
-const nativeAiSetting = document.getElementById("native-ai-setting") as HTMLElement;
-const nativeAiTarget = document.getElementById("native-ai-target") as HTMLSelectElement;
 const nativePanels = document.querySelectorAll<HTMLElement>(".native-panel");
 const legacyControls = document.querySelectorAll<HTMLElement>("[data-legacy-control]");
 const legacyControlInputs = document.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLButtonElement>("[data-legacy-control] input, [data-legacy-control] select, [data-legacy-control] button");
@@ -104,7 +111,7 @@ async function init(): Promise<void> {
         renderConfig(cached.config);
     }
     if (cached?.status && typeof cached.status.totalMessages === "number") {
-        statusText.textContent = renderStatusText(cached.status);
+        statusText.textContent = renderPopupStatusText(cached.config ?? currentConfig, cached.status);
         settingsSection.style.display = "flex";
         currentSiteId = cached.status.siteId;
         renderPerformanceMode(cached.config?.performanceMode ?? currentConfig.performanceMode, cached.status);
@@ -119,28 +126,23 @@ async function init(): Promise<void> {
 }
 
 function renderPerformanceMode(mode: PerformanceMode, status?: ExtensionStatus): void {
-    const effectiveMode = status?.performanceMode ?? mode;
-    const nativeRequested = mode === "native";
-    const nativeRuntimeActive = nativeRequested && effectiveMode === "native";
-    const nativeRequestedButUnavailable = nativeRequested && effectiveMode === "legacy";
+    const nativeSupported = shouldShowNativeModeControl(currentSiteId);
+    const effectiveMode: PerformanceMode = nativeSupported ? (status?.performanceMode ?? mode) : "legacy";
+    const nativeRequested = nativeSupported && mode === "native";
 
-    performanceModeSelect.value = mode;
-    nativeAiTarget.value = "chatgpt";
-    performanceModeHint.textContent = nativeRuntimeActive
-        ? "Native mode"
-        : nativeRequestedButUnavailable
-            ? "Native mode selected; Stable runtime active on this site"
-            : "Stable mode";
+    nativeModeSetting.hidden = !nativeSupported;
+    toggleNativeMode.checked = nativeRequested;
+    toggleNativeMode.disabled = !nativeSupported;
+    performanceModeHint.textContent = renderPerformanceModeHint(mode, status);
 
-    nativeAiSetting.hidden = true;
     nativePanels.forEach((panel) => {
-        panel.hidden = !nativeRequested;
+        panel.hidden = effectiveMode !== "native";
     });
     legacyControls.forEach((control) => {
-        control.hidden = nativeRequested;
+        control.hidden = effectiveMode === "native";
     });
     legacyControlInputs.forEach((input) => {
-        input.disabled = nativeRequested;
+        input.disabled = effectiveMode === "native";
     });
 }
 
@@ -182,32 +184,6 @@ function renderNativeDiagnostics(status: ExtensionStatus | undefined): void {
     nativeDiagnosticsBody.textContent = `Adapter: ${adapter} · lifecycle: ${lifecycle} · selector: ${selectorHealth} · input: ${inputState} · features: ${featureCount} · observer: ${observer}${snapshots}${tokens}${renderUnits}${virtualization}${plan}${budget}${blocked}`;
 }
 
-function renderStatusText(status: ExtensionStatus): string {
-    if (status.chatGptMaxLengthReadonlyDetected) {
-        return "ChatGPT maximum conversation length reached · start a new chat to continue";
-    }
-    const countText = currentConfig.fetchInterceptEnabled
-        ? "Fast Mode active · message counts disabled"
-        : `${status.visibleMessages}/${status.totalMessages} messages visible` +
-            (status.hiddenMessages > 0 ? ` · ${status.hiddenMessages} hidden` : "");
-
-    switch (status.contentLifecycleState) {
-        case "initializing":
-            return `Initializing content script · ${countText}`;
-        case "recovering":
-            return `Recovering content script · ${countText}`;
-        case "degraded":
-            return `Degraded content script · ${countText}`;
-        case "stopped":
-            return `Content script stopped · ${countText}`;
-        case "unsupported":
-            return "Unsupported page";
-        case "active":
-        default:
-            return countText;
-    }
-}
-
 function renderConfig(config: ExtensionConfig): void {
     currentConfig = config;
     writePopupCache({ ...readPopupCache(), config });
@@ -217,17 +193,10 @@ function renderConfig(config: ExtensionConfig): void {
     toggleHideOld.checked = config.hideOldMessages;
     toggleFetchIntercept.checked = config.fetchInterceptEnabled;
     toggleDeliveryTimeoutRefresh.checked = config.autoRefreshDeliveryTimeout;
-    const fastModeSetting = toggleFetchIntercept.closest<HTMLElement>("[data-legacy-control]");
-    if (fastModeSetting && !fastModeSetting.querySelector(".fast-mode-counts-hint")) {
-        const hint = document.createElement("p");
-        hint.className = "hint fast-mode-counts-hint";
-        hint.textContent = "Fast Mode disables message counts because the page only renders a trimmed window.";
-        fastModeSetting.appendChild(hint);
-    }
     visibleLimitInput.value = String(config.visibleMessageLimit);
     batchSizeInput.value = String(config.loadMoreBatchSize);
     requestLimitInput.value = String(config.weeklyRequestLimit);
-    performanceModeSelect.value = config.performanceMode;
+    toggleNativeMode.checked = config.performanceMode === "native";
     renderPerformanceMode(config.performanceMode);
     settingsSection.setAttribute("aria-disabled", String(!config.enabled));
 
@@ -240,7 +209,7 @@ async function refreshStatus(): Promise<void> {
     try {
         const status = await safeSendMessage<ExtensionStatus | undefined>({ type: MessageType.GET_STATUS });
         if (status && typeof status.totalMessages === "number") {
-            statusText.textContent = renderStatusText(status);
+            statusText.textContent = renderPopupStatusText(currentConfig, status);
             settingsSection.style.display = "flex"; // Set to flex only when the site is actually supported
             currentSiteId = status.siteId;
             writePopupCache({ ...readPopupCache(), config: currentConfig, status });
@@ -368,8 +337,8 @@ toggleFetchIntercept.addEventListener("change", async () => {
     await refreshStatus();
 });
 
-performanceModeSelect.addEventListener("change", async () => {
-    const requestedMode = performanceModeSelect.value as PerformanceMode;
+toggleNativeMode.addEventListener("change", async () => {
+    const requestedMode: PerformanceMode = toggleNativeMode.checked ? "native" : "legacy";
     const mode: PerformanceMode = requestedMode === "native" && !isNativeModeAllowedForSite(currentSiteId)
         ? "legacy"
         : requestedMode;
@@ -416,8 +385,8 @@ themeToggle.addEventListener("click", async () => {
 
 // Tooltip: fixed-position bubble that can't be clipped by popup overflow
 const tooltip = document.getElementById("tooltip") as HTMLElement;
-const TOOLTIP_W = 220; // must match CSS width
-const POPUP_W = 300;   // body width
+const TOOLTIP_W = 260; // must match CSS width
+const POPUP_W = 320;   // body width
 
 document.querySelectorAll<HTMLElement>("[data-tooltip]").forEach((el) => {
     el.addEventListener("mouseenter", () => {
