@@ -43,6 +43,7 @@
 
 #### Chatgpt
 
+- prevent native CSS bleed in stable mode ([f107713](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/f107713e0f8b6716d8c3c6870f9b27aa67cab8e9)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - preserve fast mode mapping references ([949c1b1](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/949c1b15b72fb3d56bba0fd2c1b760e867f30801)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - track outer turn containers ([ad369eb](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/ad369ebec9c894b04dd28f6c31e92d32e4081950)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - avoid undercounting virtualized messages ([72e9256](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/72e9256ed90f2102e21701892a7bf6d53341a8a4)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
