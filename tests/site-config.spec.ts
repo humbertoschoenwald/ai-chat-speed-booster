@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { SITES } from "../src/shared/sites";
+import { detectSiteFromUrl } from "../src/shared/siteDetection";
 
 test("search ai site config is guarded by required query parameter (#23)", () => {
     const site = SITES.find((candidate) => candidate.id === "search-ai-mode");
@@ -50,4 +51,12 @@ test("perplexity site config uses active answer tab panels without fetch trimmin
     expect(site?.selectors.scrollContainer).toBe("main .scrollable-container");
     expect(site?.messageIdAttribute).toBe("id");
     expect(site?.fetchIntercept).toBeUndefined();
+});
+
+test("site detection from URL distinguishes ChatGPT, Gemini, and guarded Search AI Mode", () => {
+    expect(detectSiteFromUrl("https://chatgpt.com/c/mock")?.id).toBe("chatgpt");
+    expect(detectSiteFromUrl("https://gemini.google.com/app/mock")?.id).toBe("gemini");
+    expect(detectSiteFromUrl("https://www.google.com/search?q=test")?.id).toBeUndefined();
+    expect(detectSiteFromUrl("https://www.google.com/search?q=test&udm=50")?.id).toBe("search-ai-mode");
+    expect(detectSiteFromUrl(undefined)).toBeNull();
 });

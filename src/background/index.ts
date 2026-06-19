@@ -1,11 +1,11 @@
 import { loadConfig, saveConfig, loadRequestCount, incrementRequestCount, resetRequestCount } from "../shared/storage";
 import { onMessage, api } from "../shared/browser-api";
 import { MessageType } from "../shared/types";
-import type { ExtensionConfig, ExtensionMessageUnion, ExtensionStatus } from "../shared/types";
+import type { ExtensionConfig, ExtensionMessageUnion } from "../shared/types";
 import { logger } from "../shared/logger";
-import { getAllUrlPatterns } from "../shared/sites";
-
-const allUrlPatterns = getAllUrlPatterns();
+import { resolveMessageSiteId } from "./activeSite";
+import { coerceConfigPatchForSite } from "./configPolicy";
+import { broadcastToContentScripts, forwardToActiveTab } from "./tabMessaging";
 
 api.runtime.onInstalled.addListener(async (details: chrome.runtime.InstalledDetails) => {
     if (details.reason === "install") {
@@ -18,7 +18,7 @@ api.runtime.onInstalled.addListener(async (details: chrome.runtime.InstalledDeta
     }
 });
 
-onMessage(async (message): Promise<unknown> => {
+onMessage(async (message, sender): Promise<unknown> => {
     const msg = message as ExtensionMessageUnion;
 
     switch (msg.type) {
@@ -27,7 +27,8 @@ onMessage(async (message): Promise<unknown> => {
 
         case MessageType.SET_CONFIG: {
             const partial = msg.payload as Partial<ExtensionConfig>;
-            const updated = await saveConfig(partial);
+            const siteId = await resolveMessageSiteId(sender);
+            const updated = await saveConfig(coerceConfigPatchForSite(partial, siteId));
             await broadcastToContentScripts({ type: MessageType.CONFIG_UPDATED, payload: updated });
             return updated;
         }
@@ -90,25 +91,3 @@ onMessage(async (message): Promise<unknown> => {
             return undefined;
     }
 });
-
-async function broadcastToContentScripts(message: ExtensionMessageUnion): Promise<void> {
-    try {
-        const tabs = await api.tabs.query({ url: allUrlPatterns as string[] });
-        for (const tab of tabs) {
-            if (tab.id == null) continue;
-            try { await api.tabs.sendMessage(tab.id, message); } catch { /* not injected */ }
-        }
-    } catch (error) {
-        logger.error("failed to broadcast to content scripts", error);
-    }
-}
-
-async function forwardToActiveTab(message: ExtensionMessageUnion): Promise<ExtensionStatus | undefined> {
-    try {
-        const [tab] = await api.tabs.query({ active: true, currentWindow: true, url: allUrlPatterns as string[] });
-        if (!tab?.id) return undefined;
-        return (await api.tabs.sendMessage(tab.id, message)) as ExtensionStatus | undefined;
-    } catch {
-        return undefined;
-    }
-}

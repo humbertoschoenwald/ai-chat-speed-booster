@@ -6,6 +6,7 @@ import {
     renderPopupStatusText,
 } from "../src/popup/popupViewModel";
 import { shouldShowNativeModeControl } from "../src/popup/popupCapabilities";
+import { shouldUsePopupCachedStatus } from "../src/popup/popupActiveSite";
 
 const status = (overrides: Partial<ExtensionStatus> = {}): ExtensionStatus => ({
     enabled: true,
@@ -71,5 +72,11 @@ test.describe("popup mode view model", () => {
         expect(shouldShowNativeModeControl("gemini")).toBe(false);
         expect(shouldShowNativeModeControl("claude")).toBe(false);
         expect(shouldShowNativeModeControl(undefined)).toBe(false);
+    });
+
+    test("stale ChatGPT popup cache is ignored on Gemini", () => {
+        expect(shouldUsePopupCachedStatus(status({ siteId: "chatgpt" }), "gemini")).toBe(false);
+        expect(shouldUsePopupCachedStatus(status({ siteId: "gemini" }), "gemini")).toBe(true);
+        expect(shouldUsePopupCachedStatus(status({ siteId: "chatgpt" }), undefined)).toBe(false);
     });
 });

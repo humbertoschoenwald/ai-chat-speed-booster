@@ -66,27 +66,18 @@ export interface SiteConfig {
 
 export const SITES: readonly SiteConfig[] = sitesConfig as SiteConfig[];
 
-/**
- * Detect which supported AI chat site the content script is running on.
- * Returns null if the current page is not a supported site.
- */
-function hostnameMatches(site: SiteConfig, hostname: string): boolean {
-    return site.hostnames.some((h) => hostname === h || hostname.endsWith(`.${h}`));
-}
-
-function requiredSearchParamsMatch(site: SiteConfig): boolean {
-    if (!site.requiredSearchParams?.length) return true;
-
-    const params = new URLSearchParams(window.location.search);
-    return site.requiredSearchParams.every((requirement) => {
-        const currentValue = params.get(requirement.name);
-        return currentValue !== null && requirement.values.includes(currentValue);
-    });
-}
-
 export function detectCurrentSite(): SiteConfig | null {
     const hostname = window.location.hostname;
-    return SITES.find((site) => hostnameMatches(site, hostname) && requiredSearchParamsMatch(site)) ?? null;
+    const params = new URLSearchParams(window.location.search);
+
+    return SITES.find((site) => {
+        const hostMatches = site.hostnames.some((h) => hostname === h || hostname.endsWith(`.${h}`));
+        const paramsMatch = !site.requiredSearchParams?.length || site.requiredSearchParams.every((requirement) => {
+            const currentValue = params.get(requirement.name);
+            return currentValue !== null && requirement.values.includes(currentValue);
+        });
+        return hostMatches && paramsMatch;
+    }) ?? null;
 }
 
 /** Collect every URL pattern across all configured sites. */

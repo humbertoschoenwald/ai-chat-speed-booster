@@ -17,6 +17,7 @@ import {
 } from "../shared/types";
 import { SITES } from "../shared/sites";
 import { isNativeModeAllowedForSite } from "../shared/native-runtime-policy";
+import { detectActivePopupSiteId, shouldUsePopupCachedStatus } from "./popupActiveSite";
 import { shouldShowNativeModeControl } from "./popupCapabilities";
 import { renderPerformanceModeHint, renderPopupStatusText } from "./popupViewModel";
 
@@ -104,16 +105,16 @@ async function safeSendMessage<T>(message: unknown): Promise<T | null> {
 async function init(): Promise<void> {
     const manifest = chrome.runtime.getManifest();
     versionText.textContent = `(v${manifest.version})`; // New: set the version text from manifest
+    currentSiteId = await detectActivePopupSiteId();
 
     const cached = readPopupCache();
     if (cached?.config) {
         applyTheme(cached.config.theme);
         renderConfig(cached.config);
     }
-    if (cached?.status && typeof cached.status.totalMessages === "number") {
+    if (shouldUsePopupCachedStatus(cached?.status, currentSiteId) && typeof cached?.status?.totalMessages === "number") {
         statusText.textContent = renderPopupStatusText(cached.config ?? currentConfig, cached.status);
         settingsSection.style.display = "flex";
-        currentSiteId = cached.status.siteId;
         renderPerformanceMode(cached.config?.performanceMode ?? currentConfig.performanceMode, cached.status);
         renderNativeDiagnostics(cached.status);
     }
