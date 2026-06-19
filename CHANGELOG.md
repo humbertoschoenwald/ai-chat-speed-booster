@@ -6,6 +6,7 @@
 
 #### Chatgpt
 
+- detect max length readonly state ([5b3dad8](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/5b3dad894116f5b13f7cbbea93d01dc6c6d504e8)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - reload after mode switch ([aa742f7](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/aa742f703f23f0c20dd1a21ed92dee592cbdb0c7)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 
 #### Counter
