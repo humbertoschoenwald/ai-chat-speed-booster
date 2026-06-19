@@ -19,6 +19,22 @@ test.describe("ChatGPT text snapshot cache", () => {
         expect(cache.get("c", 2)?.text).toBe("12345");
     });
 
+    test("keeps snapshot version stable when text hash is unchanged", () => {
+        const cache = new ChatGptTextSnapshotCache({ maxBytes: 100, maxEntryBytes: 100, ttlMs: 100 });
+
+        cache.put("same", "stable text", 0);
+        const first = cache.get("same", 1)!;
+        cache.put("same", "stable text", 2);
+        const second = cache.get("same", 3)!;
+        cache.put("same", "changed text", 4);
+        const third = cache.get("same", 5)!;
+
+        expect(second.snapshotVersion).toBe(first.snapshotVersion);
+        expect(second.textHash).toBe(first.textHash);
+        expect(third.snapshotVersion).toBe(first.snapshotVersion + 1);
+        expect(third.textHash).not.toBe(first.textHash);
+    });
+
     test("expires snapshots and rejects oversized entries", () => {
         const cache = new ChatGptTextSnapshotCache({ maxBytes: 20, maxEntryBytes: 5, ttlMs: 10 });
 

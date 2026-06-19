@@ -2,6 +2,9 @@ export interface ChatGptTextSnapshot {
     readonly key: string;
     readonly text: string;
     readonly bytes: number;
+    readonly textHash: string;
+    readonly textLength: number;
+    readonly snapshotVersion: number;
     readonly createdAtMs: number;
     readonly lastAccessedMs: number;
 }
@@ -34,12 +37,21 @@ export class ChatGptTextSnapshotCache {
         if (!key || !text) return;
         const bytes = measureUtf8Bytes(text);
         if (bytes > this.options.maxEntryBytes || bytes > this.options.maxBytes) return;
+        const textHash = hashText(text);
+        const existing = this.entries.get(key);
+        if (existing?.textHash === textHash && existing.textLength === text.length) {
+            this.entries.set(key, { ...existing, lastAccessedMs: nowMs });
+            return;
+        }
 
         this.delete(key);
         this.entries.set(key, {
             key,
             text,
             bytes,
+            textHash,
+            textLength: text.length,
+            snapshotVersion: (existing?.snapshotVersion ?? 0) + 1,
             createdAtMs: nowMs,
             lastAccessedMs: nowMs,
         });
@@ -101,6 +113,15 @@ export function renderChatGptTextSnapshot(snapshot: ChatGptTextSnapshot): string
 
 function measureUtf8Bytes(value: string): number {
     return new TextEncoder().encode(value).length;
+}
+
+function hashText(value: string): string {
+    let hash = 2166136261;
+    for (let index = 0; index < value.length; index++) {
+        hash ^= value.charCodeAt(index);
+        hash = Math.imul(hash, 16777619);
+    }
+    return (hash >>> 0).toString(16);
 }
 
 function escapeText(value: string): string {
