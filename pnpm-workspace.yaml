@@ -1,0 +1,3 @@
+# ADR: docs/adr/engineering/tooling/pnpm-package-manager-authority.md
+allowBuilds:
+  esbuild: true

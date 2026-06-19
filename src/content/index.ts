@@ -10,6 +10,7 @@ import { createRenderUnitBudgetSnapshot, type RenderUnitBudgetSnapshot } from ".
 import { ToolCallGroupController } from "./native/ToolCallGroupController";
 import { TurnRegistry } from "./native/TurnRegistry";
 import { VirtualizationConflictDetector } from "./native/VirtualizationConflictDetector";
+import { detectChatGptDeliveryTimeout } from "./native/chatgpt/ChatGptDeliveryTimeoutDetector";
 import { ChatGptTextSnapshotRenderer } from "./native/chatgpt/ChatGptTextSnapshotRenderer";
 import { estimateChatGptPromptTokens, readChatGptComposerText } from "./native/chatgpt/ChatGptTokenEstimator";
 import { detectCurrentSite, type SiteConfig } from "../shared/sites";
@@ -408,6 +409,9 @@ function handleExtensionMessage(message: unknown): ExtensionStatus | undefined {
         const tokenEstimate = currentSite.id === "chatgpt"
             ? estimateChatGptPromptTokens(readChatGptComposerText(document))
             : null;
+        const deliveryTimeout = currentSite.id === "chatgpt"
+            ? detectChatGptDeliveryTimeout(document)
+            : null;
         const displayStatus = getDisplayStatus(messageManager.getStatus());
         return {
             ...displayStatus,
@@ -450,6 +454,12 @@ function handleExtensionMessage(message: unknown): ExtensionStatus | undefined {
             nativeModeApproxInputTokens: tokenEstimate?.approxTokens,
             nativeModeTokenLimit: tokenEstimate?.limitTokens,
             nativeModeTokenWarningLevel: tokenEstimate?.warningLevel,
+            chatGptDeliveryTimeoutDetected: deliveryTimeout?.detected,
+            chatGptDeliveryTimeoutConfidence: deliveryTimeout?.confidence,
+            chatGptDeliveryTimeoutRetryButtonCount: deliveryTimeout?.retryButtonCount,
+            chatGptDeliveryTimeoutAssistantErrorCount: deliveryTimeout?.assistantErrorCount,
+            chatGptDeliveryTimeoutFirstMessageId: deliveryTimeout?.firstMessageId,
+            chatGptDeliveryTimeoutReason: deliveryTimeout?.reason,
             nativeModeRenderUnitCost: nativeRenderBudget?.estimatedRenderUnitCost,
             nativeModeTurnNodeCost: nativeRenderBudget?.estimatedTurnNodeCost,
             nativeModeToolNodeCost: nativeRenderBudget?.estimatedToolNodeCost,
@@ -532,6 +542,16 @@ function refreshUI(): void {
         contentLastUiRefreshAt = Date.now();
         const status = messageManager.getStatus();
         const displayStatus = getDisplayStatus(status);
+        if (currentSite.id === "chatgpt") {
+            const deliveryTimeout = detectChatGptDeliveryTimeout(document);
+            if (deliveryTimeout.detected) {
+                contentLifecycleState = "degraded";
+                contentLastRecoverableErrorClass = `chatgpt-delivery-timeout:${deliveryTimeout.confidence}`;
+            } else if (contentLastRecoverableErrorClass?.startsWith("chatgpt-delivery-timeout:")) {
+                contentLastRecoverableErrorClass = null;
+                contentLifecycleState = "active";
+            }
+        }
 
         // Consume the DOM attribute written by the MAIN-world fetch
         // interceptor.  Once consumed we store the flag internally so

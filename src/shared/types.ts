@@ -127,6 +127,12 @@ export interface ExtensionStatus {
     readonly nativeModeApproxInputTokens?: number;
     readonly nativeModeTokenLimit?: number;
     readonly nativeModeTokenWarningLevel?: "ok" | "warn" | "critical";
+    readonly chatGptDeliveryTimeoutDetected?: boolean;
+    readonly chatGptDeliveryTimeoutConfidence?: "none" | "structural" | "text-fallback";
+    readonly chatGptDeliveryTimeoutRetryButtonCount?: number;
+    readonly chatGptDeliveryTimeoutAssistantErrorCount?: number;
+    readonly chatGptDeliveryTimeoutFirstMessageId?: string | null;
+    readonly chatGptDeliveryTimeoutReason?: string | null;
     readonly nativeModeRenderUnitCost?: number;
     readonly nativeModeTurnNodeCost?: number;
     readonly nativeModeToolNodeCost?: number;
