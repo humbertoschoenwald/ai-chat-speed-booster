@@ -116,6 +116,10 @@
 - target google ai mode turns (#23) ([9cea8b7](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/9cea8b781c4c7c3f1b767a99515a3a493b4a0906)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - finish search ai mode adapter (#23) ([e40c281](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/e40c2816ab51edeff1c76f59d051a6b4c519572e)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 
+#### Stable
+
+- bound managed hidden turn sizing ([16edb9d](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/16edb9d74d20aff4502ab867fa52aed288b80251)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
+
 #### Streaming
 
 - add stale generation detector model ([2c5b617](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/2c5b61788d20ba10c4c2832c9a1e8bd11ed5bf64)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
