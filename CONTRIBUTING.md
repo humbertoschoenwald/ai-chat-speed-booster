@@ -63,8 +63,19 @@ Keep generated outputs out of commits. The repo already ignores build outputs su
 | `pnpm run lint` | Check package and command-surface invariants |
 | `pnpm test` | Run build and extension Playwright tests |
 | `pnpm run validate` | Run the full project validation gate |
+| `pnpm run hooks:install` | Install the optional local Git hook |
 
 The repository does not require contributors to install extra local lint tools beyond the dependencies installed by pnpm.
+
+## Local Git hook
+
+Maintainers can install the optional local Git hook with:
+
+```bash
+pnpm run hooks:install
+```
+
+The hook refreshes CHANGELOG.md before publishing. When the file changes, it creates a changelog-only commit and asks you to run the publish command again so the new commit is included.
 
 ## Validation
 
