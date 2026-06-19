@@ -24,7 +24,7 @@ import { renderPerformanceModeHint, renderPopupStatusText } from "./popupViewMod
 const toggleEnabled = document.getElementById("toggle-enabled") as HTMLInputElement;
 const toggleStatus = document.getElementById("toggle-status") as HTMLInputElement;
 const toggleFetchIntercept = document.getElementById("toggle-fetch-intercept") as HTMLInputElement;
-const toggleAutoLoad = document.getElementById("toggle-auto-load") as HTMLInputElement;
+// Auto Load remains storage-only; the popup intentionally does not render a control.
 const toggleHideOld = document.getElementById("toggle-hide-old") as HTMLInputElement;
 const visibleLimitInput = document.getElementById("visible-limit") as HTMLInputElement;
 const batchSizeInput = document.getElementById("batch-size") as HTMLInputElement;
@@ -190,7 +190,6 @@ function renderConfig(config: ExtensionConfig): void {
     writePopupCache({ ...readPopupCache(), config });
     toggleEnabled.checked = config.enabled;
     toggleStatus.checked = config.showStatus;
-    toggleAutoLoad.checked = config.autoLoad;
     toggleHideOld.checked = config.hideOldMessages;
     toggleFetchIntercept.checked = config.fetchInterceptEnabled;
     toggleDeliveryTimeoutRefresh.checked = config.autoRefreshDeliveryTimeout;
@@ -311,11 +310,7 @@ toggleStatus.addEventListener("change", async () => {
     await refreshStatus();
 });
 
-toggleAutoLoad.addEventListener("change", async () => {
-    const config = await safeSendMessage<ExtensionConfig>({ type: MessageType.TOGGLE_AUTO_LOAD });
-    if (config) renderConfig(config);
-    await refreshStatus();
-});
+// Auto Load has no popup listener because the control is intentionally hidden.
 
 toggleHideOld.addEventListener("change", async () => {
     const config = await safeSendMessage<ExtensionConfig>({ type: MessageType.TOGGLE_HIDE_OLD_MESSAGES });

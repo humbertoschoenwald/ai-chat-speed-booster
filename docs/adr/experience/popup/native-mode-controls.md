@@ -8,7 +8,7 @@ Accepted.
 
 Native Mode needs user-facing controls before aggressive behavior ships. The popup must expose the mode boundary without deleting or overwriting existing Legacy settings.
 
-Legacy Mode remains the default and keeps existing Fast Mode, Auto Load, Hide Old Turns, visible limit, batch size, status indicator, theme, and request-counter behavior.
+Stable Mode remains the default and keeps Fast Mode, Hide Old Turns, visible limit, batch size, status indicator, theme, and request-counter behavior. Auto Load remains a stored experimental flag but is no longer rendered in the popup.
 
 ## Decision
 
@@ -20,9 +20,10 @@ Non-ChatGPT sites must not show Native Mode controls, warnings, or diagnostics y
 surface stays Stable-only until that provider has a tested native adapter and a provider-specific
 ADR accepts the added behavior.
 
-Fast Mode, Auto Load, Hide Old Turns, visible-count controls, and the floating status badge are
-Stable-only controls. They are hidden and disabled while Native Mode is effectively active so their
-saved Stable values cannot leak into Native status copy or runtime behavior.
+Fast Mode, Hide Old Turns, visible-count controls, and the floating status badge are Stable-only
+controls. They are hidden and disabled while Native Mode is effectively active so their saved
+Stable values cannot leak into Native status copy or runtime behavior. Fast Mode status copy must
+say it is experimental and must never be shown while Native Mode is requested or active.
 
 Delivery-timeout auto-refresh is mode-neutral and stays visible in both Stable and Native Mode.
 

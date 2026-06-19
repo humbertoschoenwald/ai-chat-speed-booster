@@ -73,27 +73,14 @@
                 <div class="native-panel__body" id="native-diagnostics-body">Waiting for page status…</div>
             </div>
 
-            <!-- Fast mode + Auto load -->
-                <div class="setting" data-legacy-control data-tooltip="Trims API responses before rendering. Faster than hiding after the fact. Disable if messages appear missing.">
+            <!-- Fast mode -->
+                <div class="setting" data-legacy-control data-tooltip="Experimental: trims the initial API render window before the chat app paints it. Disable if you need exact counts or older turns appear unavailable.">
                     <div class="setting__info">
                     <span class="setting__label">Fast mode</span>
-                    <span class="setting__hint">Stable only; disables message counts</span>
+                    <span class="setting__hint">Experimental window</span>
                     </div>
                     <label class="toggle" aria-label="Enable or disable fetch interception">
                         <input type="checkbox" id="toggle-fetch-intercept" class="toggle__input">
-                        <span class="toggle__slider"></span>
-                    </label>
-                </div>
-                <div class="setting" data-legacy-control data-tooltip="Beta: reveals one older message when you scroll to the top. Disabled by default while we iron out scroll glitches.">
-                    <div class="setting__info">
-                    <span class="setting__label">
-                        Auto load
-                        <span class="setting__badge">Beta</span>
-                    </span>
-                    <span class="setting__hint">Stable only</span>
-                    </div>
-                    <label class="toggle" aria-label="Enable or disable auto-load (Beta)">
-                        <input type="checkbox" id="toggle-auto-load" class="toggle__input">
                         <span class="toggle__slider"></span>
                     </label>
                 </div>

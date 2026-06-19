@@ -44,11 +44,13 @@ export function renderPopupStatusText(config: ExtensionConfig, status: Extension
 }
 
 function renderModeCountText(config: ExtensionConfig, status: ExtensionStatus): string {
-    if (status.performanceMode === "native") {
-        return "Native Mode active · experimental";
+    if (config.performanceMode === "native" || status.performanceMode === "native") {
+        return status.performanceMode === "native"
+            ? "Native Mode active · experimental"
+            : "Native Mode requested · reloading chat tab";
     }
     if (config.fetchInterceptEnabled) {
-        return "Fast Mode active · message counts disabled";
+        return "Fast Mode active · experimental window";
     }
     return `${status.visibleMessages}/${status.totalMessages} messages visible` +
         (status.hiddenMessages > 0 ? ` · ${status.hiddenMessages} hidden` : "");

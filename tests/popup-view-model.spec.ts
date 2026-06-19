@@ -37,11 +37,22 @@ test.describe("popup mode view model", () => {
         expect(text).not.toContain("message counts disabled");
     });
 
-    test("Stable Fast Mode keeps the count-disabled copy", () => {
+    test("requested Native Mode never falls through to Stable Fast Mode copy", () => {
+        const text = renderPopupStatusText(
+            config({ performanceMode: "native", fetchInterceptEnabled: true }),
+            status({ performanceMode: "legacy" }),
+        );
+
+        expect(text).toBe("Native Mode requested · reloading chat tab");
+        expect(text).not.toContain("Fast Mode");
+        expect(text).not.toContain("message counts disabled");
+    });
+
+    test("Stable Fast Mode uses experimental window copy", () => {
         expect(renderPopupStatusText(
             config({ performanceMode: "legacy", fetchInterceptEnabled: true }),
             status({ performanceMode: "legacy" }),
-        )).toBe("Fast Mode active · message counts disabled");
+        )).toBe("Fast Mode active · experimental window");
     });
 
     test("Stable non-Fast Mode reports message counts", () => {
