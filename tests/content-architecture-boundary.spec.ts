@@ -102,6 +102,11 @@ test("fast-mode status invariants stay wired", () => {
     expect(source).toContain("fastModeChanged");
 });
 
+test("observer source keeps narrow mutation helpers", () => {
+    const source = readFileSync(path.resolve("src/content/DOMObserver.ts"), "utf8");
+    expect(source).toContain("TOOL_CALL_MUTATION_SELECTOR");
+});
+
 test("auto-load observer never forces the scroll position away from the top", () => {
     const source = readFileSync(path.resolve("src/content/DOMObserver.ts"), "utf8");
 

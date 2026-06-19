@@ -33,6 +33,11 @@ const EXTREME_MUTATION_BATCH_SIZE = 250;
 const MUTATION_PROCESS_BUDGET_MS = 8;
 const URL_CHANGE_DEBOUNCE_MS = 150;
 const EXTENSION_OWNED_SELECTOR = ".acsb-load-more-btn,.acsb-status-indicator";
+const TOOL_CALL_MUTATION_SELECTOR = [
+    '[data-message-author-role="tool"]',
+    '[data-testid*="tool" i]',
+    '[class*="tool" i]',
+].join(",");
 
 export class DOMObserver {
     private observer: MutationObserver | null = null;
@@ -250,6 +255,11 @@ export class DOMObserver {
         let skippedNodeCount = 0;
 
         for (const mutation of mutations) {
+            if (this.isToolCallOnlyMutation(mutation)) {
+                skippedNodeCount += mutation.addedNodes.length + mutation.removedNodes.length;
+                continue;
+            }
+
             for (const node of mutation.addedNodes) {
                 if (!(node instanceof HTMLElement)) continue;
                 pageStateElements.push(node);
@@ -322,6 +332,13 @@ export class DOMObserver {
             logger.error(`DOMObserver callback failed during ${phase}`, error);
             this.callbacks.onObserverError(error, phase);
         }
+    }
+
+    private isToolCallOnlyMutation(mutation: MutationRecord): boolean {
+        const target = mutation.target instanceof HTMLElement ? mutation.target : null;
+        if (!target?.closest(TOOL_CALL_MUTATION_SELECTOR)) return false;
+        const nodes = [...mutation.addedNodes, ...mutation.removedNodes];
+        return nodes.every((node) => node instanceof HTMLElement && node.closest(TOOL_CALL_MUTATION_SELECTOR) !== null);
     }
 
     private collectMessageTurns(
