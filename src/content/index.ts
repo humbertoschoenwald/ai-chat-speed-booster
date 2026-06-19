@@ -13,6 +13,7 @@ import { NativeModeController } from "./native/NativeModeController";
 import { ChatGptContentRuntime } from "./native/chatgpt/ChatGptContentRuntime";
 import { ContentBootstrapLease } from "./runtime/ContentBootstrapLease";
 import { ContentReloadCoordinator } from "./runtime/ContentReloadCoordinator";
+import { ContentTimerRegistry } from "./runtime/ContentTimerRegistry";
 import { createExtensionStatus } from "./status/ContentStatusPresenter";
 import { detectCurrentSite, type SiteConfig } from "../shared/sites";
 import { deriveRuntimeConfigForSite } from "../shared/native-runtime-policy";
@@ -31,6 +32,7 @@ const bootstrapLease = new ContentBootstrapLease({ document });
 const reloadCoordinator = new ContentReloadCoordinator({
     reload: () => window.location.reload(),
 });
+const timers = new ContentTimerRegistry();
 
 let config: ExtensionConfig;
 let currentSite: SiteConfig;
@@ -42,9 +44,6 @@ let statusIndicator: StatusIndicator;
 let domObserver: DOMObserver;
 let nativeModeController: NativeModeController | null = null;
 let chatGptRuntime: ChatGptContentRuntime | null = null;
-let conversationRetryTimer: ReturnType<typeof setTimeout> | null = null;
-let resumeHealthCheckTimer: ReturnType<typeof setTimeout> | null = null;
-let viewportResizeTimer: ReturnType<typeof setTimeout> | null = null;
 const contentBootTime = Date.now();
 let contentLifecycleState: ContentLifecycleState = "initializing";
 let contentLastUiRefreshAt: number | null = null;
@@ -225,11 +224,7 @@ function handleConversationChanged(): void {
     currentConversationTrimmed = false;
     requestLifecycleTracker?.reset();
 
-    // Cancel any in-flight retry loop from a previous navigation
-    if (conversationRetryTimer) {
-        clearTimeout(conversationRetryTimer);
-        conversationRetryTimer = null;
-    }
+    timers.clear("conversation-retry");
 
     // Don't restore DOM visibility — the old nodes are about to be removed
     // by the framework.  Un-hiding them would cause a flash of all messages.
@@ -254,14 +249,13 @@ function handleConversationChanged(): void {
                 contentLastRecoverableErrorClass = "conversation-empty-after-retry";
             }
             refreshUI();
-            conversationRetryTimer = null;
             if (messages.length > 0) {
                 logger.debug(`re-initialised with ${messages.length} messages after ${retries} retries`);
             }
             return;
         }
         retries++;
-        conversationRetryTimer = setTimeout(attempt, 300);
+        timers.set("conversation-retry", attempt, 300);
     };
     // Try immediately — with cached responses messages may already be rendered.
     // Fall back to polling if the DOM is empty (server fetch still in-flight).
@@ -297,18 +291,14 @@ function handleVisibilityResume(): void {
 function handleViewportResize(): void {
     nativeModeController?.protectBackgroundWork("viewport-resize", 250);
     chatGptRuntime?.invalidateTurnVisibility();
-    if (viewportResizeTimer) clearTimeout(viewportResizeTimer);
-    viewportResizeTimer = setTimeout(() => {
-        viewportResizeTimer = null;
+    timers.set("viewport-resize", () => {
         refreshUI();
     }, 250);
 }
 
 function queueResumeHealthCheck(reason: string): void {
     if (contentLifecycleState === "stopped") return;
-    if (resumeHealthCheckTimer) clearTimeout(resumeHealthCheckTimer);
-    resumeHealthCheckTimer = setTimeout(() => {
-        resumeHealthCheckTimer = null;
+    timers.set("resume-health-check", () => {
         runResumeHealthCheck(reason);
     }, 120);
 }
@@ -540,18 +530,7 @@ function findMessageContainer(): HTMLElement | null {
 window.addEventListener("beforeunload", () => {
     if (!bootstrapLease.ownsBootstrap()) return;
     contentLifecycleState = "stopped";
-    if (conversationRetryTimer) {
-        clearTimeout(conversationRetryTimer);
-        conversationRetryTimer = null;
-    }
-    if (resumeHealthCheckTimer) {
-        clearTimeout(resumeHealthCheckTimer);
-        resumeHealthCheckTimer = null;
-    }
-    if (viewportResizeTimer) {
-        clearTimeout(viewportResizeTimer);
-        viewportResizeTimer = null;
-    }
+    timers.clearAll();
     reloadCoordinator.dispose();
     window.removeEventListener("pageshow", handlePageResume);
     window.removeEventListener("focus", handleWindowFocus);
