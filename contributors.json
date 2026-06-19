@@ -7,5 +7,6 @@
   "Ryan Holman Clark": { "name": "Ryan Holman", "handle": "RyanHolmanClark" },
   "Claude": { "name": "Claude", "handle": "claude" },
   "claude": { "name": "Claude", "handle": "claude" },
-  "infpdev": { "name": "infpdev", "handle": "infpdev" }
+  "infpdev": { "name": "infpdev", "handle": "infpdev" },
+  "dev": { "name": "infpdev", "handle": "infpdev" }
 }

@@ -149,9 +149,19 @@ async function withResolvedAuthorProfiles(commits) {
   })));
 }
 
+function normalizedProfile(profile) {
+  if (profile?.handle && contributorProfiles.has(profile.handle)) {
+    return contributorProfiles.get(profile.handle);
+  }
+  if (profile?.name && contributorProfiles.has(profile.name)) {
+    return contributorProfiles.get(profile.name);
+  }
+  return profile;
+}
+
 function authorProfile(commit) {
   if (commit.authorProfile?.name || commit.authorProfile?.handle) {
-    return commit.authorProfile;
+    return normalizedProfile(commit.authorProfile);
   }
   if (contributorProfiles.has(commit.author)) {
     return contributorProfiles.get(commit.author);
