@@ -53,6 +53,8 @@ MUST NOT
 
 A token-progress bar is rejected. ChatGPT does not expose an authoritative token ledger for hidden context, compacted history, tool traces, or provider-side truncation. A numeric progress UI would look precise while being unverifiable.
 
+GPT-5.5 Thinking/High token accounting cannot be inferred from DOM text because provider-side context may include hidden instructions, tool metadata, compacted history, omitted turns, and internal accounting that is not present in the page. Do not implement a conversation token ratio, progress meter, percentage bar, or estimated remaining context UI.
+
 Use observable read-only or max-length provider signals instead, without showing a numeric context budget.
 
 ## Risk Register
