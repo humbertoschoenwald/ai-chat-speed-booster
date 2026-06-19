@@ -13,6 +13,7 @@ import { VirtualizationConflictDetector } from "./native/VirtualizationConflictD
 import { detectChatGptDeliveryTimeout } from "./native/chatgpt/ChatGptDeliveryTimeoutDetector";
 import { detectChatGptMaxLengthReadonly } from "./native/chatgpt/ChatGptMaxLengthReadonlyDetector";
 import { ChatGptTextSnapshotRenderer } from "./native/chatgpt/ChatGptTextSnapshotRenderer";
+import { ChatGptTurnContentVisibilityController } from "./native/chatgpt/ChatGptTurnContainmentController";
 import { estimateChatGptPromptTokens, readChatGptComposerText } from "./native/chatgpt/ChatGptTokenEstimator";
 import { detectCurrentSite, type SiteConfig } from "../shared/sites";
 import { deriveRuntimeConfigForSite } from "../shared/native-runtime-policy";
@@ -45,6 +46,7 @@ let statusIndicator: StatusIndicator;
 let domObserver: DOMObserver;
 let nativeModeController: NativeModeController | null = null;
 let chatGptTextSnapshotRenderer: ChatGptTextSnapshotRenderer | null = null;
+let chatGptTurnContentVisibilityController: ChatGptTurnContentVisibilityController | null = null;
 let chatGptResizeListenerAttached = false;
 let nativeSnapshotHosts = 0;
 let nativeSnapshotCacheBytes = 0;
@@ -631,6 +633,8 @@ function ensureChatGptTextSnapshotRendererState(): void {
         }
         chatGptTextSnapshotRenderer?.stop();
         chatGptTextSnapshotRenderer = null;
+        chatGptTurnContentVisibilityController?.stop(document);
+        chatGptTurnContentVisibilityController = null;
         scrubStableChatGptNativeArtifacts();
         return;
     }
@@ -641,7 +645,11 @@ function ensureChatGptTextSnapshotRendererState(): void {
     if (!chatGptTextSnapshotRenderer) {
         chatGptTextSnapshotRenderer = new ChatGptTextSnapshotRenderer();
     }
+    if (!chatGptTurnContentVisibilityController) {
+        chatGptTurnContentVisibilityController = new ChatGptTurnContentVisibilityController();
+    }
     chatGptTextSnapshotRenderer.start(document);
+    chatGptTurnContentVisibilityController.start(document);
 }
 
 function scrubStableChatGptNativeArtifacts(): void {
@@ -654,6 +662,7 @@ function syncChatGptNativeSnapshots(): void {
     const nativeActive = config.performanceMode === "native" && controller?.snapshot().active === true;
     if (!chatGptTextSnapshotRenderer || !controller || currentSite.id !== "chatgpt" || !nativeActive) {
         chatGptTextSnapshotRenderer?.restoreAll(document);
+        chatGptTurnContentVisibilityController?.restoreAll(document);
         ChatGptTextSnapshotRenderer.cleanupNativeArtifacts(document);
         nativeTurnRegistry.reset();
         nativeToolCallGroups.reset();
@@ -688,17 +697,13 @@ function syncChatGptNativeSnapshots(): void {
     for (const record of records) nativeToolCallGroups.indexTurn(record);
     nativeRenderBudget = createRenderUnitBudgetSnapshot(turns, nativeToolCallGroups.snapshot(), config.visibleMessageLimit);
 
-    const result = chatGptTextSnapshotRenderer.sync(turns, {
-        enabled: true,
+    chatGptTextSnapshotRenderer.restoreAll(document);
+    const result = chatGptTurnContentVisibilityController?.sync(turns, {
         liveWindowSize: nativeRenderBudget.liveWindowSize,
         nearestWindow: 2,
-        nowMs,
     });
-    for (let i = 0; i < result.hostRevealLoops; i++) {
-        nativeVirtualizationConflicts.recordHostReveal(true, false);
-    }
-    nativeSnapshotHosts = result.snapshotHosts;
-    nativeSnapshotCacheBytes = result.cache.totalBytes;
+    nativeSnapshotHosts = result?.containedTurns ?? 0;
+    nativeSnapshotCacheBytes = 0;
     } catch (error) {
         handleNativeSnapshotSyncError(error);
     }
@@ -778,6 +783,8 @@ window.addEventListener("beforeunload", () => {
     cancelDeliveryTimeoutRefresh();
     chatGptTextSnapshotRenderer?.stop();
     chatGptTextSnapshotRenderer = null;
+    chatGptTurnContentVisibilityController?.stop(document);
+    chatGptTurnContentVisibilityController = null;
     editorLatencyGuard.stop();
     nativeModeController?.stop("content script unloading");
     nativeModeController = null;
