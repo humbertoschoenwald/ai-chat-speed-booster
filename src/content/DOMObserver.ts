@@ -4,6 +4,7 @@ import type { MutationBatchClass } from "../shared/types";
 import { logger } from "../shared/logger";
 import { filterMessageTurns } from "../shared/messageTurnFilter";
 import { AutoLoadScrollGate } from "./scroll/AutoLoadScrollGate";
+import { MessageQueryCache } from "./MessageQueryCache";
 
 export interface DOMObserverCallbacks {
     onMessagesAdded(elements: HTMLElement[]): void;
@@ -57,6 +58,7 @@ export class DOMObserver {
     private autoLoadEnabled = false;
     private scrollRetryTimer: ReturnType<typeof setInterval> | null = null;
     private readonly scrollGate = new AutoLoadScrollGate();
+    private readonly messageQueryCache = new MessageQueryCache();
     private diagnostics: DOMObserverDiagnostics = {
         lastBatchClass: null,
         lastBatchSize: 0,
@@ -117,12 +119,7 @@ export class DOMObserver {
     }
 
     queryAllMessages(): HTMLElement[] {
-        return this.dedupeNestedMessageTurns(
-            filterMessageTurns(
-                Array.from(document.querySelectorAll<HTMLElement>(this.selectors.messageTurn)),
-                this.selectors,
-            ),
-        );
+        return this.messageQueryCache.queryTurns(this.selectors, location.href);
     }
 
     getDiagnostics(): DOMObserverDiagnostics {
@@ -217,6 +214,7 @@ export class DOMObserver {
         const current = this.pendingUrlChange ?? location.href;
         this.pendingUrlChange = null;
         if (current === this.lastUrl) return;
+        this.messageQueryCache.invalidate(current);
         logger.debug(`URL changed: ${this.lastUrl} -> ${current}`);
         this.lastUrl = current;
         this.runCallback("conversation-changed", () => this.callbacks.onConversationChanged());
@@ -285,6 +283,10 @@ export class DOMObserver {
             skippedNodeCount,
             performance.now() - startedAt,
         );
+
+        if (addedMessages.length > 0 || removedMessages.length > 0) {
+            this.messageQueryCache.invalidate(location.href);
+        }
 
         if (pageStateElements.length > 0) {
             this.runCallback("page-state-changed", () => this.callbacks.onPageStateChanged?.(pageStateElements));
