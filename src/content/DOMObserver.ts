@@ -29,6 +29,7 @@ export interface DOMObserverDiagnostics {
 const HEAVY_MUTATION_BATCH_SIZE = 50;
 const EXTREME_MUTATION_BATCH_SIZE = 250;
 const MUTATION_PROCESS_BUDGET_MS = 8;
+const URL_CHANGE_DEBOUNCE_MS = 150;
 const EXTENSION_OWNED_SELECTOR = ".acsb-load-more-btn,.acsb-status-indicator";
 
 export class DOMObserver {
@@ -39,6 +40,8 @@ export class DOMObserver {
     private readonly selectors: SiteSelectors;
     private readonly callbacks: DOMObserverCallbacks;
     private lastUrl = "";
+    private pendingUrlChange: string | null = null;
+    private urlChangeTimer: ReturnType<typeof setTimeout> | null = null;
     private urlPollTimer: ReturnType<typeof setInterval> | null = null;
     private totalMessages = 0;
     private visibleMessages = 0;
@@ -91,6 +94,11 @@ export class DOMObserver {
             clearInterval(this.urlPollTimer);
             this.urlPollTimer = null;
         }
+        if (this.urlChangeTimer) {
+            clearTimeout(this.urlChangeTimer);
+            this.urlChangeTimer = null;
+        }
+        this.pendingUrlChange = null;
         window.removeEventListener("popstate", this.handleNavigation);
         if (this.observer) {
             this.observer.disconnect();
@@ -184,10 +192,20 @@ export class DOMObserver {
     private checkUrlChange(): void {
         const current = location.href;
         if (current !== this.lastUrl) {
-            logger.debug(`URL changed: ${this.lastUrl} -> ${current}`);
-            this.lastUrl = current;
-            this.runCallback("conversation-changed", () => this.callbacks.onConversationChanged());
+            this.pendingUrlChange = current;
+            if (this.urlChangeTimer) clearTimeout(this.urlChangeTimer);
+            this.urlChangeTimer = setTimeout(() => this.flushUrlChange(), URL_CHANGE_DEBOUNCE_MS);
         }
+    }
+
+    private flushUrlChange(): void {
+        this.urlChangeTimer = null;
+        const current = this.pendingUrlChange ?? location.href;
+        this.pendingUrlChange = null;
+        if (current === this.lastUrl) return;
+        logger.debug(`URL changed: ${this.lastUrl} -> ${current}`);
+        this.lastUrl = current;
+        this.runCallback("conversation-changed", () => this.callbacks.onConversationChanged());
     }
 
     private readonly handleNavigation = (): void => {
