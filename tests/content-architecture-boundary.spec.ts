@@ -7,6 +7,7 @@ test("content entrypoint depends on ChatGPT through one provider runtime adapter
     const source = readFileSync(path.resolve("src/content/index.ts"), "utf8");
 
     expect(source).toContain('import { ChatGptContentRuntime }');
+    expect(source).toContain('import { createExtensionStatus }');
     for (const forbidden of [
         "ensureChatGptTextSnapshotRendererState",
         "syncChatGptNativeSnapshots",
@@ -21,6 +22,21 @@ test("content entrypoint depends on ChatGPT through one provider runtime adapter
         "TurnRegistry",
     ]) {
         expect(source, `${forbidden} belongs inside the ChatGPT runtime adapter`).not.toContain(forbidden);
+    }
+});
+
+test("content entrypoint delegates popup status DTO shaping", () => {
+    const source = readFileSync(path.resolve("src/content/index.ts"), "utf8");
+
+    expect(source).toContain("return createExtensionStatus({");
+    for (const field of [
+        "nativeModeSnapshotHosts:",
+        "chatGptDeliveryTimeoutDetected:",
+        "editorInputEventCount:",
+        "observerLastBatchClass:",
+        "nativeModeVirtualizationDisabled:",
+    ]) {
+        expect(source, `${field} belongs in ContentStatusPresenter`).not.toContain(field);
     }
 });
 

@@ -13,6 +13,7 @@ import { EditorInputOptimizer } from "./native/EditorInputOptimizer";
 import { NativeModeController } from "./native/NativeModeController";
 import { ChatGptContentRuntime } from "./native/chatgpt/ChatGptContentRuntime";
 import { ContentReloadCoordinator } from "./runtime/ContentReloadCoordinator";
+import { createExtensionStatus } from "./status/ContentStatusPresenter";
 import { detectCurrentSite, type SiteConfig } from "../shared/sites";
 import { deriveRuntimeConfigForSite } from "../shared/native-runtime-policy";
 import { loadConfig, onConfigChanged } from "../shared/storage";
@@ -411,73 +412,23 @@ function handleMessagesReset(): void {
 function handleExtensionMessage(message: unknown): ExtensionStatus | undefined {
     const msg = message as { type?: string; payload?: unknown };
     if (msg.type === MessageType.GET_STATUS) {
-        const nativeState = nativeModeController?.snapshot();
-        const editorInputSnapshot = editorLatencyGuard.snapshot();
-        const observerDiagnostics = domObserver.getDiagnostics();
-        const chatGptInspection = chatGptRuntime?.inspectPage();
-        const chatGptStatus = chatGptRuntime?.snapshot();
-        const displayStatus = getDisplayStatus(messageManager.getStatus());
-        return {
-            ...displayStatus,
+        return createExtensionStatus({
+            baseStatus: getDisplayStatus(messageManager.getStatus()),
             siteId: currentSite.id,
             performanceMode: config.performanceMode,
-            nativeModeActive: nativeState?.active ?? false,
-            nativeModeSelectorHealthy: nativeState?.selectorHealth?.healthy ?? false,
-            nativeModeInputActive: nativeState?.editorInput.active ?? false,
-            nativeModeAdapterId: nativeState?.adapter.siteId,
-            nativeModeAdapterName: nativeState?.adapter.displayName,
-            nativeModeAdapterSupport: nativeState?.adapter.support,
-            nativeModeBlockedReason: nativeState?.blockedReason ?? null,
-            nativeModePlanCanStart: nativeState?.executionPlan?.canStart ?? false,
-            nativeModePlanReason: nativeState?.executionPlan?.reason,
-            nativeModePlanActiveFeatures: nativeState?.executionPlan?.activeFeatures,
-            nativeModePlanBlockedFeatures: nativeState?.executionPlan?.blockedFeatures,
-            nativeModeMutationBudgetMs: nativeState?.executionPlan?.mutationBudgetMs,
-            nativeModeInputQuietWindowMs: nativeState?.executionPlan?.inputQuietWindowMs,
-            nativeModeScrollOverscanPx: nativeState?.executionPlan?.scrollOverscanPx,
-            contentLifecycleState,
-            contentBootTime,
-            contentLastUiRefreshAt,
-            contentOverlayPresent: statusIndicator.isMounted(),
-            contentLastRecoverableErrorClass,
-            editorInputActive: editorInputSnapshot.active,
-            editorInputComposing: editorInputSnapshot.composing,
-            editorInputDeferredTaskCount: editorInputSnapshot.deferredTaskCount,
-            editorInputEventCount: editorInputSnapshot.eventCount,
-            editorInputLastEventType: editorInputSnapshot.lastEventType,
-            editorInputLastEventAt: editorInputSnapshot.lastEventAt,
-            editorInputProtectedUntilMs: editorInputSnapshot.protectedUntilMs,
-            editorInputLastPasteLength: editorInputSnapshot.lastPasteLength,
-            editorInputLastPasteChunkCount: editorInputSnapshot.lastPasteChunkCount,
-            observerLastBatchClass: observerDiagnostics.lastBatchClass,
-            observerLastBatchSize: observerDiagnostics.lastBatchSize,
-            observerLastDurationMs: observerDiagnostics.lastDurationMs,
-            observerOverBudgetCount: observerDiagnostics.overBudgetCount,
-            nativeModeSnapshotHosts: chatGptStatus?.nativeSnapshotHosts,
-            nativeModeSnapshotCacheBytes: chatGptStatus?.nativeSnapshotCacheBytes,
-            nativeModeApproxInputTokens: chatGptInspection?.tokenEstimate.approxTokens,
-            nativeModeTokenLimit: chatGptInspection?.tokenEstimate.limitTokens,
-            nativeModeTokenWarningLevel: chatGptInspection?.tokenEstimate.warningLevel,
-            chatGptDeliveryTimeoutDetected: chatGptInspection?.deliveryTimeout.detected,
-            chatGptDeliveryTimeoutConfidence: chatGptInspection?.deliveryTimeout.confidence,
-            chatGptDeliveryTimeoutRetryButtonCount: chatGptInspection?.deliveryTimeout.retryButtonCount,
-            chatGptDeliveryTimeoutAssistantErrorCount: chatGptInspection?.deliveryTimeout.assistantErrorCount,
-            chatGptDeliveryTimeoutFirstMessageId: chatGptInspection?.deliveryTimeout.firstMessageId,
-            chatGptDeliveryTimeoutReason: chatGptInspection?.deliveryTimeout.reason,
-            chatGptMaxLengthReadonlyDetected: chatGptInspection?.maxLengthReadonly.detected,
-            chatGptMaxLengthReadonlyReason: chatGptInspection?.maxLengthReadonly.reason,
-            nativeModeRenderUnitCost: chatGptStatus?.nativeRenderBudget?.estimatedRenderUnitCost,
-            nativeModeTurnNodeCost: chatGptStatus?.nativeRenderBudget?.estimatedTurnNodeCost,
-            nativeModeToolNodeCost: chatGptStatus?.nativeRenderBudget?.estimatedToolNodeCost,
-            nativeModeToolGroupCount: chatGptStatus?.nativeRenderBudget?.toolGroupCount,
-            nativeModeRunningToolCount: chatGptStatus?.nativeRenderBudget?.runningToolCount,
-            nativeModeFailedToolCount: chatGptStatus?.nativeRenderBudget?.failedToolCount,
-            nativeModeLiveWindowSize: chatGptStatus?.nativeRenderBudget?.liveWindowSize,
-            nativeModeRevealLoopCount: chatGptStatus?.nativeRevealLoopCount,
-            nativeModeScrollOscillationCount: chatGptStatus?.nativeScrollOscillationCount,
-            nativeModeVirtualizationDisabled: chatGptStatus?.nativeVirtualizationDisabled,
-            nativeModeVirtualizationConflictReason: chatGptStatus?.nativeVirtualizationConflictReason,
-        };
+            lifecycle: {
+                state: contentLifecycleState,
+                bootTime: contentBootTime,
+                lastUiRefreshAt: contentLastUiRefreshAt,
+                overlayPresent: statusIndicator.isMounted(),
+                lastRecoverableErrorClass: contentLastRecoverableErrorClass,
+            },
+            nativeState: nativeModeController?.snapshot(),
+            editorInput: editorLatencyGuard.snapshot(),
+            observer: domObserver.getDiagnostics(),
+            chatGptInspection: chatGptRuntime?.inspectPage(),
+            chatGptStatus: chatGptRuntime?.snapshot(),
+        });
     }
     // Background also broadcasts CONFIG_UPDATED here (in addition to the
     // storage-change listener) so config changes still propagate if storage
