@@ -294,6 +294,10 @@
 
 - split contributor guidance from README ([347e5a6](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/347e5a6247bf41d3290f27b7f1f7804ff86c735d)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 
+#### Native
+
+- define no-hide invariant ([02ddcee](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/02ddcee0a2fe818d04c1d1e258bbad2ff06c8c6e)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
+
 #### Repo
 
 - document maintainer setup ([75d6aca](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/75d6acab90484cb15bbf815a01a69e17406f08d2)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
