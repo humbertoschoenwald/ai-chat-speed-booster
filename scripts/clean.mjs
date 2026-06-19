@@ -24,10 +24,14 @@ function cleanDist() {
         return;
     }
 
-    if (!existsSync("dist")) return;
+    if (!existsSync("dist")) {
+        return;
+    }
 
     for (const entry of readdirSync("dist", { withFileTypes: true })) {
-        if (entry.name === PRESERVED_DIST_TARGET) continue;
+        if (entry.name === PRESERVED_DIST_TARGET) {
+            continue;
+        }
         rmSync(join("dist", entry.name), { recursive: true, force: true });
     }
 }

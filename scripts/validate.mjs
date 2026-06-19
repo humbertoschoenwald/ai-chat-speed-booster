@@ -15,8 +15,16 @@ function quoteWindowsCommandPart(part) {
     return `"${part.replace(/(["^&|<>])/g, "^$1")}"`;
 }
 
+function tail(text, maxChars = 24_000) {
+    if (!text || text.length <= maxChars) {
+        return text ?? "";
+    }
+    return `[output truncated to last ${maxChars} characters]\n${text.slice(-maxChars)}`;
+}
+
 function run(command, args) {
-    console.log(`\n$ ${[command, ...args].join(" ")}`);
+    const displayCommand = [command, ...args].join(" ");
+    console.log(`\nRUN ${displayCommand}`);
     const spawnCommand = process.platform === "win32"
         ? process.env.ComSpec ?? "cmd.exe"
         : command;
@@ -24,18 +32,50 @@ function run(command, args) {
         ? ["/d", "/s", "/c", [command, ...args].map(quoteWindowsCommandPart).join(" ")]
         : args;
     const result = spawnSync(spawnCommand, spawnArgs, {
-        stdio: "inherit",
+        encoding: "utf8",
+        env: {
+            ...process.env,
+            FORCE_COLOR: "0",
+            NO_COLOR: "1",
+        },
+        maxBuffer: 64 * 1024 * 1024,
         shell: false,
+        stdio: ["inherit", "pipe", "pipe"],
     });
 
+    const stdout = result.stdout ?? "";
+    const stderr = result.stderr ?? "";
+
+    if (process.env.VALIDATE_VERBOSE === "1") {
+        if (stdout) {
+            process.stdout.write(stdout);
+        }
+        if (stderr) {
+            process.stderr.write(stderr);
+        }
+    }
+
     if (result.error) {
+        console.error(`ERROR validation step failed before exit: ${displayCommand}`);
         console.error(result.error.message);
         process.exit(1);
     }
 
     if (result.status !== 0) {
+        console.error(`ERROR validation step failed: ${displayCommand}`);
+        console.error(`exit code: ${result.status ?? "unknown"}${result.signal ? ` signal: ${result.signal}` : ""}`);
+        if (stdout) {
+            console.error("\n--- stdout ---");
+            console.error(tail(stdout));
+        }
+        if (stderr) {
+            console.error("\n--- stderr ---");
+            console.error(tail(stderr));
+        }
         process.exit(result.status ?? 1);
     }
+
+    console.log(`OK ${displayCommand}`);
 }
 
 const playwrightInstallArgs =
@@ -55,7 +95,7 @@ const STEPS = [
     [pnpm, ["run", buildScript]],
     [pnpm, ["run", "typecheck"]],
     [pnpm, ["run", "lint"]],
-    [pnpm, ["exec", "playwright", "test", "--project=build"]],
+    [pnpm, ["exec", "playwright", "test", "--project=build", "--reporter=dot"]],
     ...(includeBrowserSmoke ? [[pnpm, playwrightInstallArgs], ["node", ["tests/auth-setup.mjs"]], [pnpm, ["exec", "playwright", "test", "--project=extension-smoke"]]] : []),
     ...(includeFullExtension ? [[pnpm, ["exec", "playwright", "test", "--project=extension"]]] : []),
     ...(includeLiveIntegration ? [[pnpm, ["exec", "playwright", "test", "--project=integration"]]] : []),
