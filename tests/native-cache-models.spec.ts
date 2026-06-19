@@ -3,6 +3,7 @@ import { createRenderUnitBudgetSnapshot } from "../src/content/native/RenderUnit
 import { ToolCallGroupController } from "../src/content/native/ToolCallGroupController";
 import { TurnMeasurementCache } from "../src/content/native/TurnMeasurementCache";
 import { TurnRegistry, type NativeTurnRecord } from "../src/content/native/TurnRegistry";
+import { classifyTurnPriority } from "../src/content/native/chatgpt/ChatGptVisibleTurnPriorityController";
 
 const element = (kind: "tool" | "running" | "failed" | "expanded", childCount = 0): HTMLElement => ({
     matches: (selector: string) => {
@@ -19,6 +20,12 @@ const element = (kind: "tool" | "running" | "failed" | "expanded", childCount = 
         if (name === "data-state" && kind === "tool") return "closed";
         return null;
     },
+}) as unknown as HTMLElement;
+
+const priorityElement = (intersecting: string): HTMLElement => ({
+    getAttribute: (name: string) => name === "data-is-intersecting" ? intersecting : null,
+    getBoundingClientRect: () => ({ top: 0, bottom: 1 }) as DOMRect,
+    ownerDocument: { defaultView: { innerHeight: 800 } },
 }) as unknown as HTMLElement;
 
 const record = (key: string, node: HTMLElement, measuredHeight: number | null): NativeTurnRecord => ({
@@ -58,6 +65,11 @@ test.describe("native cache and tool-call models", () => {
         const retracked = registry.track(replacement, 1);
         expect(retracked).toBe(first);
         expect(registry.consumeDirtyRecords([retracked])).toEqual([retracked]);
+    });
+
+    test("classifies visible priority hints", () => {
+        expect(classifyTurnPriority(priorityElement("true"))).toBe("live");
+        expect(classifyTurnPriority(priorityElement("false"))).toBe("far");
     });
 
     test("persists only stable measurement keys", () => {

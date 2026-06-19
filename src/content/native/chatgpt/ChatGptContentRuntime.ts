@@ -22,6 +22,7 @@ import { createChatGptLogicalDisplayStatus } from "./ChatGptLogicalTurnCounter";
 import { ChatGptTextSnapshotRenderer } from "./ChatGptTextSnapshotRenderer";
 import { ChatGptToolCallSummaryController } from "./ChatGptToolCallSummaryController";
 import { ChatGptTurnContentVisibilityController } from "./ChatGptTurnContainmentController";
+import { ChatGptVisibleTurnPriorityController } from "./ChatGptVisibleTurnPriorityController";
 import {
     estimateChatGptPromptTokens,
     readChatGptComposerText,
@@ -61,6 +62,7 @@ export class ChatGptContentRuntime {
     private readonly nativeTurnRegistry = new TurnRegistry();
     private readonly nativeToolCallGroups = new ToolCallGroupController();
     private readonly toolCallSummaries = new ChatGptToolCallSummaryController();
+    private readonly visibleTurnPriorities = new ChatGptVisibleTurnPriorityController();
     private readonly ports: ChatGptContentRuntimePorts;
     private chatGptTextSnapshotRenderer: ChatGptTextSnapshotRenderer | null = null;
     private chatGptTurnContentVisibilityController: ChatGptTurnContentVisibilityController | null = null;
@@ -200,8 +202,9 @@ export class ChatGptContentRuntime {
             const turns = this.ports.queryTurns();
             const records = turns.map((turn, index) => this.nativeTurnRegistry.track(turn, index));
             const dirtyRecords = this.nativeTurnRegistry.consumeDirtyRecords(records);
-            const recordsForToolIndex = dirtyRecords.length > 0 ? dirtyRecords : records;
-            if (recordsForToolIndex === records) this.nativeToolCallGroups.reset();
+            const toolSourceRecords = dirtyRecords.length > 0 ? dirtyRecords : records;
+            const recordsForToolIndex = this.visibleTurnPriorities.prioritize(toolSourceRecords);
+            if (toolSourceRecords === records) this.nativeToolCallGroups.reset();
             const toolGroups = recordsForToolIndex.flatMap((record) => [...this.nativeToolCallGroups.indexTurn(record)]);
             this.toolCallSummaries.sync(toolGroups);
             this.nativeRenderBudget = createRenderUnitBudgetSnapshot(
