@@ -34,6 +34,7 @@ const EXTREME_MUTATION_BATCH_SIZE = 250;
 const MUTATION_PROCESS_BUDGET_MS = 8;
 const URL_CHANGE_DEBOUNCE_MS = 150;
 const EXTENSION_OWNED_SELECTOR = ".acsb-load-more-btn,.acsb-status-indicator";
+const COMPOSER_SELECTOR = "#prompt-textarea,textarea,[contenteditable]";
 const TOOL_CALL_MUTATION_SELECTOR = [
     '[data-message-author-role="tool"]',
     '[data-testid*="tool" i]',
@@ -260,6 +261,10 @@ export class DOMObserver {
 
             for (const node of mutation.addedNodes) {
                 if (!(node instanceof HTMLElement)) continue;
+                if (this.isComposerOwned(node)) {
+                    skippedNodeCount += 1;
+                    continue;
+                }
                 pageStateElements.push(node);
                 const collected = this.collectMessageTurns(node, scannedNodes);
                 addedMessages.push(...collected.elements);
@@ -269,6 +274,10 @@ export class DOMObserver {
 
             for (const node of mutation.removedNodes) {
                 if (!(node instanceof HTMLElement)) continue;
+                if (this.isComposerOwned(node)) {
+                    skippedNodeCount += 1;
+                    continue;
+                }
                 const collected = this.collectMessageTurns(node, scannedNodes);
                 removedMessages.push(...collected.elements);
                 scannedNodeCount += collected.scanned;
@@ -347,7 +356,7 @@ export class DOMObserver {
         root: HTMLElement,
         scannedNodes: WeakSet<HTMLElement>,
     ): { elements: HTMLElement[]; scanned: number; skipped: number } {
-        if (this.isExtensionOwned(root) || scannedNodes.has(root)) {
+        if (this.isExtensionOwned(root) || this.isComposerOwned(root) || scannedNodes.has(root)) {
             return { elements: [], scanned: 0, skipped: 1 };
         }
 
@@ -414,6 +423,10 @@ export class DOMObserver {
 
     private isExtensionOwned(el: HTMLElement): boolean {
         return el.closest(EXTENSION_OWNED_SELECTOR) !== null;
+    }
+
+    private isComposerOwned(el: HTMLElement): boolean {
+        return el.closest(COMPOSER_SELECTOR) !== null;
     }
 
     private isMessageTurn(el: HTMLElement): boolean {
