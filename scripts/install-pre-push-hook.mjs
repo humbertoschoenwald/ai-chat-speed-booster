@@ -34,10 +34,11 @@ if (existsSync(oldPrePushPath) && readFileSync(oldPrePushPath, "utf8").includes(
 }
 
 const postCommitPath = gitHookPath("post-commit");
+const nodePath = process.execPath.replaceAll("\\", "/");
 writeExecutable(postCommitPath, `#!/bin/sh
 # Installed by pnpm run hooks:install.
 # Creates a changelog-only follow-up commit after normal commits when CHANGELOG.md changes.
-exec node scripts/post-commit-changelog.mjs "$@"
+exec "${nodePath}" scripts/post-commit-changelog.mjs "$@"
 `);
 
 console.log(`Installed post-commit changelog hook at ${postCommitPath.replaceAll("\\", "/")}`);
