@@ -42,6 +42,7 @@ let statusIndicator: StatusIndicator;
 let domObserver: DOMObserver;
 let nativeModeController: NativeModeController | null = null;
 let chatGptTextSnapshotRenderer: ChatGptTextSnapshotRenderer | null = null;
+let chatGptResizeListenerAttached = false;
 let nativeSnapshotHosts = 0;
 let nativeSnapshotCacheBytes = 0;
 const nativeVirtualizationConflicts = new VirtualizationConflictDetector();
@@ -99,7 +100,6 @@ async function bootstrap(): Promise<void> {
     nativeModeController.updateConfig(config);
     if (currentSite.id === "chatgpt") {
         ensureChatGptTextSnapshotRendererState();
-        window.addEventListener("resize", handleViewportResize);
     }
     editorLatencyGuard.start();
     messageManager.updateConfig(config);
@@ -611,10 +611,18 @@ function refreshUI(): void {
 function ensureChatGptTextSnapshotRendererState(): void {
     if (currentSite.id !== "chatgpt") return;
     if (config.performanceMode !== "native") {
+        if (chatGptResizeListenerAttached) {
+            window.removeEventListener("resize", handleViewportResize);
+            chatGptResizeListenerAttached = false;
+        }
         chatGptTextSnapshotRenderer?.stop();
         chatGptTextSnapshotRenderer = null;
         ChatGptTextSnapshotRenderer.cleanupNativeArtifacts(document);
         return;
+    }
+    if (!chatGptResizeListenerAttached) {
+        window.addEventListener("resize", handleViewportResize);
+        chatGptResizeListenerAttached = true;
     }
     if (!chatGptTextSnapshotRenderer) {
         chatGptTextSnapshotRenderer = new ChatGptTextSnapshotRenderer();
@@ -702,7 +710,10 @@ window.addEventListener("beforeunload", () => {
     }
     window.removeEventListener("pageshow", handlePageResume);
     window.removeEventListener("focus", handleWindowFocus);
-    window.removeEventListener("resize", handleViewportResize);
+    if (chatGptResizeListenerAttached) {
+        window.removeEventListener("resize", handleViewportResize);
+        chatGptResizeListenerAttached = false;
+    }
     document.removeEventListener("visibilitychange", handleVisibilityResume);
     chatGptTextSnapshotRenderer?.stop();
     chatGptTextSnapshotRenderer = null;
