@@ -11,7 +11,9 @@ import { test, expect } from "@playwright/test";
 import { readFileSync, existsSync } from "fs";
 import path from "path";
 
-const BROWSERS = ["chrome", "firefox", "edge", "safari"];
+const BROWSERS = process.env.VALIDATE_ALL_BROWSERS === "1" || process.env.VALIDATE_FULL === "1"
+    ? ["chrome", "firefox", "edge", "safari"]
+    : ["chrome"];
 const REQUIRED_FILES = ["manifest.json", "content.js", "background.js", "popup.html", "popup.css"];
 
 const sitesConfig = JSON.parse(readFileSync(path.resolve("sites.config.json"), "utf8"));

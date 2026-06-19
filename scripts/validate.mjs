@@ -46,10 +46,13 @@ const pnpm = "pnpm";
 const includeBrowserSmoke = process.env.VALIDATE_BROWSER === "1" || process.env.VALIDATE_FULL === "1";
 const includeFullExtension = process.env.VALIDATE_FULL === "1";
 const includeLiveIntegration = process.env.VALIDATE_LIVE_INTEGRATION === "1" || process.env.VALIDATE_FULL === "1";
+const buildScript = process.env.VALIDATE_ALL_BROWSERS === "1" || process.env.VALIDATE_FULL === "1"
+    ? "build:all"
+    : "build:chrome";
 
 const STEPS = [
     [pnpm, ["run", "clean"]],
-    [pnpm, ["run", "build:all"]],
+    [pnpm, ["run", buildScript]],
     [pnpm, ["run", "typecheck"]],
     [pnpm, ["run", "lint"]],
     [pnpm, ["exec", "playwright", "test", "--project=build"]],
@@ -58,6 +61,10 @@ const STEPS = [
     ...(includeLiveIntegration ? [[pnpm, ["exec", "playwright", "test", "--project=integration"]]] : []),
     ["node", ["tests/scroll-diagnostic.mjs"]],
 ];
+
+if (buildScript !== "build:all") {
+    console.log("Building Chrome only. Set VALIDATE_ALL_BROWSERS=1 to build every browser target.");
+}
 
 if (!includeBrowserSmoke) {
     console.log("Skipping browser smoke tests. Set VALIDATE_BROWSER=1 to include them.");
