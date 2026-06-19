@@ -13,14 +13,10 @@ function injectHideStyle(): void {
     if (styleInjected) return;
     styleInjected = true;
     const style = document.createElement("style");
-    // The second rule defeats ChatGPT's `content-visibility: auto` on the turns
-    // we let through. Without it, turns materialize/de-materialize as they
-    // cross the viewport, making scrollHeight oscillate and triggering
-    // overflow-anchor jumps. Hidden turns are display:none so this is cheap.
-    style.textContent = `.${HIDE_CLASS}{display:none!important}` +
-        `[${DATA_ATTR}]:not(.${HIDE_CLASS}),` +
-        `[${DATA_ATTR}]:not(.${HIDE_CLASS}) *` +
-        `{content-visibility:visible!important;contain-intrinsic-size:auto!important;}`;
+    // Keep visible managed turns in normal provider layout. Only offscreen
+    // managed turns receive bounded placeholder sizing.
+    style.textContent = `[${DATA_ATTR}].${HIDE_CLASS}{content-visibility:hidden!important;contain-intrinsic-size:1px 240px!important;overflow:hidden!important;pointer-events:none!important}` +
+        `[${DATA_ATTR}].${HIDE_CLASS}>*{visibility:hidden!important}`;
     (document.head ?? document.documentElement).appendChild(style);
 }
 
