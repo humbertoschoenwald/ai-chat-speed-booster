@@ -285,6 +285,10 @@
 
 ### Refactors
 
+#### Chatgpt
+
+- centralize native renderer lifecycle ([fef27fe](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/fef27fefb19c91821a286a2192c6d61728764ff2)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
+
 #### Native
 
 - split provider adapter records ([2ce356f](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/2ce356f15deb091504494f7420492b9e1a576029)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
