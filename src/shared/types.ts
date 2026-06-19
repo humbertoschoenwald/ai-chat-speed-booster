@@ -32,6 +32,8 @@ export interface ExtensionConfig {
     // viewport-based virtualization and our hiding makes scrolling janky).
     // Fast Mode (fetchInterceptEnabled) is independent and still useful here.
     readonly hideOldMessages: boolean;
+    // When true, refresh ChatGPT after a persistent delivery-timeout UI is detected.
+    readonly autoRefreshDeliveryTimeout: boolean;
 }
 
 export interface TrackedMessage {

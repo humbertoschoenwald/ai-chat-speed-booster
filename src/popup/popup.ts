@@ -33,6 +33,7 @@ const requestLimitSep = document.getElementById("request-limit-sep") as HTMLElem
 const requestLimitInput = document.getElementById("request-limit-input") as HTMLInputElement;
 const requestCountHint = document.getElementById("request-counter-hint") as HTMLElement;
 const requestCountReset = document.getElementById("request-count-reset") as HTMLButtonElement;
+const toggleDeliveryTimeoutRefresh = document.getElementById("toggle-delivery-timeout-refresh") as HTMLInputElement;
 const performanceModeSelect = document.getElementById("performance-mode") as HTMLSelectElement;
 const performanceModeHint = document.getElementById("performance-mode-hint") as HTMLElement;
 const nativeDiagnosticsBody = document.getElementById("native-diagnostics-body") as HTMLElement;
@@ -215,6 +216,7 @@ function renderConfig(config: ExtensionConfig): void {
     toggleAutoLoad.checked = config.autoLoad;
     toggleHideOld.checked = config.hideOldMessages;
     toggleFetchIntercept.checked = config.fetchInterceptEnabled;
+    toggleDeliveryTimeoutRefresh.checked = config.autoRefreshDeliveryTimeout;
     const fastModeSetting = toggleFetchIntercept.closest<HTMLElement>("[data-legacy-control]");
     if (fastModeSetting && !fastModeSetting.querySelector(".fast-mode-counts-hint")) {
         const hint = document.createElement("p");
@@ -347,6 +349,15 @@ toggleAutoLoad.addEventListener("change", async () => {
 
 toggleHideOld.addEventListener("change", async () => {
     const config = await safeSendMessage<ExtensionConfig>({ type: MessageType.TOGGLE_HIDE_OLD_MESSAGES });
+    if (config) renderConfig(config);
+    await refreshStatus();
+});
+
+toggleDeliveryTimeoutRefresh.addEventListener("change", async () => {
+    const config = await safeSendMessage<ExtensionConfig>({
+        type: MessageType.SET_CONFIG,
+        payload: { autoRefreshDeliveryTimeout: toggleDeliveryTimeoutRefresh.checked },
+    });
     if (config) renderConfig(config);
     await refreshStatus();
 });

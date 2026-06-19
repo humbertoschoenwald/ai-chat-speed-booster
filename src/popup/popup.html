@@ -108,6 +108,14 @@
                 </div>
             </div>
 
+            <div class="setting" data-tooltip="Optional: refresh ChatGPT only after the delivery-timeout UI remains visible for a short grace period.">
+                <span class="setting__label">Auto-refresh delivery timeout</span>
+                <label class="toggle" aria-label="Enable or disable delivery-timeout auto-refresh">
+                    <input type="checkbox" id="toggle-delivery-timeout-refresh" class="toggle__input">
+                    <span class="toggle__slider"></span>
+                </label>
+            </div>
+
             <!-- Hide old messages toggle -->
             <div class="setting" data-legacy-control data-tooltip="Hide older turns from the DOM beyond the Visible limit. Turn this off if scrolling feels janky on ChatGPT (which has its own viewport-based rendering) — Fast mode still trims the API payload for speed.">
                 <div class="setting__info">

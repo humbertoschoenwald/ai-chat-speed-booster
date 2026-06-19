@@ -32,6 +32,7 @@ const CONTENT_HEARTBEAT_ATTR = "data-acsb-content-heartbeat-at";
 const CONTENT_HEARTBEAT_MS = 1_000;
 const STALE_CONTENT_HEARTBEAT_MS = 5_000;
 const NATIVE_SNAPSHOT_SYNC_FAILURE_COOLDOWN_MS = 1_500;
+const DELIVERY_TIMEOUT_REFRESH_GRACE_MS = 3_000;
 const contentInstanceId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
 let config: ExtensionConfig;
@@ -53,6 +54,7 @@ const nativeToolCallGroups = new ToolCallGroupController();
 let nativeRenderBudget: RenderUnitBudgetSnapshot | null = null;
 let nativeSnapshotSyncCooldownUntilMs = 0;
 let conversationRetryTimer: ReturnType<typeof setTimeout> | null = null;
+let deliveryTimeoutRefreshTimer: ReturnType<typeof setTimeout> | null = null;
 let resumeHealthCheckTimer: ReturnType<typeof setTimeout> | null = null;
 let viewportResizeTimer: ReturnType<typeof setTimeout> | null = null;
 let modeSwitchReloadTimer: ReturnType<typeof setTimeout> | null = null;
@@ -141,6 +143,8 @@ async function bootstrap(): Promise<void> {
     window.addEventListener("pageshow", handlePageResume);
     window.addEventListener("focus", handleWindowFocus);
     document.addEventListener("visibilitychange", handleVisibilityResume);
+    document.addEventListener("click", cancelDeliveryTimeoutRefresh, true);
+    document.addEventListener("keydown", cancelDeliveryTimeoutRefresh, true);
 
 }
 
@@ -568,7 +572,9 @@ function refreshUI(): void {
             if (deliveryTimeout.detected) {
                 contentLifecycleState = "degraded";
                 contentLastRecoverableErrorClass = `chatgpt-delivery-timeout:${deliveryTimeout.confidence}`;
+                scheduleDeliveryTimeoutRefresh(deliveryTimeout.reason);
             } else if (contentLastRecoverableErrorClass?.startsWith("chatgpt-delivery-timeout:")) {
+                cancelDeliveryTimeoutRefresh();
                 contentLastRecoverableErrorClass = null;
                 contentLifecycleState = "active";
             }
@@ -711,6 +717,23 @@ function handleNativeSnapshotSyncError(error: unknown): void {
     logger.warn("native snapshot sync failed; cooldown started", error);
 }
 
+function scheduleDeliveryTimeoutRefresh(reason: string | null): void {
+    if (!config.autoRefreshDeliveryTimeout || currentSite.id !== "chatgpt" || deliveryTimeoutRefreshTimer) return;
+    deliveryTimeoutRefreshTimer = setTimeout(() => {
+        deliveryTimeoutRefreshTimer = null;
+        if (!config.autoRefreshDeliveryTimeout) return;
+        const snapshot = detectChatGptDeliveryTimeout(document);
+        if (!snapshot.detected || snapshot.reason !== reason) return;
+        window.location.reload();
+    }, DELIVERY_TIMEOUT_REFRESH_GRACE_MS);
+}
+
+function cancelDeliveryTimeoutRefresh(): void {
+    if (!deliveryTimeoutRefreshTimer) return;
+    clearTimeout(deliveryTimeoutRefreshTimer);
+    deliveryTimeoutRefreshTimer = null;
+}
+
 function findFirstVisibleMessage(): HTMLElement | null {
     const all = document.querySelectorAll<HTMLElement>(currentSite.selectors.messageTurn);
     for (const el of all) {
@@ -750,6 +773,9 @@ window.addEventListener("beforeunload", () => {
         chatGptResizeListenerAttached = false;
     }
     document.removeEventListener("visibilitychange", handleVisibilityResume);
+    document.removeEventListener("click", cancelDeliveryTimeoutRefresh, true);
+    document.removeEventListener("keydown", cancelDeliveryTimeoutRefresh, true);
+    cancelDeliveryTimeoutRefresh();
     chatGptTextSnapshotRenderer?.stop();
     chatGptTextSnapshotRenderer = null;
     editorLatencyGuard.stop();

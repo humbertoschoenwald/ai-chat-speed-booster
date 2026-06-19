@@ -15,6 +15,7 @@ export const DEFAULT_CONFIG: Readonly<ExtensionConfig> = Object.freeze({
     autoLoad: false,
     weeklyRequestLimit: 3000,
     hideOldMessages: true,
+    autoRefreshDeliveryTimeout: false,
 });
 
 /** localStorage key used by settings bridge → MAIN-world fetch interceptor. */
