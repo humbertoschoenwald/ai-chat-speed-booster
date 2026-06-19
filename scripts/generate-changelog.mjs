@@ -6,7 +6,9 @@ import { fileURLToPath } from "url";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const out = resolve(root, "CHANGELOG.md");
-const repoUrl = "https://github.com/Noah4ever/ai-chat-speed-booster";
+const contributorsPath = resolve(root, "contributors.json");
+const repoSlug = process.env.GITHUB_REPOSITORY || repositorySlugFromRemote();
+const repoUrl = repoSlug ? `https://github.com/${repoSlug}` : "";
 const headings = new Map([["feat", "Features"], ["fix", "Fixes"], ["perf", "Performance"], ["test", "Tests"], ["ci", "CI"], ["build", "Build"], ["docs", "Docs"], ["refactor", "Refactors"], ["chore", "Maintenance"]]);
 const ignoredSubjectPatterns = [
   /^(?:docs(?:\([^)]+\))?:\s*)?update readme\.md$/i,
@@ -52,6 +54,12 @@ function safeGit(args) {
   }
 }
 
+function repositorySlugFromRemote() {
+  const remote = safeGit(["config", "--get", "remote.origin.url"]);
+  const match = remote.match(/github\.com[:/]([^/]+\/[^/.]+)(?:\.git)?$/i);
+  return match?.[1] || "";
+}
+
 function exists(ref) {
   return safeGit(["rev-parse", "--verify", `${ref}^{commit}`]) !== "";
 }
@@ -60,12 +68,13 @@ function isIgnoredSubject(subject) {
   return ignoredSubjectPatterns.some((pattern) => pattern.test(subject.trim()));
 }
 
-function log(range) {
+async function log(range) {
   const raw = safeGit(["log", "--reverse", range, "--pretty=format:%H%x1f%an%x1f%ae%x1f%s"]);
-  return raw ? raw.split("\n").map((row) => {
-    const [hash, author, email, subject] = row.split("\x1f");
-    return { hash: hash.slice(0, 7), author, email, subject };
+  const commits = raw ? raw.split("\n").map((row) => {
+    const [fullHash, author, email, subject] = row.split("\x1f");
+    return { hash: fullHash.slice(0, 7), fullHash, author, email, subject };
   }).filter((commit) => !isIgnoredSubject(commit.subject)) : [];
+  return withResolvedAuthorProfiles(commits);
 }
 
 function tags() {
@@ -89,21 +98,63 @@ function parsed(subject) {
   return { type: match[1], scope: match[2], breaking: Boolean(match[3]), text: match[4] };
 }
 
-const authorProfiles = new Map([
-  ["Humberto Schoenwald", { name: "Humberto Schoenwald", handle: "humbertoschoenwald" }],
-  ["Noah Thiering", { name: "Noah Thiering", handle: "Noah4ever" }],
-  ["RyanHolmanClark", { name: "Ryan Holman", handle: "RyanHolmanClark" }],
-  ["Ryan Holman Clark", { name: "Ryan Holman", handle: "RyanHolmanClark" }],
-  ["Ryan Holman", { name: "Ryan Holman", handle: "RyanHolmanClark" }],
-  ["Claude", { name: "Claude", handle: "claude" }],
-  ["claude", { name: "Claude", handle: "claude" }],
-  ["infpdev", { name: "infpdev", handle: "infpdev" }],
-  ["dev", { name: "dev", handle: "dev" }],
-]);
+const contributorProfiles = loadContributorProfiles();
+const apiAuthorCache = new Map();
+
+function loadContributorProfiles() {
+  try {
+    return new Map(Object.entries(JSON.parse(readFileSync(contributorsPath, "utf8"))));
+  } catch {
+    return new Map();
+  }
+}
+
+async function fetchAuthorProfile(commit) {
+  if (!repoSlug || typeof fetch !== "function") {
+    return null;
+  }
+  if (apiAuthorCache.has(commit.fullHash)) {
+    return apiAuthorCache.get(commit.fullHash);
+  }
+  try {
+    const headers = {
+      Accept: "application/vnd.github+json",
+      "User-Agent": "ai-chat-speed-booster-changelog",
+    };
+    if (process.env.GITHUB_TOKEN) {
+      headers.Authorization = `Bearer ${process.env.GITHUB_TOKEN}`;
+    }
+    const response = await fetch(`https://api.github.com/repos/${repoSlug}/commits/${commit.fullHash}`, { headers });
+    if (!response.ok) {
+      apiAuthorCache.set(commit.fullHash, null);
+      return null;
+    }
+    const data = await response.json();
+    const profile = {
+      name: data.commit?.author?.name || data.author?.login || commit.author || "",
+      handle: data.author?.login || "",
+    };
+    apiAuthorCache.set(commit.fullHash, profile);
+    return profile;
+  } catch {
+    apiAuthorCache.set(commit.fullHash, null);
+    return null;
+  }
+}
+
+async function withResolvedAuthorProfiles(commits) {
+  return Promise.all(commits.map(async (commit) => ({
+    ...commit,
+    authorProfile: await fetchAuthorProfile(commit),
+  })));
+}
 
 function authorProfile(commit) {
-  if (authorProfiles.has(commit.author)) {
-    return authorProfiles.get(commit.author);
+  if (commit.authorProfile?.name || commit.authorProfile?.handle) {
+    return commit.authorProfile;
+  }
+  if (contributorProfiles.has(commit.author)) {
+    return contributorProfiles.get(commit.author);
   }
   const emailMatch = commit.email?.match(/^(?:\d+\+)?([^@]+)@users\.noreply\.github\.com$/);
   if (emailMatch) {
@@ -140,11 +191,17 @@ function issueReferences(subject) {
 
 function issueLink(ref) {
   const number = ref.replace(/^GH-/i, "").replace(/^#/, "");
+  if (!repoUrl) {
+    return `(issue #${number})`;
+  }
   return `([issue #${number}](${repoUrl}/issues/${number}))`;
 }
 
-function commitLink(hash) {
-  return `([${hash}](${repoUrl}/commit/${hash}))`;
+function commitLink(commit) {
+  if (!repoUrl) {
+    return `(${commit.hash})`;
+  }
+  return `([${commit.hash}](${repoUrl}/commit/${commit.fullHash || commit.hash}))`;
 }
 
 function displayText(text) {
@@ -154,7 +211,7 @@ function displayText(text) {
 function entrySuffix(commit) {
   const refs = issueReferences(commit.subject).map(issueLink);
   const issueText = refs.length > 0 ? ` ${refs.join(" ")}` : "";
-  return `${issueText} ${commitLink(commit.hash)}${byline(commit)}`;
+  return `${issueText} ${commitLink(commit)}${byline(commit)}`;
 }
 
 function line(commit) {
@@ -205,13 +262,13 @@ function section(title, commits, note = "") {
   return `## ${title}\n\n${renderCommits(commits)}${note}`;
 }
 
-function sectionsFromReleaseRefs(refs) {
-  const parts = [section("Unreleased", log(`${refs.at(-1)[1]}..HEAD`))];
+async function sectionsFromReleaseRefs(refs) {
+  const parts = [section("Unreleased", await log(`${refs.at(-1)[1]}..HEAD`))];
   for (let index = refs.length - 1; index >= 0; index -= 1) {
     const [tag, ref] = refs[index];
     const previous = refs[index - 1]?.[1] || "";
     const range = previous ? `${previous}..${ref}` : ref;
-    parts.push(section(tag, log(range)));
+    parts.push(section(tag, await log(range)));
   }
   return parts;
 }
@@ -236,7 +293,7 @@ function newer(version, latest) {
   return false;
 }
 
-function inferredSections() {
+async function inferredSections() {
   const pkg = JSON.parse(readFileSync(resolve(root, "package.json"), "utf8"));
   if (Number(String(pkg.version).split(".")[0]) >= 2) {
     throw new Error("Version tags are required from v2.0.0 onward.");
@@ -245,7 +302,7 @@ function inferredSections() {
   const seen = new Set();
   let latest = "v0.0.0";
   let bucket = [];
-  for (const commit of log("HEAD")) {
+  for (const commit of await log("HEAD")) {
     bucket.push(commit);
     const version = versionFrom(commit.subject);
     if (!version || seen.has(version) || !newer(version, latest)) {
@@ -260,5 +317,5 @@ function inferredSections() {
 }
 
 const refs = releaseRefs();
-const sections = refs.length > 0 ? sectionsFromReleaseRefs(refs) : inferredSections();
+const sections = refs.length > 0 ? await sectionsFromReleaseRefs(refs) : await inferredSections();
 writeFileSync(out, `# Changelog\n\n${sections.join("\n")}`);
