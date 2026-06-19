@@ -22,6 +22,7 @@
 
 #### Native
 
+- cache turn containment heights ([6bfd916](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/6bfd916d51f38c9dfc811f29d5174d5ed2d2d0df)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - add turn containment controller ([ffd5739](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/ffd5739ca084414dffc336815e589f59ae6ce3d1)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - add retry state diagnostics ([fa4b36f](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/fa4b36f20d3c49aee3e8f6b79cefcd180da28169)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - budget snapshots by render-unit cost ([9416406](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/941640689c658b9108907de1a7e5fd7a5a385d9b)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
