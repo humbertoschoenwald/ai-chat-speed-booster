@@ -1,4 +1,10 @@
 /**
+ * License: MIT. See LICENSE in the repository root.
+ * Responsibility: verify mock-site behavior for the built Chromium extension.
+ * Boundary: this suite uses local mock pages only and does not own live integration coverage.
+ * ADR: docs/adr/engineering/tooling/pnpm-package-manager-authority.md.
+ * SCHOENWALD-LARGE-FILE owner=ai-chat-speed-booster reason="Configured site matrix shares one extension fixture and assertion vocabulary" split="Split per site if site-specific regressions grow further" validation="pnpm validate" review="Parallel site groups keep each site's tests serial"
+ *
  * Extension tests – loads the real extension in Chromium and verifies it
  * works on mock pages that mimic each configured site's DOM.
  *
@@ -15,6 +21,8 @@
  */
 import { test, expect, SITES } from "./extension-fixture";
 import { generateMockPage, getMessageTestAttr } from "./helpers/mock-page";
+
+test.describe.configure({ mode: "parallel" });
 
 const MESSAGE_COUNT = 20; // enough to exceed default visible window
 // Config defaults: visibleMessageLimit=3, loadMoreBatchSize=3
@@ -257,10 +265,11 @@ for (const site of SITES) {
             });
         }
 
-        test("no errors in extension service worker", async ({ extensionContext }) => {
-            const workers = extensionContext.serviceWorkers();
-            expect(workers.length).toBeGreaterThan(0);
-            expect(workers[0].url()).toContain("background.js");
+        test("no errors in extension service worker", async ({ extensionContext, extensionId }) => {
+            const worker = extensionContext
+                .serviceWorkers()
+                .find((serviceWorker) => serviceWorker.url().includes(extensionId));
+            expect(worker?.url()).toContain("background.js");
         });
 
         test("popup page loads without errors", async ({ extensionId, extensionContext }) => {

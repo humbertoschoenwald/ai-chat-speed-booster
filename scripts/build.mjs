@@ -1,3 +1,11 @@
+/**
+ * License: MIT. See LICENSE in the repository root.
+ * Responsibility: build browser-extension bundles and copy static extension assets.
+ * Boundary: this script writes dist/<browser> outputs only and leaves validation orchestration to
+ * scripts/validate.mjs.
+ * ADR: docs/adr/engineering/tooling/pnpm-package-manager-authority.md.
+ * SCHOENWALD-LARGE-FILE owner=ai-chat-speed-booster reason="Browser targets and entry bundles share one compact build surface" split="Extract manifest asset copying if browser-specific transforms grow" validation="pnpm validate" review="Parallel non-watch builds preserve one output file per entry"
+ */
 import * as esbuild from "esbuild";
 import { cpSync, mkdirSync, existsSync, readdirSync, readFileSync, writeFileSync } from "fs";
 import { resolve, dirname } from "path";
@@ -82,15 +90,15 @@ async function buildBrowser(browser) {
         { name: "popup", path: "src/popup/popup.ts" },
     ];
 
-    for (const entry of entries) {
-        const opts = esbuildOptions(browser, entry.name, entry.path);
-        if (watch) {
+    if (watch) {
+        for (const entry of entries) {
+            const opts = esbuildOptions(browser, entry.name, entry.path);
             const ctx = await esbuild.context(opts);
             await ctx.watch();
             console.log(`  watching ${entry.name}`);
-        } else {
-            await esbuild.build(opts);
         }
+    } else {
+        await Promise.all(entries.map((entry) => esbuild.build(esbuildOptions(browser, entry.name, entry.path))));
     }
 
     console.log(`${browser} done -> dist/${browser}/`);
@@ -98,8 +106,12 @@ async function buildBrowser(browser) {
 
 (async () => {
     try {
-        for (const browser of targets) {
-            await buildBrowser(browser);
+        if (watch) {
+            for (const browser of targets) {
+                await buildBrowser(browser);
+            }
+        } else {
+            await Promise.all(targets.map((browser) => buildBrowser(browser)));
         }
         if (watch) {
             console.log("\nwatching for changes...");

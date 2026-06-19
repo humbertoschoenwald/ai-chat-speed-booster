@@ -1,4 +1,9 @@
 /**
+ * License: MIT. See LICENSE in the repository root.
+ * Responsibility: verify the built extension remains compatible with configured live sites.
+ * Boundary: this suite performs live navigation only and does not own saved-auth setup.
+ * ADR: docs/adr/engineering/tooling/pnpm-package-manager-authority.md.
+ *
  * Integration tests – run against REAL sites using saved auth.
  *
  * Prerequisites:
@@ -16,6 +21,8 @@ import path from "path";
 
 const AUTH_PROFILE = path.resolve("tests", ".auth-profile");
 
+test.describe.configure({ mode: "parallel" });
+
 test.beforeAll(() => {
     if (!existsSync(AUTH_PROFILE)) {
         console.warn(
@@ -27,7 +34,7 @@ test.beforeAll(() => {
 
 for (const site of SITES) {
     test.describe(`${site.name} (live)`, () => {
-        test(`content script loads on ${site.hostnames[0]}`, async ({ page }) => {
+        test(`extension stays healthy on ${site.hostnames[0]}`, async ({ page }) => {
             const pageErrors: string[] = [];
             page.on("pageerror", (err) => pageErrors.push(err.message));
 
@@ -53,14 +60,6 @@ for (const site of SITES) {
                 e.includes("acsb") || e.includes("speed booster"),
             );
             expect(extensionErrors).toHaveLength(0);
-        });
-
-        test(`messages are managed if present on ${site.hostnames[0]}`, async ({ page }) => {
-            await page.goto(`https://${site.hostnames[0]}`, {
-                waitUntil: "domcontentloaded",
-                timeout: 30_000,
-            });
-            await page.waitForTimeout(5000);
 
             // Check if any messages exist on the page
             const messageCount = await page

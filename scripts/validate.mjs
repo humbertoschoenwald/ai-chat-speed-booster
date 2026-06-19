@@ -7,6 +7,11 @@
  * ADR: docs/adr/engineering/tooling/pnpm-package-manager-authority.md.
  */
 import { spawnSync } from "child_process";
+import { existsSync } from "fs";
+import { createRequire } from "module";
+
+const require = createRequire(import.meta.url);
+const validationStartedAt = performance.now();
 
 function quoteWindowsCommandPart(part) {
     if (/^[A-Za-z0-9_./:=@-]+$/.test(part)) {
@@ -22,7 +27,30 @@ function tail(text, maxChars = 24_000) {
     return `[output truncated to last ${maxChars} characters]\n${text.slice(-maxChars)}`;
 }
 
+function formatDuration(ms) {
+    return `${(ms / 1000).toFixed(1)}s`;
+}
+
+function isChromiumInstalled() {
+    try {
+        const { chromium } = require("@playwright/test");
+        return existsSync(chromium.executablePath());
+    } catch {
+        return false;
+    }
+}
+
+function childEnv() {
+    const env = {
+        ...process.env,
+        NO_COLOR: "1",
+    };
+    delete env.FORCE_COLOR;
+    return env;
+}
+
 function run(command, args) {
+    const startedAt = performance.now();
     const displayCommand = [command, ...args].join(" ");
     console.log(`\nRUN ${displayCommand}`);
     const spawnCommand = process.platform === "win32"
@@ -33,11 +61,7 @@ function run(command, args) {
         : args;
     const result = spawnSync(spawnCommand, spawnArgs, {
         encoding: "utf8",
-        env: {
-            ...process.env,
-            FORCE_COLOR: "0",
-            NO_COLOR: "1",
-        },
+        env: childEnv(),
         maxBuffer: 64 * 1024 * 1024,
         shell: false,
         stdio: ["inherit", "pipe", "pipe"],
@@ -75,7 +99,7 @@ function run(command, args) {
         process.exit(result.status ?? 1);
     }
 
-    console.log(`OK ${displayCommand}`);
+    console.log(`OK ${displayCommand} (${formatDuration(performance.now() - startedAt)})`);
 }
 
 const playwrightInstallArgs =
@@ -89,16 +113,38 @@ const includeLiveIntegration = process.env.VALIDATE_LIVE_INTEGRATION === "1" || 
 const buildScript = process.env.VALIDATE_ALL_BROWSERS === "1" || process.env.VALIDATE_FULL === "1"
     ? "build:all"
     : "build:chrome";
+const buildTestWorkers = process.env.VALIDATE_BUILD_TEST_WORKERS
+    ?? (process.platform === "win32" ? "2" : "50%");
+const browserTestWorkers = process.env.VALIDATE_BROWSER_TEST_WORKERS
+    ?? (includeFullExtension || includeLiveIntegration ? "3" : "1");
+const browserProjects = [
+    ...(includeBrowserSmoke ? ["extension-smoke"] : []),
+    ...(includeFullExtension ? ["extension"] : []),
+    ...(includeLiveIntegration ? ["integration"] : []),
+];
+const shouldInstallChromium = process.env.CI === "true" && process.platform === "linux"
+    ? includeBrowserSmoke || includeFullExtension || includeLiveIntegration
+    : browserProjects.length > 0 && !isChromiumInstalled();
 
 const STEPS = [
     [pnpm, ["run", "clean"]],
     [pnpm, ["run", buildScript]],
     [pnpm, ["run", "typecheck"]],
     [pnpm, ["run", "lint"]],
-    [pnpm, ["exec", "playwright", "test", "--project=build", "--reporter=dot"]],
-    ...(includeBrowserSmoke ? [[pnpm, playwrightInstallArgs], ["node", ["tests/auth-setup.mjs"]], [pnpm, ["exec", "playwright", "test", "--project=extension-smoke"]]] : []),
-    ...(includeFullExtension ? [[pnpm, ["exec", "playwright", "test", "--project=extension"]]] : []),
-    ...(includeLiveIntegration ? [[pnpm, ["exec", "playwright", "test", "--project=integration"]]] : []),
+    [pnpm, ["exec", "playwright", "test", "--project=build", "--workers", buildTestWorkers, "--reporter=dot"]],
+    ...(shouldInstallChromium ? [[pnpm, playwrightInstallArgs]] : []),
+    ...(includeBrowserSmoke ? [["node", ["tests/auth-setup.mjs"]]] : []),
+    ...(browserProjects.length > 0
+        ? [[pnpm, [
+            "exec",
+            "playwright",
+            "test",
+            ...browserProjects.map((project) => `--project=${project}`),
+            "--workers",
+            browserTestWorkers,
+            "--reporter=dot",
+        ]]]
+        : []),
     ["node", ["tests/scroll-diagnostic.mjs"]],
 ];
 
@@ -121,3 +167,5 @@ if (!includeLiveIntegration) {
 for (const [command, args] of STEPS) {
     run(command, args);
 }
+
+console.log(`\nValidation complete in ${formatDuration(performance.now() - validationStartedAt)}.`);
