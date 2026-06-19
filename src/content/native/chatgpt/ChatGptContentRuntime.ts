@@ -198,9 +198,11 @@ export class ChatGptContentRuntime {
             }
 
             const turns = this.ports.queryTurns();
-            this.nativeToolCallGroups.reset();
             const records = turns.map((turn, index) => this.nativeTurnRegistry.track(turn, index));
-            const toolGroups = records.flatMap((record) => [...this.nativeToolCallGroups.indexTurn(record)]);
+            const dirtyRecords = this.nativeTurnRegistry.consumeDirtyRecords(records);
+            const recordsForToolIndex = dirtyRecords.length > 0 ? dirtyRecords : records;
+            if (recordsForToolIndex === records) this.nativeToolCallGroups.reset();
+            const toolGroups = recordsForToolIndex.flatMap((record) => [...this.nativeToolCallGroups.indexTurn(record)]);
             this.toolCallSummaries.sync(toolGroups);
             this.nativeRenderBudget = createRenderUnitBudgetSnapshot(
                 turns,

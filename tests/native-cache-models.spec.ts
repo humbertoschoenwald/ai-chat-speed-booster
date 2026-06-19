@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 import { createRenderUnitBudgetSnapshot } from "../src/content/native/RenderUnitBudget";
 import { ToolCallGroupController } from "../src/content/native/ToolCallGroupController";
 import { TurnMeasurementCache } from "../src/content/native/TurnMeasurementCache";
-import type { NativeTurnRecord } from "../src/content/native/TurnRegistry";
+import { TurnRegistry, type NativeTurnRecord } from "../src/content/native/TurnRegistry";
 
 const element = (kind: "tool" | "running" | "failed" | "expanded", childCount = 0): HTMLElement => ({
     matches: (selector: string) => {
@@ -15,6 +15,7 @@ const element = (kind: "tool" | "running" | "failed" | "expanded", childCount = 
     querySelectorAll: () => Array.from({ length: childCount }),
     getAttribute: (name: string) => {
         if (name === "aria-expanded" && kind === "expanded") return "true";
+        if (name === "data-testid") return "conversation-turn-tool";
         if (name === "data-state" && kind === "tool") return "closed";
         return null;
     },
@@ -43,6 +44,20 @@ test.describe("native cache and tool-call models", () => {
             failedCount: 1,
             completedCount: 1,
         });
+    });
+
+    test("turn registry consumes dirty records by stable identity", () => {
+        const registry = new TurnRegistry();
+        const first = registry.track(element("tool"), 1);
+
+        expect(registry.dirtyTurnKeys()).toEqual([first.key]);
+        expect(registry.consumeDirtyRecords([first])).toEqual([first]);
+        expect(registry.consumeDirtyRecords([first])).toEqual([]);
+
+        const replacement = element("tool");
+        const retracked = registry.track(replacement, 1);
+        expect(retracked).toBe(first);
+        expect(registry.consumeDirtyRecords([retracked])).toEqual([retracked]);
     });
 
     test("persists only stable measurement keys", () => {

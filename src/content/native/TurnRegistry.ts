@@ -11,8 +11,8 @@ export type NativeTurnPinReason =
 
 export interface NativeTurnRecord {
     readonly key: string;
-    readonly element: HTMLElement;
-    readonly role: NativeTurnRole;
+    element: HTMLElement;
+    role: NativeTurnRole;
     hydrationState: NativeTurnHydrationState;
     measuredHeight: number | null;
     readonly pinReasons: Set<NativeTurnPinReason>;
@@ -33,18 +33,29 @@ export class TurnRegistry {
     private elementToRecord = new WeakMap<HTMLElement, NativeTurnRecord>();
     private placeholderToRecord = new WeakMap<HTMLElement, NativeTurnRecord>();
     private readonly dirtyMeasurements = new Set<string>();
+    private readonly dirtyTurns = new Set<string>();
 
     reset(): void {
         this.keyToRecord.clear();
         this.elementToRecord = new WeakMap<HTMLElement, NativeTurnRecord>();
         this.placeholderToRecord = new WeakMap<HTMLElement, NativeTurnRecord>();
         this.dirtyMeasurements.clear();
+        this.dirtyTurns.clear();
     }
 
     track(element: HTMLElement, structuralIndex: number): NativeTurnRecord {
         const key = this.deriveKey(element, structuralIndex);
         const existing = this.keyToRecord.get(key);
-        if (existing) return existing;
+        if (existing) {
+            const role = this.deriveRole(element);
+            if (existing.element !== element || existing.role !== role) {
+                existing.element = element;
+                existing.role = role;
+                this.elementToRecord.set(element, existing);
+                this.markTurnDirty(existing);
+            }
+            return existing;
+        }
 
         const record: NativeTurnRecord = {
             key,
@@ -63,7 +74,26 @@ export class TurnRegistry {
         this.keyToRecord.set(key, record);
         this.elementToRecord.set(element, record);
         this.markMeasurementDirty(record);
+        this.markTurnDirty(record);
         return record;
+    }
+
+    markDirtyByElement(element: HTMLElement): boolean {
+        const record = this.elementToRecord.get(element);
+        if (!record) return false;
+        this.markTurnDirty(record);
+        return true;
+    }
+
+    consumeDirtyRecords(records: readonly NativeTurnRecord[]): readonly NativeTurnRecord[] {
+        if (this.dirtyTurns.size === 0) return [];
+        const dirtyRecords = records.filter((record) => this.dirtyTurns.has(record.key));
+        for (const record of dirtyRecords) this.dirtyTurns.delete(record.key);
+        return dirtyRecords;
+    }
+
+    dirtyTurnKeys(): readonly string[] {
+        return [...this.dirtyTurns];
     }
 
     getByKey(key: string): NativeTurnRecord | undefined {
@@ -143,6 +173,11 @@ export class TurnRegistry {
 
     private markMeasurementDirty(record: NativeTurnRecord): void {
         this.dirtyMeasurements.add(record.key);
+    }
+
+    private markTurnDirty(record: NativeTurnRecord): void {
+        this.dirtyTurns.add(record.key);
+        this.markMeasurementDirty(record);
     }
 
     private deriveKey(element: HTMLElement, structuralIndex: number): string {
