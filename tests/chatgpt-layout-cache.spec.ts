@@ -1,4 +1,6 @@
 import { test, expect } from "@playwright/test";
+import { readFileSync } from "fs";
+import path from "path";
 import { ChatGptLayoutCache } from "../src/content/native/chatgpt/ChatGptLayoutCache";
 
 test.describe("ChatGPT layout cache", () => {
@@ -20,6 +22,48 @@ test.describe("ChatGPT layout cache", () => {
             totalKnownHeightPx: 300,
             newestMeasurementMs: 20,
         });
+    });
+
+    test("keeps aggregate snapshot values correct across upsert and remove", () => {
+        const cache = new ChatGptLayoutCache();
+        cache.upsert({ key: "first", heightPx: 100, measuredAtMs: 10 });
+        cache.upsert({ key: "latest", heightPx: 200, measuredAtMs: 20 });
+        cache.upsert({ key: "first", heightPx: 50, measuredAtMs: 30 });
+
+        expect(cache.snapshot()).toEqual({
+            turnCount: 2,
+            totalKnownHeightPx: 250,
+            newestMeasurementMs: 30,
+        });
+
+        cache.remove("first");
+        expect(cache.snapshot()).toEqual({
+            turnCount: 1,
+            totalKnownHeightPx: 200,
+            newestMeasurementMs: 20,
+        });
+
+        cache.remove("latest");
+        expect(cache.snapshot()).toEqual({
+            turnCount: 0,
+            totalKnownHeightPx: 0,
+            newestMeasurementMs: null,
+        });
+    });
+
+    test("keeps snapshot O(1) by avoiding measurement-map iteration", () => {
+        const source = readFileSync(
+            path.resolve("src/content/native/chatgpt/ChatGptLayoutCache.ts"),
+            "utf8",
+        );
+        const snapshotStart = source.indexOf("    snapshot(): ChatGptLayoutCacheSnapshot");
+        const nextMethodStart = source.indexOf("    private findNewestMeasurementMs", snapshotStart);
+        const snapshotSource = source.slice(snapshotStart, nextMethodStart);
+
+        expect(snapshotSource).not.toContain("for (");
+        expect(snapshotSource).not.toContain(".values()");
+        expect(snapshotSource).toContain("totalKnownHeightPx: this.totalKnownHeightPx");
+        expect(snapshotSource).toContain("newestMeasurementMs: this.newestMeasurementMs");
     });
 
     test("ignores unknown order keys and invalid measurements", () => {

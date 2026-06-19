@@ -20,19 +20,33 @@ export interface ChatGptLayoutCacheSnapshot {
 
 export class ChatGptLayoutCache {
     private readonly measurements = new Map<string, ChatGptCachedTurnMeasurement>();
+    private totalKnownHeightPx = 0;
+    private newestMeasurementMs: number | null = null;
 
     upsert(measurement: ChatGptCachedTurnMeasurement): void {
         if (!measurement.key || !Number.isFinite(measurement.heightPx)) return;
-        this.measurements.set(measurement.key, {
+        const previous = this.measurements.get(measurement.key);
+        const next = {
             key: measurement.key,
             heightPx: Math.max(1, Math.round(measurement.heightPx)),
             pinned: measurement.pinned === true,
             measuredAtMs: Math.max(0, Math.round(measurement.measuredAtMs)),
-        });
+        };
+        this.totalKnownHeightPx += next.heightPx - (previous?.heightPx ?? 0);
+        this.newestMeasurementMs = this.newestMeasurementMs === null
+            ? next.measuredAtMs
+            : Math.max(this.newestMeasurementMs, next.measuredAtMs);
+        this.measurements.set(measurement.key, next);
     }
 
     remove(key: string): void {
+        const previous = this.measurements.get(key);
+        if (!previous) return;
         this.measurements.delete(key);
+        this.totalKnownHeightPx -= previous.heightPx;
+        if (this.newestMeasurementMs === previous.measuredAtMs) {
+            this.newestMeasurementMs = this.findNewestMeasurementMs();
+        }
     }
 
     createPlan(order: readonly string[], viewport: ChatGptViewportWindow): ChatGptFullFidelityLayoutPlan {
@@ -50,19 +64,20 @@ export class ChatGptLayoutCache {
     }
 
     snapshot(): ChatGptLayoutCacheSnapshot {
-        let totalKnownHeightPx = 0;
+        return {
+            turnCount: this.measurements.size,
+            totalKnownHeightPx: this.totalKnownHeightPx,
+            newestMeasurementMs: this.newestMeasurementMs,
+        };
+    }
+
+    private findNewestMeasurementMs(): number | null {
         let newestMeasurementMs: number | null = null;
         for (const measurement of this.measurements.values()) {
-            totalKnownHeightPx += measurement.heightPx;
             newestMeasurementMs = newestMeasurementMs === null
                 ? measurement.measuredAtMs
                 : Math.max(newestMeasurementMs, measurement.measuredAtMs);
         }
-
-        return {
-            turnCount: this.measurements.size,
-            totalKnownHeightPx,
-            newestMeasurementMs,
-        };
+        return newestMeasurementMs;
     }
 }
