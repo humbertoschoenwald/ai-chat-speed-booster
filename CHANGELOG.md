@@ -22,8 +22,9 @@
 
 #### Native
 
-- cache turn containment heights ([6bfd916](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/6bfd916d51f38c9dfc811f29d5174d5ed2d2d0df)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
-- add turn containment controller ([ffd5739](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/ffd5739ca084414dffc336815e589f59ae6ce3d1)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
+- schedule native scroll work ([a3b139e](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/a3b139ee5b422f35982447d0a7153ea5d4b136d2)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
+- cache turn containment heights ([1cb9162](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/1cb9162edb17816a7a3f1a5258dfb32b11feeea0)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
+- add turn containment controller ([3c27cb1](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/3c27cb1ee3ea1c81e5c73282219362144e10e191)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - add retry state diagnostics ([fa4b36f](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/fa4b36f20d3c49aee3e8f6b79cefcd180da28169)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - budget snapshots by render-unit cost ([9416406](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/941640689c658b9108907de1a7e5fd7a5a385d9b)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - enforce chatgpt-only runtime ([01d95f9](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/01d95f940bd1cc59a2f2181216acb6cd9c619433)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
@@ -51,8 +52,8 @@
 
 #### Chatgpt
 
-- reset response cache on full load ([0177731](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/0177731b1857935bc1f5dee3cf8f2b1c278b490d)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
-- debounce spa url changes ([c586df7](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/c586df79b75ae78263aa4ab42bb65bc47a3653da)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
+- reset response cache on full load ([87fe86e](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/87fe86e3bf96a0921a2cd25b5f753d58606eb2bd)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
+- debounce spa url changes ([fd598b7](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/fd598b77787e7ba3e2e70934214b57c6ed62800e)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - add native sync failure cooldown ([2e8c099](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/2e8c099ff7a3dc5306162252357c2aecd4d5f19a)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - guard native snapshot freezing ([c5ce050](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/c5ce050caf0328b982c733a8937c674ee22cef9f)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - isolate stable boot artifact cleanup ([9e2adf2](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/9e2adf2bebadbe2884f506eccc8ca70e1be94cd3)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
@@ -298,7 +299,7 @@
 
 #### Native
 
-- define no-hide invariant ([02ddcee](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/02ddcee0a2fe818d04c1d1e258bbad2ff06c8c6e)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
+- define no-hide invariant ([7b800f3](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/7b800f3af9e495856b790abab249ad22bb031952)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 
 #### Repo
 
@@ -312,11 +313,16 @@
 
 #### Native
 
+- batch containment updates ([81d8179](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/81d81793905fb43fb732f9e68209e5798b7985b6)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - split provider adapter records ([2ce356f](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/2ce356f15deb091504494f7420492b9e1a576029)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 
 ### Maintenance
 
 - update changelog formatting ([d3f0379](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/d3f03797a621aeda3cd1d864b81b23de338787f2)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
+
+#### Gitignore
+
+- ignore repo cache output ([8864826](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/8864826946659ecdc07e92274d02492f7ae13108)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 
 #### Quality
 
