@@ -1,4 +1,4 @@
-// SCHOENWALD-LARGE-FILE owner=ai-chat-speed-booster reason="Content entrypoint coordinates lifecycle, mode policy, observer wiring, and popup status" split="Move editor latency/status wiring into a narrow coordinator if this grows further" validation="pnpm validate" review="No message text, clipboard text, secrets, or raw HTML are stored"
+// Large-file note: content entrypoint coordinates lifecycle, mode policy, observer wiring, and popup status. Move editor latency and status wiring into a narrow coordinator if this grows further.
 import { decideContentBootstrapOwnership } from "./ContentBootstrapOwnership";
 import { DOMObserver } from "./DOMObserver";
 import { MessageManager } from "./MessageManager";

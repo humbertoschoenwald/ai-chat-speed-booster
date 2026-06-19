@@ -2,7 +2,7 @@
 /**
  * License: MIT. See LICENSE in the repository root.
  * Responsibility: validate repository command-surface and package-manager invariants.
- * Boundary: this public lint script avoids private Schoenwald policy and does not run ESLint.
+ * Boundary: this public lint script checks repository invariants and does not run ESLint.
  * ADR: docs/adr/engineering/tooling/pnpm-package-manager-authority.md.
  */
 import { existsSync, readFileSync } from "fs";
@@ -37,7 +37,7 @@ if (existsSync("package-lock.json")) {
 }
 
 if (existsSync("eslint.config.mjs")) {
-    failures.push("ESLint config is Schoenwald-only and must not live in the public repo.");
+    failures.push("ESLint config is not part of this public repository validation surface.");
 }
 
 for (const [name, expected] of Object.entries(requiredScripts)) {

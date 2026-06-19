@@ -2,7 +2,7 @@
 /**
  * License: MIT. See LICENSE in the repository root.
  * Responsibility: run the public package validation sequence.
- * Boundary: this script invokes repository scripts only and leaves stricter operator checks to
+ * Boundary: this script invokes repository scripts only and leaves stricter release checks to
  * external validation wrappers.
  * ADR: docs/adr/engineering/tooling/pnpm-package-manager-authority.md.
  */

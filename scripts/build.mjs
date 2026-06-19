@@ -4,7 +4,7 @@
  * Boundary: this script writes dist/<browser> outputs only and leaves validation orchestration to
  * scripts/validate.mjs.
  * ADR: docs/adr/engineering/tooling/pnpm-package-manager-authority.md.
- * SCHOENWALD-LARGE-FILE owner=ai-chat-speed-booster reason="Browser targets and entry bundles share one compact build surface" split="Extract manifest asset copying if browser-specific transforms grow" validation="pnpm validate" review="Parallel non-watch builds preserve one output file per entry"
+ * Large-file note: browser targets and entry bundles share one compact build surface. Split out manifest asset copying if browser-specific transforms grow.
  */
 import * as esbuild from "esbuild";
 import { cpSync, mkdirSync, existsSync, readdirSync, readFileSync, writeFileSync } from "fs";

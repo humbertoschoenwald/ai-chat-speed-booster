@@ -3,7 +3,7 @@
  * Responsibility: verify mock-site behavior for the built Chromium extension.
  * Boundary: this suite uses local mock pages only and does not own live integration coverage.
  * ADR: docs/adr/engineering/tooling/pnpm-package-manager-authority.md.
- * SCHOENWALD-LARGE-FILE owner=ai-chat-speed-booster reason="Configured site matrix shares one extension fixture and assertion vocabulary" split="Split per site if site-specific regressions grow further" validation="pnpm validate" review="Parallel site groups keep each site's tests serial"
+ * Large-file note: the configured site matrix shares one extension fixture and assertion vocabulary. Split per site if site-specific regressions grow further.
  *
  * Extension tests – loads the real extension in Chromium and verifies it
  * works on mock pages that mimic each configured site's DOM.

@@ -1,4 +1,4 @@
-// SCHOENWALD-LARGE-FILE owner=ai-chat-speed-booster reason="Native ChatGPT snapshot rendering keeps role-aware restore logic together" split="Move shared DOM helpers if this grows further" validation="pnpm validate" review="Native Mode only; no persistent content storage"
+// Large-file note: native ChatGPT snapshot rendering keeps role-aware restore logic together. Move shared DOM helpers if this grows further.
 import {
     ChatGptTextSnapshotCache,
     type ChatGptTextSnapshotCacheSnapshot,

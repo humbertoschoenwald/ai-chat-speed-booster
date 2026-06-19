@@ -1,4 +1,4 @@
-// SCHOENWALD-LARGE-FILE owner=ai-chat-speed-booster reason="Native model guard tests cover independent safety models in one fast suite" split="Split per native guard if this suite grows further" validation="pnpm validate" review="Model-only tests; no browser secrets or clipboard text"
+// Large-file note: native model guard tests cover independent safety models in one fast suite. Split per native guard if this suite grows further.
 import { test, expect } from "@playwright/test";
 import { EditorInputOptimizer } from "../src/content/native/EditorInputOptimizer";
 import { InputChunkPlanner } from "../src/content/native/InputChunkPlanner";

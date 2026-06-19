@@ -1,4 +1,4 @@
-// SCHOENWALD-LARGE-FILE owner=ai-chat-speed-booster reason="Native editor latency guard keeps event capture, paste planning, and defer diagnostics together" split="Move DOM event policy into a separate model if this grows further" validation="pnpm validate" review="No clipboard text is stored; only event type, timestamps, counters, and paste length are retained"
+// Large-file note: native editor latency guard keeps event capture, paste planning, and defer diagnostics together. Move DOM event policy into a separate model if this grows further.
 import { InputChunkPlanner } from "./InputChunkPlanner";
 
 export interface EditorInputSnapshot {

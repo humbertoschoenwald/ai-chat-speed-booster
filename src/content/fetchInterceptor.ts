@@ -3,7 +3,7 @@
  * Responsibility: patch supported conversation fetches and safely trim host responses.
  * Boundary: MAIN-world fetch interception only; no browser extension APIs or persistent chat data.
  * ADR: docs/adr/architecture/message-management/chatgpt-fetch-trim-reference-preservation.md.
- * SCHOENWALD-LARGE-FILE owner=ai-chat-speed-booster reason="MAIN-world fetch patch and trim strategies must stay bundled without chrome API imports" split="Extract pure trim strategies if this grows further" validation="pnpm validate" review="ChatGPT Fast Mode compatibility fix"
+ * Large-file note: MAIN-world fetch patch and trim strategies stay bundled. Extract pure trim strategies if this grows further.
  *
  * Fetch Interceptor — runs in the MAIN world (same JS context as the page).
  *
