@@ -129,6 +129,7 @@
 
 ### Docs
 
+- **chatgpt:** add master technical spec ([Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)) (6057f19)
 - **repo:** document maintainer setup ([Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)) (75d6aca)
 - **contributing:** split contributor guidance from README ([Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)) (347e5a6)
 - **adr:** normalize decision record taxonomy ([Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)) (43f404d)
