@@ -20,6 +20,7 @@ import {
 } from "./ChatGptMaxLengthReadonlyDetector";
 import { createChatGptLogicalDisplayStatus } from "./ChatGptLogicalTurnCounter";
 import { ChatGptTextSnapshotRenderer } from "./ChatGptTextSnapshotRenderer";
+import { ChatGptToolCallSummaryController } from "./ChatGptToolCallSummaryController";
 import { ChatGptTurnContentVisibilityController } from "./ChatGptTurnContainmentController";
 import {
     estimateChatGptPromptTokens,
@@ -59,6 +60,7 @@ export class ChatGptContentRuntime {
     private readonly nativeVirtualizationConflicts = new VirtualizationConflictDetector();
     private readonly nativeTurnRegistry = new TurnRegistry();
     private readonly nativeToolCallGroups = new ToolCallGroupController();
+    private readonly toolCallSummaries = new ChatGptToolCallSummaryController();
     private readonly ports: ChatGptContentRuntimePorts;
     private chatGptTextSnapshotRenderer: ChatGptTextSnapshotRenderer | null = null;
     private chatGptTurnContentVisibilityController: ChatGptTurnContentVisibilityController | null = null;
@@ -86,6 +88,7 @@ export class ChatGptContentRuntime {
     restoreNativeArtifacts(): void {
         this.chatGptTextSnapshotRenderer?.restoreAll(this.ports.document);
         this.chatGptTurnContentVisibilityController?.restoreAll(this.ports.document);
+        this.toolCallSummaries.restoreAll(this.ports.document);
     }
 
     resetNativeTracking(): void {
@@ -143,6 +146,7 @@ export class ChatGptContentRuntime {
         this.chatGptTextSnapshotRenderer = null;
         this.chatGptTurnContentVisibilityController?.stop(this.ports.document);
         this.chatGptTurnContentVisibilityController = null;
+        this.toolCallSummaries.stop(this.ports.document);
     }
 
     private ensureNativeState(): void {
@@ -152,6 +156,7 @@ export class ChatGptContentRuntime {
             this.chatGptTextSnapshotRenderer = null;
             this.chatGptTurnContentVisibilityController?.stop(this.ports.document);
             this.chatGptTurnContentVisibilityController = null;
+            this.toolCallSummaries.stop(this.ports.document);
             this.scrubStableNativeArtifacts();
             return;
         }
@@ -161,6 +166,7 @@ export class ChatGptContentRuntime {
         this.chatGptTurnContentVisibilityController ??= new ChatGptTurnContentVisibilityController();
         this.chatGptTextSnapshotRenderer.start(this.ports.document);
         this.chatGptTurnContentVisibilityController.start(this.ports.document);
+        this.toolCallSummaries.start(this.ports.document);
     }
 
     private syncNativeSnapshots(controller: NativeModeController | null): void {
@@ -194,7 +200,8 @@ export class ChatGptContentRuntime {
             const turns = this.ports.queryTurns();
             this.nativeToolCallGroups.reset();
             const records = turns.map((turn, index) => this.nativeTurnRegistry.track(turn, index));
-            for (const record of records) this.nativeToolCallGroups.indexTurn(record);
+            const toolGroups = records.flatMap((record) => [...this.nativeToolCallGroups.indexTurn(record)]);
+            this.toolCallSummaries.sync(toolGroups);
             this.nativeRenderBudget = createRenderUnitBudgetSnapshot(
                 turns,
                 this.nativeToolCallGroups.snapshot(),

@@ -8,13 +8,15 @@ Accepted.
 
 Native Mode must treat tool calls as first-class render units. Completed tool-call bodies may later be grouped or frozen, but running, failed, and user-expanded tool calls must remain hydrated and visible.
 
-This slice introduces the model only. It does not hide, freeze, collapse, or restore live tool-call DOM.
+This slice now also owns a completed-tool static summary treatment. The treatment keeps the original card in place, uses CSS containment rather than `display: none`, and rolls back whenever a tool call looks running, failed, or user-expanded.
 
 ## Decision
 
 Add a `ToolCallGroupController` that indexes tool-like subtrees under a turn record, classifies groups as completed, running, failed, or user-expanded, and reports sanitized counts plus estimated node cost.
 
-The controller uses structural selectors only and never reads or stores tool output text.
+Completed groups are eligible for a ChatGPT-only summary controller only when the group is closed and has no active loading, spinner, busy, streaming, failed, retry, or user-expanded signal. The controller injects an ACSB-owned summary label and containment attributes while preserving ChatGPT-owned DOM.
+
+The controller uses structural selectors only and never stores tool output text.
 
 ## Consequences
 

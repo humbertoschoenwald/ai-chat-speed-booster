@@ -13,7 +13,11 @@ const element = (kind: "tool" | "running" | "failed" | "expanded", childCount = 
     },
     querySelector: () => null,
     querySelectorAll: () => Array.from({ length: childCount }),
-    getAttribute: (name: string) => (name === "aria-expanded" && kind === "expanded" ? "true" : null),
+    getAttribute: (name: string) => {
+        if (name === "aria-expanded" && kind === "expanded") return "true";
+        if (name === "data-state" && kind === "tool") return "closed";
+        return null;
+    },
 }) as unknown as HTMLElement;
 
 const record = (key: string, node: HTMLElement, measuredHeight: number | null): NativeTurnRecord => ({

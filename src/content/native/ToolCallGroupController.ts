@@ -99,7 +99,10 @@ export class ToolCallGroupController {
         if (element.matches(FAILED_SELECTOR) || element.querySelector(FAILED_SELECTOR)) return "failed";
         if (element.matches(RUNNING_SELECTOR) || element.querySelector(RUNNING_SELECTOR)) return "running";
         if (element.getAttribute("aria-expanded") === "true") return "user-expanded";
-        return "completed";
+        const text = (element.innerText || element.textContent || "").replace(/\s+/g, " ").trim().toLowerCase();
+        if (text.includes("calling tool") || text.includes("working on it")) return "running";
+        if (element.getAttribute("data-state") === "closed" || element.querySelector("[data-state='closed']")) return "completed";
+        return "running";
     }
 
     private estimateNodeCost(element: HTMLElement): number {
