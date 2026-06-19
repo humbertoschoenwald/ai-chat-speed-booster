@@ -224,6 +224,7 @@ function scheduleInitialScan(): void {
  */
 function handleMessagesAdded(elements: HTMLElement[]): void {
     nativeModeController?.protectBackgroundWork("messages-added", 1_000);
+    chatGptTurnContentVisibilityController?.invalidateAll();
     messageManager.addMessages(elements);
     refreshUI();
     countNewUserRequests(elements);
@@ -243,6 +244,7 @@ function handlePageStateChanged(elements: HTMLElement[]): void {
  * Cleans up removed turn references to keep manager state aligned with DOM.
  */
 function handleMessagesRemoved(elements: HTMLElement[]): void {
+    chatGptTurnContentVisibilityController?.invalidateAll();
     requestLifecycleTracker?.observeRemovedTurns(elements);
     messageManager.removeMessages(elements);
     refreshUI();
@@ -254,6 +256,7 @@ function handleMessagesRemoved(elements: HTMLElement[]): void {
  */
 function handleConversationChanged(): void {
     nativeModeController?.protectBackgroundWork("conversation-changed", 1_000);
+    chatGptTurnContentVisibilityController?.invalidateAll();
     chatGptTextSnapshotRenderer?.restoreAll(document);
     contentLifecycleState = "recovering";
     logger.debug("conversation changed, re-initialising");
@@ -346,6 +349,7 @@ function handleVisibilityResume(): void {
 
 function handleViewportResize(): void {
     nativeModeController?.protectBackgroundWork("viewport-resize", 250);
+    chatGptTurnContentVisibilityController?.invalidateAll();
     if (viewportResizeTimer) clearTimeout(viewportResizeTimer);
     viewportResizeTimer = setTimeout(() => {
         viewportResizeTimer = null;
@@ -404,6 +408,7 @@ function handleObserverError(error: unknown, phase: string): void {
 
 function handleMessagesReset(): void {
     nativeModeController?.protectBackgroundWork("messages-reset", 1_000);
+    chatGptTurnContentVisibilityController?.invalidateAll();
     chatGptTextSnapshotRenderer?.restoreAll(document);
     contentLifecycleState = "recovering";
     logger.debug("large batch detected, re-initialising message manager");

@@ -11,18 +11,26 @@ const CONTAINED_ATTR = "data-acsb-native-contained-turn";
 const STYLE_ID = "acsb-native-turn-content-visibility-style";
 
 export class ChatGptTurnContentVisibilityController {
+    private readonly heightCache = new Map<string, number>();
+
     start(root: Document = document): void {
         injectStyle(root);
     }
 
     stop(root: ParentNode = document): void {
         this.restoreAll(root);
+        this.invalidateAll();
         if (root instanceof Document) root.getElementById(STYLE_ID)?.remove();
+    }
+
+    invalidateAll(): void {
+        this.heightCache.clear();
     }
 
     restoreAll(root: ParentNode = document): void {
         root.querySelectorAll<HTMLElement>(`[${CONTAINED_ATTR}="true"]`).forEach((turn) => {
             turn.removeAttribute(CONTAINED_ATTR);
+            turn.style.removeProperty("--acsb-contained-turn-height");
         });
     }
 
@@ -32,12 +40,24 @@ export class ChatGptTurnContentVisibilityController {
         turns.forEach((turn, index) => {
             if (live.has(index) || !isSafeCompletedTurn(turn)) {
                 turn.removeAttribute(CONTAINED_ATTR);
+                turn.style.removeProperty("--acsb-contained-turn-height");
                 return;
             }
+            const height = this.readCachedHeight(turn, index);
+            turn.style.setProperty("--acsb-contained-turn-height", `${height}px`);
             turn.setAttribute(CONTAINED_ATTR, "true");
             containedTurns += 1;
         });
         return { containedTurns };
+    }
+
+    private readCachedHeight(turn: HTMLElement, index: number): number {
+        const key = getTurnKey(turn, index);
+        const cached = this.heightCache.get(key);
+        if (cached) return cached;
+        const measured = Math.max(120, Math.min(2400, Math.round(turn.getBoundingClientRect().height || turn.offsetHeight || 320)));
+        this.heightCache.set(key, measured);
+        return measured;
     }
 }
 
@@ -45,7 +65,7 @@ function injectStyle(root: Document): void {
     if (root.getElementById(STYLE_ID)) return;
     const style = root.createElement("style");
     style.id = STYLE_ID;
-    style.textContent = `[${CONTAINED_ATTR}="true"]{content-visibility:auto!important;contain-intrinsic-size:auto 320px!important;}`;
+    style.textContent = `[${CONTAINED_ATTR}="true"]{content-visibility:auto!important;contain-intrinsic-size:auto var(--acsb-contained-turn-height,320px)!important;}`;
     (root.head ?? root.documentElement).appendChild(style);
 }
 
@@ -59,6 +79,10 @@ function computeLiveIndexes(turns: readonly HTMLElement[], liveWindowSize: numbe
         live.add(index);
     }
     return live;
+}
+
+function getTurnKey(turn: HTMLElement, index: number): string {
+    return turn.getAttribute("data-turn-id") ?? turn.getAttribute("data-testid") ?? `chatgpt-turn-${index}`;
 }
 
 function findViewportTurnIndex(turns: readonly HTMLElement[]): number {
