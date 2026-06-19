@@ -51,6 +51,7 @@ let nativeRenderBudget: RenderUnitBudgetSnapshot | null = null;
 let conversationRetryTimer: ReturnType<typeof setTimeout> | null = null;
 let resumeHealthCheckTimer: ReturnType<typeof setTimeout> | null = null;
 let viewportResizeTimer: ReturnType<typeof setTimeout> | null = null;
+let modeSwitchReloadTimer: ReturnType<typeof setTimeout> | null = null;
 let contentHeartbeatTimer: ReturnType<typeof setInterval> | null = null;
 let contentScriptOwnsBootstrap = false;
 const contentBootTime = Date.now();
@@ -300,12 +301,24 @@ function handleConversationChanged(): void {
 }
 
 function handleConfigUpdated(newConfig: ExtensionConfig): void {
+    const previousMode = config.performanceMode;
     config = deriveRuntimeConfigForSite(newConfig, currentSite.id);
+    const modeChanged = previousMode !== config.performanceMode;
     nativeModeController?.updateConfig(config);
     ensureChatGptTextSnapshotRendererState();
     messageManager.updateConfig(config);
     refreshUI();
+    if (modeChanged) scheduleModeSwitchReload();
     logger.debug("config updated from external source");
+}
+
+function scheduleModeSwitchReload(): void {
+    if (currentSite.id !== "chatgpt") return;
+    if (modeSwitchReloadTimer) clearTimeout(modeSwitchReloadTimer);
+    modeSwitchReloadTimer = setTimeout(() => {
+        modeSwitchReloadTimer = null;
+        window.location.reload();
+    }, 150);
 }
 
 function handlePageResume(): void {
@@ -682,6 +695,10 @@ window.addEventListener("beforeunload", () => {
     if (viewportResizeTimer) {
         clearTimeout(viewportResizeTimer);
         viewportResizeTimer = null;
+    }
+    if (modeSwitchReloadTimer) {
+        clearTimeout(modeSwitchReloadTimer);
+        modeSwitchReloadTimer = null;
     }
     window.removeEventListener("pageshow", handlePageResume);
     window.removeEventListener("focus", handleWindowFocus);
