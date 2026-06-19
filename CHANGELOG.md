@@ -115,6 +115,7 @@
 
 ### CI
 
+- fix pnpm setup version ([Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)) (4699d29)
 - **release:** ignore release metadata changelog commit ([Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)) (d0f7829)
 - fix workflow setup order ([Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)) (e5109b5)
 - **release:** use Node 24 actions ([Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)) (4721ac8)
