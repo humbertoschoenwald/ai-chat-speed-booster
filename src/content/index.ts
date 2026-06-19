@@ -11,6 +11,7 @@ import { ToolCallGroupController } from "./native/ToolCallGroupController";
 import { TurnRegistry } from "./native/TurnRegistry";
 import { VirtualizationConflictDetector } from "./native/VirtualizationConflictDetector";
 import { detectChatGptDeliveryTimeout } from "./native/chatgpt/ChatGptDeliveryTimeoutDetector";
+import { detectChatGptMaxLengthReadonly } from "./native/chatgpt/ChatGptMaxLengthReadonlyDetector";
 import { ChatGptTextSnapshotRenderer } from "./native/chatgpt/ChatGptTextSnapshotRenderer";
 import { estimateChatGptPromptTokens, readChatGptComposerText } from "./native/chatgpt/ChatGptTokenEstimator";
 import { detectCurrentSite, type SiteConfig } from "../shared/sites";
@@ -427,6 +428,9 @@ function handleExtensionMessage(message: unknown): ExtensionStatus | undefined {
         const deliveryTimeout = currentSite.id === "chatgpt"
             ? detectChatGptDeliveryTimeout(document)
             : null;
+        const maxLengthReadonly = currentSite.id === "chatgpt"
+            ? detectChatGptMaxLengthReadonly(document)
+            : null;
         const displayStatus = getDisplayStatus(messageManager.getStatus());
         return {
             ...displayStatus,
@@ -475,6 +479,8 @@ function handleExtensionMessage(message: unknown): ExtensionStatus | undefined {
             chatGptDeliveryTimeoutAssistantErrorCount: deliveryTimeout?.assistantErrorCount,
             chatGptDeliveryTimeoutFirstMessageId: deliveryTimeout?.firstMessageId,
             chatGptDeliveryTimeoutReason: deliveryTimeout?.reason,
+            chatGptMaxLengthReadonlyDetected: maxLengthReadonly?.detected,
+            chatGptMaxLengthReadonlyReason: maxLengthReadonly?.reason,
             nativeModeRenderUnitCost: nativeRenderBudget?.estimatedRenderUnitCost,
             nativeModeTurnNodeCost: nativeRenderBudget?.estimatedTurnNodeCost,
             nativeModeToolNodeCost: nativeRenderBudget?.estimatedToolNodeCost,

@@ -182,6 +182,9 @@ function renderNativeDiagnostics(status: ExtensionStatus | undefined): void {
 }
 
 function renderStatusText(status: ExtensionStatus): string {
+    if (status.chatGptMaxLengthReadonlyDetected) {
+        return "ChatGPT maximum conversation length reached · start a new chat to continue";
+    }
     const countText = currentConfig.fetchInterceptEnabled
         ? "Fast Mode active · message counts disabled"
         : `${status.visibleMessages}/${status.totalMessages} messages visible` +
