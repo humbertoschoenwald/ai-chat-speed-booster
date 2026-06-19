@@ -31,12 +31,14 @@ function createArrowUpIcon(): SVGElement {
 export class LoadMoreButton {
     private container: HTMLElement | null = null;
     private readonly onLoadMore: LoadMoreHandler;
+    private activeHandler: LoadMoreHandler;
     private hiddenCount = 0;
     private loadMoreBatchSize = 3;
     private siteConfig: SiteConfig;
 
     constructor(onLoadMore: LoadMoreHandler, siteConfig: SiteConfig) {
         this.onLoadMore = onLoadMore;
+        this.activeHandler = onLoadMore;
         this.siteConfig = siteConfig;
     }
 
@@ -48,12 +50,36 @@ export class LoadMoreButton {
     ): void {
         this.hiddenCount = hiddenCount;
         this.loadMoreBatchSize = loadMoreBatchSize;
+        this.activeHandler = this.onLoadMore;
 
         if (!this.container) {
             this.container = this.createElement();
         }
 
         this.updateLabel();
+
+        if (
+            firstVisibleElement &&
+            firstVisibleElement.parentElement === anchorParent
+        ) {
+            anchorParent.insertBefore(this.container, firstVisibleElement);
+        } else {
+            anchorParent.prepend(this.container);
+        }
+    }
+
+    showFetchTrimmed(
+        anchorParent: HTMLElement,
+        firstVisibleElement: HTMLElement | null,
+        onFetchTrimmedLoadMore: LoadMoreHandler,
+    ): void {
+        this.activeHandler = onFetchTrimmedLoadMore;
+
+        if (!this.container) {
+            this.container = this.createElement();
+        }
+
+        this.updateFetchTrimmedLabel();
 
         if (
             firstVisibleElement &&
@@ -167,10 +193,19 @@ export class LoadMoreButton {
         }
     }
 
+    private updateFetchTrimmedLabel(): void {
+        const label = this.container?.querySelector<HTMLElement>(
+            `.${CSS_PREFIX}-load-more-label`,
+        );
+        if (label) {
+            label.textContent = "Load older messages";
+        }
+    }
+
     private readonly handleClick = (e: MouseEvent): void => {
         e.preventDefault();
         e.stopPropagation();
-        this.onLoadMore();
+        this.activeHandler();
     };
 }
 

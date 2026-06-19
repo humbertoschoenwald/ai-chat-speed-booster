@@ -18,7 +18,7 @@ import { createExtensionStatus } from "./status/ContentStatusPresenter";
 import { detectCurrentSite, type SiteConfig } from "../shared/sites";
 import { deriveRuntimeConfigForSite } from "../shared/native-runtime-policy";
 import { loadConfig, onConfigChanged } from "../shared/storage";
-import { onMessage } from "../shared/browser-api";
+import { onMessage, sendMessage } from "../shared/browser-api";
 import { filterMessageTurns } from "../shared/messageTurnFilter";
 import {
     MessageType,
@@ -49,6 +49,7 @@ let contentLifecycleState: ContentLifecycleState = "initializing";
 let contentLastUiRefreshAt: number | null = null;
 let contentLastRecoverableErrorClass: string | null = null;
 const FETCH_TRIMMED_ATTR = "data-acsb-trimmed" as const;
+let currentConversationTrimmed = false;
 
 async function bootstrap(): Promise<void> {
     const site = detectCurrentSite();
@@ -213,6 +214,7 @@ function handleConversationChanged(): void {
     contentLifecycleState = "recovering";
     logger.debug("conversation changed, re-initialising");
 
+    currentConversationTrimmed = false;
     document.documentElement.removeAttribute(FETCH_TRIMMED_ATTR);
     requestLifecycleTracker?.reset();
 
@@ -256,13 +258,15 @@ function handleConversationChanged(): void {
 
 function handleConfigUpdated(newConfig: ExtensionConfig): void {
     const previousMode = config.performanceMode;
+    const previousFastMode = config.fetchInterceptEnabled;
     config = deriveRuntimeConfigForSite(newConfig, currentSite.id);
     const modeChanged = previousMode !== config.performanceMode;
+    const fastModeChanged = previousFastMode !== config.fetchInterceptEnabled;
     nativeModeController?.updateConfig(config);
     chatGptRuntime?.updateConfig(config);
     messageManager.updateConfig(config);
     refreshUI();
-    if (modeChanged) reloadCoordinator.scheduleModeSwitchReload();
+    if (modeChanged || fastModeChanged) reloadCoordinator.scheduleModeSwitchReload();
     logger.debug("config updated from external source");
 }
 
@@ -403,6 +407,17 @@ function loadOneMoreMessage(): void {
     refreshUI();
 }
 
+function handleFetchTrimmedLoadMore(): void {
+    void sendMessage({
+        type: MessageType.SET_CONFIG,
+        payload: { fetchInterceptEnabled: false },
+    }).finally(reloadCurrentPage);
+}
+
+function reloadCurrentPage(): void {
+    window.location.reload();
+}
+
 /**
  * Central renderer for load-more and status-indicator visibility states.
  */
@@ -434,6 +449,7 @@ function refreshUI(): void {
         }
 
         if (document.documentElement.hasAttribute(FETCH_TRIMMED_ATTR)) {
+            currentConversationTrimmed = true;
             document.documentElement.removeAttribute(FETCH_TRIMMED_ATTR);
         }
 
@@ -443,6 +459,12 @@ function refreshUI(): void {
             if (container) {
                 loadMoreButton.show(container, firstVisible, status.hiddenMessages, config.loadMoreBatchSize);
             }
+        } else if (currentConversationTrimmed && config.enabled && config.fetchInterceptEnabled) {
+            const firstVisible = findFirstVisibleMessage();
+            const container = findMessageContainer();
+            if (container) {
+                loadMoreButton.showFetchTrimmed(container, firstVisible, handleFetchTrimmedLoadMore);
+            }
         } else {
             loadMoreButton.hide();
         }
@@ -450,7 +472,7 @@ function refreshUI(): void {
         domObserver.updateMessageStats(status.totalMessages, status.visibleMessages);
         domObserver.SetAutoLoad(config.autoLoad); // Update auto-load state in DOM observer based on latest config
 
-        if (!config.enabled || !config.showStatus || displayStatus.totalMessages === 0) {
+        if (!config.enabled || !config.showStatus || config.fetchInterceptEnabled || displayStatus.totalMessages === 0) {
             statusIndicator.hide();
         } else {
             statusIndicator.update(displayStatus.hiddenMessages, displayStatus.totalMessages, config.statusPosition, false, config.theme === "light");

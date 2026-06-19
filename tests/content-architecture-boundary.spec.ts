@@ -62,8 +62,10 @@ test("stable load-more never exposes a full-conversation reload bypass", () => {
         expect(source).not.toContain("Load full conversation");
         expect(source).not.toContain("showFullLoad");
         expect(source).not.toContain("handleFullLoad");
-        expect(source).not.toContain("acsb_skip_trim_once");
+        expect(source).not.toContain("__retired_full_load_bypass__");
     }
+    expect(contentSource).toContain("showFetchTrimmed");
+    expect(uiSource).toContain("Load older messages");
 });
 
 test("stable load-more reveal path stays bounded to the requested batch", () => {
@@ -91,6 +93,13 @@ test("delivery-timeout refresh is not grouped with Stable-only controls", () => 
 
     expect(toggleIndex).toBeGreaterThan(0);
     expect(controlOpeningTag).not.toContain("data-legacy-control");
+});
+
+test("fast-mode status invariants stay wired", () => {
+    const source = readFileSync(path.resolve("src/content/index.ts"), "utf8");
+
+    expect(source).toContain("previousFastMode");
+    expect(source).toContain("fastModeChanged");
 });
 
 test("auto-load observer never forces the scroll position away from the top", () => {

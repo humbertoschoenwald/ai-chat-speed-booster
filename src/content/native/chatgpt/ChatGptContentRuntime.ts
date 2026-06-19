@@ -18,6 +18,7 @@ import {
     detectChatGptMaxLengthReadonly,
     type ChatGptMaxLengthReadonlySnapshot,
 } from "./ChatGptMaxLengthReadonlyDetector";
+import { createChatGptLogicalDisplayStatus } from "./ChatGptLogicalTurnCounter";
 import { ChatGptTextSnapshotRenderer } from "./ChatGptTextSnapshotRenderer";
 import { ChatGptTurnContentVisibilityController } from "./ChatGptTurnContainmentController";
 import {
@@ -28,7 +29,6 @@ import {
 import { logger } from "../../../shared/logger";
 
 const NATIVE_SNAPSHOT_SYNC_FAILURE_COOLDOWN_MS = 1_500;
-const CHATGPT_RENDERED_MESSAGE_SELECTOR = "[data-message-author-role][data-message-id]";
 
 export interface ChatGptContentRuntimePorts {
     readonly document: Document;
@@ -109,17 +109,7 @@ export class ChatGptContentRuntime {
     }
 
     getDisplayStatus(status: ExtensionStatus): ExtensionStatus {
-        const messages = Array.from(
-            this.ports.document.querySelectorAll<HTMLElement>(CHATGPT_RENDERED_MESSAGE_SELECTOR),
-        );
-        if (messages.length <= status.totalMessages) return status;
-        const visibleMessages = messages.filter((message) => !message.closest(".acsb-hidden")).length;
-        return {
-            ...status,
-            totalMessages: messages.length,
-            visibleMessages,
-            hiddenMessages: Math.max(0, messages.length - visibleMessages),
-        };
+        return createChatGptLogicalDisplayStatus(this.ports.queryTurns(), status);
     }
 
     scheduleNativeScrollWork(controller: NativeModeController | null): void {
