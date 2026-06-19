@@ -49,6 +49,7 @@
 
 #### Chatgpt
 
+- debounce spa url changes ([c586df7](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/c586df79b75ae78263aa4ab42bb65bc47a3653da)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - add native sync failure cooldown ([2e8c099](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/2e8c099ff7a3dc5306162252357c2aecd4d5f19a)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - guard native snapshot freezing ([c5ce050](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/c5ce050caf0328b982c733a8937c674ee22cef9f)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - isolate stable boot artifact cleanup ([9e2adf2](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/9e2adf2bebadbe2884f506eccc8ca70e1be94cd3)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
