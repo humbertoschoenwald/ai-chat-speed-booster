@@ -25,6 +25,15 @@ const STYLE_ID = "acsb-native-text-snapshot-style";
 const MAX_SNAPSHOT_WRITES_PER_SYNC = 8;
 
 export class ChatGptTextSnapshotRenderer {
+    static cleanupNativeArtifacts(root: Document = document): void {
+        root.querySelectorAll<HTMLElement>(`[${HOST_ATTR}="true"]`).forEach((turn) => {
+            turn.removeAttribute(HOST_ATTR);
+            turn.removeAttribute("data-acsb-native-role");
+            turn.querySelectorAll<HTMLElement>(SNAPSHOT_SELECTOR).forEach((node) => node.remove());
+        });
+        root.getElementById(STYLE_ID)?.remove();
+    }
+
     private readonly cache = new ChatGptTextSnapshotCache();
     private root: Document | null = null;
 
@@ -42,6 +51,7 @@ export class ChatGptTextSnapshotRenderer {
         root.removeEventListener("pointerdown", this.restoreTarget, true);
         root.removeEventListener("focusin", this.restoreTarget, true);
         this.restoreAll(root);
+        ChatGptTextSnapshotRenderer.cleanupNativeArtifacts(root);
         this.cache.clear();
         this.root = null;
     }

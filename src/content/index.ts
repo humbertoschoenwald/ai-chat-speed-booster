@@ -97,8 +97,7 @@ async function bootstrap(): Promise<void> {
     nativeModeController = new NativeModeController(currentSite);
     nativeModeController.updateConfig(config);
     if (currentSite.id === "chatgpt") {
-        chatGptTextSnapshotRenderer = new ChatGptTextSnapshotRenderer();
-        chatGptTextSnapshotRenderer.start(document);
+        ensureChatGptTextSnapshotRendererState();
         window.addEventListener("resize", handleViewportResize);
     }
     editorLatencyGuard.start();
@@ -303,6 +302,7 @@ function handleConversationChanged(): void {
 function handleConfigUpdated(newConfig: ExtensionConfig): void {
     config = deriveRuntimeConfigForSite(newConfig, currentSite.id);
     nativeModeController?.updateConfig(config);
+    ensureChatGptTextSnapshotRendererState();
     messageManager.updateConfig(config);
     refreshUI();
     logger.debug("config updated from external source");
@@ -595,11 +595,26 @@ function refreshUI(): void {
     });
 }
 
+function ensureChatGptTextSnapshotRendererState(): void {
+    if (currentSite.id !== "chatgpt") return;
+    if (config.performanceMode !== "native") {
+        chatGptTextSnapshotRenderer?.stop();
+        chatGptTextSnapshotRenderer = null;
+        ChatGptTextSnapshotRenderer.cleanupNativeArtifacts(document);
+        return;
+    }
+    if (!chatGptTextSnapshotRenderer) {
+        chatGptTextSnapshotRenderer = new ChatGptTextSnapshotRenderer();
+    }
+    chatGptTextSnapshotRenderer.start(document);
+}
+
 function syncChatGptNativeSnapshots(): void {
     const controller = nativeModeController;
     const nativeActive = config.performanceMode === "native" && controller?.snapshot().active === true;
     if (!chatGptTextSnapshotRenderer || !controller || currentSite.id !== "chatgpt" || !nativeActive) {
         chatGptTextSnapshotRenderer?.restoreAll(document);
+        ChatGptTextSnapshotRenderer.cleanupNativeArtifacts(document);
         nativeTurnRegistry.reset();
         nativeToolCallGroups.reset();
         nativeRenderBudget = null;
