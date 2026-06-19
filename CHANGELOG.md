@@ -4,6 +4,10 @@
 
 ### Features
 
+#### Chatgpt
+
+- reload after mode switch ([aa742f7](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/aa742f703f23f0c20dd1a21ed92dee592cbdb0c7)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
+
 #### Counter
 
 - add browser account counters (#25) ([222a802](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/222a802d16d9d22c5601eb610357632ca1783a1d)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
