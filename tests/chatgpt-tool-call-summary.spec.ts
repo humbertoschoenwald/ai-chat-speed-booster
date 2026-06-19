@@ -1,6 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { isStaticSummaryCandidate } from "../src/content/native/chatgpt/ChatGptToolCallSummaryController";
 import type { ToolCallGroupRecord } from "../src/content/native/ToolCallGroupController";
+import { classifyChatGptToolCallState } from "../src/content/native/chatgpt/ChatGptToolCallStateGuard";
 
 test("completed closed tool calls are static summary candidates", () => {
     expect(isStaticSummaryCandidate(group("completed", element({ state: "closed", text: "Read file" })))).toBe(true);
@@ -15,6 +16,10 @@ test("active tool calls are not static summary candidates", () => {
 test("open or user-owned tool-like nodes are not static summary candidates", () => {
     expect(isStaticSummaryCandidate(group("completed", element({ text: "Read file" })))).toBe(false);
     expect(isStaticSummaryCandidate(group("completed", element({ state: "closed", userOwned: true, text: "Read file" })))).toBe(false);
+});
+
+test("ChatGPT guard identifies active text", () => {
+    expect(classifyChatGptToolCallState(element({ text: "Calling tool" }))).toBe("active");
 });
 
 function group(state: ToolCallGroupRecord["state"], element: HTMLElement): ToolCallGroupRecord {

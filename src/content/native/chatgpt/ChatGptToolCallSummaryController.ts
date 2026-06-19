@@ -1,4 +1,5 @@
 import type { ToolCallGroupRecord } from "../ToolCallGroupController";
+import { canApplyStaticToolCallSummary } from "./ChatGptToolCallStateGuard";
 
 const HOST_ATTR = "data-acsb-tool-call-summary-host";
 const SUMMARY_ATTR = "data-acsb-tool-call-summary";
@@ -53,6 +54,7 @@ export function isStaticSummaryCandidate(group: ToolCallGroupRecord): boolean {
     const host = group.element;
     if (group.state !== "completed") return false;
     if (host.closest("[data-message-author-role='user']")) return false;
+    if (!canApplyStaticToolCallSummary(host)) return false;
     if (host.matches(ACTIVE_SELECTOR) || host.querySelector(ACTIVE_SELECTOR)) return false;
     const text = (host.innerText || host.textContent || "").replace(/\s+/g, " ").trim().toLowerCase();
     if (!text) return false;
