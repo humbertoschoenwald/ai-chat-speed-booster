@@ -1,6 +1,5 @@
 import { test, expect } from "@playwright/test";
-import { readFileSync } from "fs";
-import { spawnSync } from "child_process";
+import { readdirSync, readFileSync, statSync } from "fs";
 import path from "path";
 
 test("content entrypoint depends on ChatGPT through one provider runtime adapter", () => {
@@ -54,6 +53,46 @@ test("content entrypoint delegates bootstrap leasing", () => {
     }
 });
 
+test("stable load-more never exposes a full-conversation reload bypass", () => {
+    const contentSource = readFileSync(path.resolve("src/content/index.ts"), "utf8");
+    const uiSource = readFileSync(path.resolve("src/content/UIComponents.ts"), "utf8");
+    const fetchSource = readFileSync(path.resolve("src/content/fetchInterceptor.ts"), "utf8");
+
+    for (const source of [contentSource, uiSource, fetchSource]) {
+        expect(source).not.toContain("Load full conversation");
+        expect(source).not.toContain("showFullLoad");
+        expect(source).not.toContain("handleFullLoad");
+        expect(source).not.toContain("acsb_skip_trim_once");
+    }
+});
+
+test("stable load-more reveal path stays bounded to the requested batch", () => {
+    const source = readFileSync(path.resolve("src/content/MessageManager.ts"), "utf8");
+    const loadMoreBody = source.match(/loadMore\(toLoad\?: number\): number \{(?<body>[\s\S]*?)\n    \}/)?.groups?.body ?? "";
+
+    expect(loadMoreBody).toContain("firstVisibleIndex");
+    expect(loadMoreBody).not.toContain(".filter(");
+    expect(loadMoreBody).not.toContain(".slice(");
+});
+
+test("popup does not render the retired Auto Load Beta control", () => {
+    const source = readFileSync(path.resolve("src/popup/popup.html"), "utf8");
+
+    expect(source).not.toContain("toggle-auto-load");
+    expect(source).not.toContain("Auto load");
+    expect(source).not.toContain("Beta");
+});
+
+test("delivery-timeout refresh is not grouped with Stable-only controls", () => {
+    const source = readFileSync(path.resolve("src/popup/popup.html"), "utf8");
+    const toggleIndex = source.indexOf("toggle-delivery-timeout-refresh");
+    const controlStart = source.lastIndexOf("<div class=\"setting\"", toggleIndex);
+    const controlOpeningTag = source.slice(controlStart, source.indexOf(">", controlStart));
+
+    expect(toggleIndex).toBeGreaterThan(0);
+    expect(controlOpeningTag).not.toContain("data-legacy-control");
+});
+
 test("auto-load observer never forces the scroll position away from the top", () => {
     const source = readFileSync(path.resolve("src/content/DOMObserver.ts"), "utf8");
 
@@ -64,12 +103,26 @@ test("auto-load observer never forces the scroll position away from the top", ()
 
 test("extension source does not carry Schoenwald large-file markers", () => {
     const marker = ["SCHOENWALD", "LARGE", "FILE"].join("-");
-    const result = spawnSync(
-        "git",
-        ["grep", "-n", marker, "--", "src", "tests", "scripts"],
-        { encoding: "utf8" },
-    );
+    const sourceRoots = ["src", "tests", "scripts"];
+    const matches: string[] = [];
 
-    expect(result.status, result.stdout).toBe(1);
-    expect(result.stdout).toBe("");
+    for (const root of sourceRoots) {
+        for (const filePath of listTextFiles(path.resolve(root))) {
+            const source = readFileSync(filePath, "utf8");
+            if (source.includes(marker)) matches.push(path.relative(process.cwd(), filePath));
+        }
+    }
+
+    expect(matches).toEqual([]);
 });
+
+function listTextFiles(root: string): string[] {
+    const stat = statSync(root);
+    if (stat.isFile()) return [root];
+    return readdirSync(root).flatMap((entry) => {
+        const entryPath = path.join(root, entry);
+        const entryStat = statSync(entryPath);
+        if (entryStat.isDirectory()) return listTextFiles(entryPath);
+        return /\.(?:cjs|js|mjs|ts|tsx)$/.test(entry) ? [entryPath] : [];
+    });
+}

@@ -34,8 +34,6 @@ export class LoadMoreButton {
     private hiddenCount = 0;
     private loadMoreBatchSize = 3;
     private siteConfig: SiteConfig;
-    private fullLoadMode = false;
-    private onFullLoad: (() => void) | null = null;
 
     constructor(onLoadMore: LoadMoreHandler, siteConfig: SiteConfig) {
         this.onLoadMore = onLoadMore;
@@ -74,47 +72,11 @@ export class LoadMoreButton {
 
     hide(): void {
         this.container?.remove();
-        this.fullLoadMode = false;
     }
 
     destroy(): void {
         this.hide();
         this.container = null;
-        this.fullLoadMode = false;
-    }
-
-    /**
-     * Shows a "Load full conversation" button when the fetch interceptor
-     * trimmed messages and the user has exhausted all hidden DOM messages.
-     */
-    showFullLoad(
-        anchorParent: HTMLElement,
-        firstVisibleElement: HTMLElement | null,
-        onFullLoad: () => void,
-    ): void {
-        this.fullLoadMode = true;
-        this.onFullLoad = onFullLoad;
-
-        if (!this.container) {
-            this.container = this.createElement();
-        }
-
-        // Update label for full-load mode
-        const label = this.container.querySelector<HTMLElement>(
-            `.${CSS_PREFIX}-load-more-label`,
-        );
-        if (label) {
-            label.textContent = "Load full conversation";
-        }
-
-        if (
-            firstVisibleElement &&
-            firstVisibleElement.parentElement === anchorParent
-        ) {
-            anchorParent.insertBefore(this.container, firstVisibleElement);
-        } else {
-            anchorParent.prepend(this.container);
-        }
     }
 
     private createElement(): HTMLElement {
@@ -124,14 +86,13 @@ export class LoadMoreButton {
         wrapper.setAttribute("role", "banner");
         Object.assign(wrapper.style, {
             display: "flex",
-            alignSelf: "stretch", // Make wrapper take full width of the parent container while respecting its own horizontal margins (Needed for Gemini)
+            alignSelf: "stretch",
             justifyContent: "center",
             alignItems: "center",
-            padding: "12px 16px",
+            padding: "10px 12px",
             margin: siteMargin,
-            borderRadius: "8px",
-            background: "#323232d9", //ChatGPT's --message-surface var
-            backdropFilter: "blur(4px)",
+            borderRadius: "12px",
+            background: "transparent",
             transition: "opacity 0.2s ease",
         } satisfies Partial<CSSStyleDeclaration>);
 
@@ -144,27 +105,30 @@ export class LoadMoreButton {
             cursor: "pointer",
             display: "inline-flex",
             alignItems: "center",
+            justifyContent: "center",
             gap: "8px",
-            padding: "8px 20px",
-            borderRadius: "6px",
+            minHeight: "34px",
+            padding: "7px 16px",
+            borderRadius: "999px",
             fontSize: "13px",
-            fontWeight: "500",
+            fontWeight: "600",
             fontFamily:
                 '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
-            color: "var(--text-muted, #d1d5db)",
-            background: "var(--surface-tertiary, rgba(255,255,255,0.06))",
-            border: "1px solid var(--border-medium, rgba(255,255,255,0.1))",
+            color: "var(--text-primary, var(--text-foreground, #f4f4f5))",
+            background: "var(--main-surface-secondary, rgba(127,127,127,0.16))",
+            border: "1px solid var(--border-light, rgba(127,127,127,0.22))",
+            boxShadow: "0 4px 16px rgba(0,0,0,0.12)",
             transition:
-                "background 0.15s ease, transform 0.1s ease, color 0.1s ease",
+                "background 0.15s ease, transform 0.1s ease, color 0.1s ease, border-color 0.15s ease",
         } satisfies Partial<CSSStyleDeclaration>);
 
         button.addEventListener("mouseenter", () => {
-            // button.style.background = "var(--surface-tertiary-hover, rgba(255,255,255,0.12))";
-            button.style.color = "var(--text-foreground)";
+            button.style.background = "var(--main-surface-tertiary, rgba(127,127,127,0.22))";
+            button.style.borderColor = "var(--border-medium, rgba(127,127,127,0.32))";
         });
         button.addEventListener("mouseleave", () => {
-            // button.style.background = "var(--surface-tertiary, rgba(255,255,255,0.06))";
-            button.style.color = "var(--text-muted, #d1d5dba2)";
+            button.style.background = "var(--main-surface-secondary, rgba(127,127,127,0.16))";
+            button.style.borderColor = "var(--border-light, rgba(127,127,127,0.22))";
         });
         button.addEventListener("mousedown", () => {
             button.style.transform = "scale(0.97)";
@@ -206,11 +170,7 @@ export class LoadMoreButton {
     private readonly handleClick = (e: MouseEvent): void => {
         e.preventDefault();
         e.stopPropagation();
-        if (this.fullLoadMode && this.onFullLoad) {
-            this.onFullLoad();
-        } else {
-            this.onLoadMore();
-        }
+        this.onLoadMore();
     };
 }
 

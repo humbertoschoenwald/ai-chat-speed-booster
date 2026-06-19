@@ -80,15 +80,9 @@ const PREFIX = "[ACSB Fetch]";
  * ISOLATED world synchronously.
  */
 const TRIMMED_ATTR = "data-acsb-trimmed";
-/** One-shot: content script sets this before reload to skip trimming once. */
-const BYPASS_KEY = "acsb_skip_trim_once";
-
 /**
- * How many "Load More" clicks worth of extra messages to keep in the response.
- * 10 rounds × batch-size 3 × 2 (×2 turn convention) = 66 API msgs = 33 turns.
- * Aggressively trims large chats while keeping ~33 turns for scrolling.
- * When the user exhausts these, a "Load full conversation" button reloads
- * with trimming bypassed.
+ * How many stable batch reveals worth of extra messages to keep in the response.
+ * Fast Mode is experimental and never exposes a reload bypass from the content UI.
  */
 const BUFFER_ROUNDS = 10;
 
@@ -192,14 +186,8 @@ function cacheGet(key: string): CachedResponse | undefined {
             return originalFetch.call(this, input, init);
         }
 
-        // One-shot bypass: content script requested a full reload
-        if (localStorage.getItem(BYPASS_KEY) === "true") {
-            localStorage.removeItem(BYPASS_KEY);
-            document.documentElement.removeAttribute(TRIMMED_ATTR);
-            responseCache.clear();
-            if (__DEV__) console.debug(PREFIX, "one-shot bypass active, cleared response cache and skipped trim");
-            return originalFetch.call(this, input, init);
-        }
+        // Clear stale trim telemetry before this response decides whether it trimmed.
+        document.documentElement.removeAttribute(TRIMMED_ATTR);
 
         // The fetch limit keeps extra messages beyond the visible limit
         // so the content script can reveal them with "Load More".

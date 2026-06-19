@@ -48,13 +48,7 @@ const contentBootTime = Date.now();
 let contentLifecycleState: ContentLifecycleState = "initializing";
 let contentLastUiRefreshAt: number | null = null;
 let contentLastRecoverableErrorClass: string | null = null;
-/**
- * Internal flag tracking whether the fetch interceptor trimmed the current
- * conversation's API response.  Set by consuming the DOM attribute
- * (data-acsb-trimmed) written by the MAIN-world interceptor, and reset
- * on conversation change so it doesn't carry over across SPA navigations.
- */
-let currentConversationTrimmed = false;
+const FETCH_TRIMMED_ATTR = "data-acsb-trimmed" as const;
 
 async function bootstrap(): Promise<void> {
     const site = detectCurrentSite();
@@ -219,9 +213,7 @@ function handleConversationChanged(): void {
     contentLifecycleState = "recovering";
     logger.debug("conversation changed, re-initialising");
 
-    // Reset the trimmed flag for the new conversation.  The fetch
-    // interceptor will set the DOM attribute again if it trims.
-    currentConversationTrimmed = false;
+    document.documentElement.removeAttribute(FETCH_TRIMMED_ATTR);
     requestLifecycleTracker?.reset();
 
     timers.clear("conversation-retry");
@@ -391,15 +383,13 @@ function handleExtensionMessage(message: unknown): ExtensionStatus | undefined {
 
 /**
  * Reveals older hidden turns and refreshes status positioning after layout settles.
- * When all hidden DOM messages are exhausted but the fetch interceptor trimmed
- * messages, shows a "Load full conversation" button that reloads without trimming.
+ * Exhausted stable batches hide the control; they never trigger a page reload.
  */
 function handleLoadMore(): void {
     const revealed = messageManager.loadMore();
     if (revealed > 0) {
         refreshUI();
     } else {
-        // Nothing left to reveal from DOM — check if fetch interceptor trimmed
         refreshUI();
     }
 }
@@ -408,20 +398,9 @@ function handleLoadMore(): void {
  * Reveals one additional conversation turn, used for auto-loading when the user scrolls to the top.
  */
 function loadOneMoreMessage(): void {
-    if(!config.autoLoad) return; // Don't auto-load if the user has disabled the feature
+    if (!config.autoLoad) return;
     messageManager.loadMore(1);
     refreshUI();
-}
-
-/**
- * One-shot full reload: sets a localStorage flag so the fetch interceptor
- * skips trimming on the next page load, then reloads.
- */
-function handleFullLoad(): void {
-    try {
-        localStorage.setItem("acsb_skip_trim_once", "true");
-    } catch { /* storage unavailable */ }
-    window.location.reload();
 }
 
 /**
@@ -454,30 +433,15 @@ function refreshUI(): void {
             }
         }
 
-        // Consume the DOM attribute written by the MAIN-world fetch
-        // interceptor.  Once consumed we store the flag internally so
-        // subsequent non-conversation fetch responses can't erase it.
-        if (document.documentElement.hasAttribute("data-acsb-trimmed")) {
-            currentConversationTrimmed = true;
-            document.documentElement.removeAttribute("data-acsb-trimmed");
+        if (document.documentElement.hasAttribute(FETCH_TRIMMED_ATTR)) {
+            document.documentElement.removeAttribute(FETCH_TRIMMED_ATTR);
         }
 
-        if (status.hiddenMessages > 1 && config.enabled) { // changed to 1 since conversations that were aborted will result in 1 turn being added, i.e., the user prompt.
-            // Normal Load More mode — there are still hidden DOM elements
-            const firstVisible = findFirstVisibleMessage();
-            const container = findMessageContainer();
-            if (container && firstVisible) {
-                loadMoreButton.show(container, firstVisible, status.hiddenMessages, config.loadMoreBatchSize);
-            } else if (container) {
-                loadMoreButton.show(container, null, status.hiddenMessages, config.loadMoreBatchSize);
-            }
-        } else if (currentConversationTrimmed && config.enabled && config.fetchInterceptEnabled) {
-            // All DOM messages visible, but fetch interceptor trimmed more.
-            // Show "Load full conversation" button.
+        if (status.hiddenMessages > 0 && config.enabled) {
             const firstVisible = findFirstVisibleMessage();
             const container = findMessageContainer();
             if (container) {
-                loadMoreButton.showFullLoad(container, firstVisible, handleFullLoad);
+                loadMoreButton.show(container, firstVisible, status.hiddenMessages, config.loadMoreBatchSize);
             }
         } else {
             loadMoreButton.hide();
@@ -486,7 +450,7 @@ function refreshUI(): void {
         domObserver.updateMessageStats(status.totalMessages, status.visibleMessages);
         domObserver.SetAutoLoad(config.autoLoad); // Update auto-load state in DOM observer based on latest config
 
-        if (!config.enabled || !config.showStatus || currentConversationTrimmed || displayStatus.totalMessages === 0) {
+        if (!config.enabled || !config.showStatus || displayStatus.totalMessages === 0) {
             statusIndicator.hide();
         } else {
             statusIndicator.update(displayStatus.hiddenMessages, displayStatus.totalMessages, config.statusPosition, false, config.theme === "light");

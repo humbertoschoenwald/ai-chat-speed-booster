@@ -29,6 +29,8 @@ export class MessageManager {
     private elementMap = new Map<HTMLElement, TrackedMessage>();
     /** O(1) id → TrackedMessage lookup for DOMObserver dedupe checks. */
     private idMap = new Map<string, TrackedMessage>();
+    /** First visible index in the contiguous stable-mode window. */
+    private firstVisibleIndex = 0;
     private visibleCounter = 0;
     private legacyRevealLoopCount = 0;
     private legacyLastRevealLoopAt: number | null = null;
@@ -51,6 +53,7 @@ export class MessageManager {
         this.messages = [];
         this.elementMap.clear();
         this.idMap.clear();
+        this.firstVisibleIndex = 0;
         this.visibleCounter = 0;
         for (const el of elements) this.trackElement(el);
         this.recalculateVisibility();
@@ -76,17 +79,28 @@ export class MessageManager {
             }
             return true;
         });
+        this.firstVisibleIndex = this.messages.findIndex((m) => m.visible);
+        if (this.firstVisibleIndex < 0) this.firstVisibleIndex = this.messages.length;
     }
 
-    loadMore(toLoad?: number): number { // Added optional parameter to specify how many messages to load
-        if (!this.config.enabled) return 0;
-        if(this.messages.length === this.visibleCount) return 0; // No hidden messages to load
-        const hidden = this.messages.filter((m) => !m.visible);
-        const toReveal = hidden.slice(( toLoad ? -toLoad : -this.config.loadMoreBatchSize) * 2);
-        for (const msg of toReveal) this.showMessage(msg);
-        this.cachedVisibleCount = this.visibleCount; // Preserve currently visible messages when user sends new prompt
-        logger.debug(`revealed ${toReveal.length} additional messages`);
-        return toReveal.length;
+    loadMore(toLoad?: number): number {
+        if (!this.config.enabled || this.firstVisibleIndex <= 0) return 0;
+        const requestedTurns = toLoad ?? this.config.loadMoreBatchSize;
+        const requestedElements = Math.max(1, requestedTurns) * 2;
+        const revealStart = Math.max(0, this.firstVisibleIndex - requestedElements);
+        let revealed = 0;
+
+        for (let i = revealStart; i < this.firstVisibleIndex; i++) {
+            const msg = this.messages[i];
+            if (!msg || msg.visible) continue;
+            this.showMessage(msg);
+            revealed++;
+        }
+
+        this.firstVisibleIndex = revealStart;
+        this.cachedVisibleCount = this.visibleCount;
+        logger.debug(`revealed ${revealed} additional messages`);
+        return revealed;
     }
 
     hasHiddenMessages(): boolean {
@@ -126,6 +140,7 @@ export class MessageManager {
         this.messages = [];
         this.elementMap.clear();
         this.idMap.clear();
+        this.firstVisibleIndex = 0;
         this.visibleCounter = 0;
         this.cachedVisibleCount = 0;
         logger.debug("MessageManager destroyed");
@@ -147,20 +162,22 @@ export class MessageManager {
             // Filtering off: leave the DOM intact and let the site handle
             // its own virtualization. Fast Mode still trims the API payload.
             for (const msg of this.messages) this.showMessage(msg);
+            this.firstVisibleIndex = 0;
             return;
         }
-        // If "load more" is ever clicked, cachedVisibleCount will store the new limit for the current session and will be used
         const limit = Math.max(this.cachedVisibleCount, this.config.visibleMessageLimit * 2);
         const total = this.messages.length;
+        const firstVisible = Math.max(0, total - limit);
 
         for (let i = 0; i < total; i++) {
             const msg = this.messages[i];
-            if (i < total - limit) {
+            if (i < firstVisible) {
                 this.hideMessage(msg);
             } else {
                 this.showMessage(msg);
             }
         }
+        this.firstVisibleIndex = firstVisible;
     }
 
     private hideMessage(msg: TrackedMessage): void {
