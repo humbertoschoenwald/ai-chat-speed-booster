@@ -151,6 +151,7 @@
 
 #### Stable
 
+- read live DOM turns ([108284a](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/108284ac4fa37d4bf5fca6d1aa4fcfb518f85ea4)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - keep ChatGPT thread turns manageable ([7cfa315](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/7cfa315f8fcd093ae895d9fa22be3431cae9a5a9)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - trim fetches to the initial window ([afe6c97](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/afe6c978a96a68c9ae5f8de4f45f3e772b1bb028)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - restore manual batch hiding boundaries ([9f80e30](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/9f80e3016ef6155a4619baa2aa1a87bb2cb21550)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
