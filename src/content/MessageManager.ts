@@ -19,8 +19,10 @@ const DOCUMENT_POSITION_FOLLOWING = 0x04;
 
 let styleInjected = false;
 function buildHideStyle(): string {
+    const hiddenOverride = `.${HIDE_CLASS}{display:none!important;overflow-anchor:none!important}`;
+    const managedOverride = `[${DATA_ATTR}]{overflow-anchor:none!important}`;
     const visibleOverride = `[${DATA_ATTR}]:not(.${HIDE_CLASS}){content-visibility:visible!important;contain-intrinsic-size:auto!important}`;
-    return `.${HIDE_CLASS}{display:none!important}` + visibleOverride;
+    return hiddenOverride + managedOverride + visibleOverride;
 }
 
 function injectHideStyle(): void {

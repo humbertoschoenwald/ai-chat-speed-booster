@@ -140,11 +140,20 @@ test("Stable fetch policy leaves ChatGPT rendering in control", () => {
     expect(fetchSource).not.toContain("restoreCachedChunkState");
 });
 
+test("Stable managed turns opt out of browser scroll anchoring", () => {
+    const source = readFileSync(path.resolve("src/content/MessageManager.ts"), "utf8");
+
+    expect(source).toContain("overflow-anchor:none!important");
+    expect(source).toContain("content-visibility:visible!important");
+});
+
 test("Stable Load More reveals downloaded DOM without chunk reload", () => {
     const contentSource = readFileSync(path.resolve("src/content/index.ts"), "utf8");
 
     expect(contentSource).toContain("messageManager.loadMore()");
     expect(contentSource).toContain("preserveViewportAnchor(previousFirstVisible, previousTop)");
+    expect(contentSource).toContain("STABLE_DOM_REVEAL_ANCHOR_MAX_MS = 420");
+    expect(contentSource).toContain("requestAnimationFrame(restore)");
     expect(contentSource).not.toContain("loadNextStableChunk");
     expect(contentSource).not.toContain("setTimeout(() => window.location.reload(), 120)");
 });
