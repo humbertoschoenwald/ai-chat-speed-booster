@@ -4,7 +4,7 @@
  * Boundary: DOM/event orchestration only; status text decisions live in popupViewModel.ts.
  * ADR: docs/adr/experience/popup/native-mode-controls.md.
  */
-import { sendMessage } from "../shared/browser-api";
+import { isExtensionContextInvalidatedError, sendMessage } from "../shared/browser-api";
 import { CONFIG_LIMITS, DEFAULT_CONFIG } from "../shared/constants";
 import {
     MessageType,
@@ -105,8 +105,16 @@ async function safeSendMessage<T>(message: unknown): Promise<T | null> {
 }
 
 async function init(): Promise<void> {
-    const manifest = chrome.runtime.getManifest();
-    versionText.textContent = `(v${manifest.version})`; // New: set the version text from manifest
+    try {
+        const manifest = chrome.runtime.getManifest();
+        versionText.textContent = `(v${manifest.version})`;
+    } catch (error) {
+        if (isExtensionContextInvalidatedError(error)) {
+            versionText.textContent = "";
+        } else {
+            throw error;
+        }
+    }
     currentSiteId = await detectActivePopupSiteId();
 
     const cached = readPopupCache();
