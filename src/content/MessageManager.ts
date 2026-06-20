@@ -14,6 +14,9 @@ import { logger } from "../shared/logger";
 
 /** Injected once into <head> — all hiding is done via this class. */
 const HIDE_CLASS = "acsb-hidden";
+const DOCUMENT_POSITION_PRECEDING = 0x02;
+const DOCUMENT_POSITION_FOLLOWING = 0x04;
+
 let styleInjected = false;
 function injectHideStyle(): void {
     if (styleInjected) return;
@@ -68,6 +71,7 @@ export class MessageManager {
         this.firstVisibleIndex = 0;
         this.visibleCounter = 0;
         for (const el of elements) this.trackElement(el);
+        this.sortMessagesByDomOrder();
         this.recalculateVisibility();
         logger.debug(`initialised with ${this.messages.length} messages`);
     }
@@ -77,6 +81,7 @@ export class MessageManager {
             if (this.elementMap.has(el)) continue;
             this.trackElement(el);
         }
+        this.sortMessagesByDomOrder();
         this.recalculateVisibility();
     }
 
@@ -180,7 +185,7 @@ export class MessageManager {
         }
         const limit = Math.max(
             this.cachedVisibleCount,
-            this.logicalToElementCount(this.config.visibleMessageLimit),
+            this.visibleElementLimitForTotal(this.messages.length),
         );
         const total = this.messages.length;
         const firstVisible = Math.max(0, total - limit);
@@ -234,6 +239,26 @@ export class MessageManager {
     private elementsToLogicalCount(elementCount: number): number {
         if (elementCount <= 0) return 0;
         return Math.ceil(elementCount / this.elementsPerLogicalMessage);
+    }
+
+    private visibleElementLimitForTotal(total: number): number {
+        return this.logicalToElementCount(this.config.visibleMessageLimit)
+            + this.inFlightPartialElementCount(total);
+    }
+
+    private inFlightPartialElementCount(total: number): number {
+        if (this.elementsPerLogicalMessage <= 1) return 0;
+        return total % this.elementsPerLogicalMessage;
+    }
+
+    private sortMessagesByDomOrder(): void {
+        this.messages.sort((left, right) => {
+            if (left.element === right.element) return 0;
+            const position = left.element.compareDocumentPosition(right.element);
+            if (position & DOCUMENT_POSITION_FOLLOWING) return -1;
+            if (position & DOCUMENT_POSITION_PRECEDING) return 1;
+            return 0;
+        });
     }
 
     private deriveId(el: HTMLElement): string {

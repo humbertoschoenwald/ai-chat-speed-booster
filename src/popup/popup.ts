@@ -144,6 +144,8 @@ function renderPerformanceMode(mode: PerformanceMode, status?: ExtensionStatus):
     legacyControlInputs.forEach((input) => {
         input.disabled = effectiveMode === "native";
     });
+    toggleHideOld.checked = true;
+    toggleHideOld.disabled = true;
 }
 
 function renderNativeDiagnostics(status: ExtensionStatus | undefined): void {

@@ -409,6 +409,7 @@ function loadOneMoreMessage(): void {
  */
 let rafPending = false;
 function getDisplayStatus(status: ExtensionStatus): ExtensionStatus {
+    if (config.performanceMode !== "native") return status;
     return chatGptRuntime?.getDisplayStatus(status) ?? status;
 }
 
@@ -457,7 +458,9 @@ function refreshUI(): void {
             statusIndicator.update(displayStatus.hiddenMessages, displayStatus.totalMessages, config.statusPosition, false, config.theme === "light");
         }
 
-        chatGptRuntime?.scheduleNativeScrollWork(nativeModeController);
+        if (config.performanceMode === "native") {
+            chatGptRuntime?.scheduleNativeScrollWork(nativeModeController);
+        }
     });
 }
 

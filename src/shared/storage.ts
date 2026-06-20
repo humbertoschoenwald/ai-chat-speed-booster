@@ -76,7 +76,7 @@ function sanitiseConfig(raw: Partial<ExtensionConfig> | undefined): ExtensionCon
         autoLoad: false,
         weeklyRequestLimit: clamp(base.weeklyRequestLimit ?? DEFAULT_CONFIG.weeklyRequestLimit, CONFIG_LIMITS.weeklyRequestLimit.min, CONFIG_LIMITS.weeklyRequestLimit.max),
         theme: base.theme === "light" || base.theme === "dark" ? base.theme : DEFAULT_CONFIG.theme,
-        hideOldMessages: typeof base.hideOldMessages === "boolean" ? base.hideOldMessages : DEFAULT_CONFIG.hideOldMessages,
+        hideOldMessages: true,
         autoRefreshDeliveryTimeout: typeof base.autoRefreshDeliveryTimeout === "boolean" ? base.autoRefreshDeliveryTimeout : DEFAULT_CONFIG.autoRefreshDeliveryTimeout,
     };
 }

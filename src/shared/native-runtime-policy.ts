@@ -23,7 +23,12 @@ export function getEffectivePerformanceMode(
 export function deriveRuntimeConfigForSite(config: ExtensionConfig, siteId: string | undefined): ExtensionConfig {
     const performanceMode = getEffectivePerformanceMode(config.performanceMode, siteId);
     if (performanceMode === "legacy") {
-        return { ...config, performanceMode };
+        return {
+            ...config,
+            performanceMode,
+            autoLoad: false,
+            hideOldMessages: true,
+        };
     }
 
     return {
