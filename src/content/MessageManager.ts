@@ -238,7 +238,15 @@ export class MessageManager {
     }
 
     private resolveLayoutElement(element: HTMLElement): HTMLElement {
-        return element.closest<HTMLElement>("[data-turn-id-container]") ?? element;
+        const turnId = element.getAttribute("data-turn-id-container")
+            ?? element.getAttribute("data-turn-id");
+        let layoutElement = element.closest<HTMLElement>("[data-turn-id-container]") ?? element;
+        let candidate = layoutElement.parentElement?.closest<HTMLElement>("[data-turn-id-container]") ?? null;
+        while (candidate && turnId && candidate.getAttribute("data-turn-id-container") === turnId) {
+            layoutElement = candidate;
+            candidate = candidate.parentElement?.closest<HTMLElement>("[data-turn-id-container]") ?? null;
+        }
+        return layoutElement;
     }
 
     private applyHiddenState(element: HTMLElement, layoutElement: HTMLElement): void {

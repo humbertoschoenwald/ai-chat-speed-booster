@@ -140,11 +140,13 @@ test("Stable fetch policy leaves ChatGPT rendering in control", () => {
     expect(fetchSource).not.toContain("restoreCachedChunkState");
 });
 
-test("Stable managed turns opt out of browser scroll anchoring", () => {
+test("Stable managed turns hide the outer ChatGPT layout wrapper", () => {
     const source = readFileSync(path.resolve("src/content/MessageManager.ts"), "utf8");
 
     expect(source).toContain("overflow-anchor:none!important");
     expect(source).toContain("content-visibility:visible!important");
+    expect(source).toContain("candidate.getAttribute(\"data-turn-id-container\") === turnId");
+    expect(source).toContain("layoutElement = candidate");
 });
 
 test("Stable Load More reveals downloaded DOM without chunk reload", () => {
