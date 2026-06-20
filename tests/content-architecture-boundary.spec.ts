@@ -2,6 +2,8 @@ import { test, expect } from "@playwright/test";
 import { readdirSync, readFileSync, statSync } from "fs";
 import path from "path";
 
+const REVIEWED_STABLE_MODE_CHATGPT = "REVISADO STABLE MODE CHATGPT 6 20 2026 5:40 PM";
+
 test("content entrypoint loads native code only behind dynamic Native Mode imports", () => {
     const source = readFileSync(path.resolve("src/content/index.ts"), "utf8");
 
@@ -138,6 +140,45 @@ test("Stable fetch policy leaves ChatGPT rendering in control", () => {
     expect(fetchSource).not.toContain("RESPONSE_CACHE_MAX");
     expect(fetchSource).not.toContain("responseCache");
     expect(fetchSource).not.toContain("restoreCachedChunkState");
+});
+
+test(REVIEWED_STABLE_MODE_CHATGPT, () => {
+    const contentSource = readFileSync(path.resolve("src/content/index.ts"), "utf8");
+    const managerSource = readFileSync(path.resolve("src/content/MessageManager.ts"), "utf8");
+    const bridgeSource = readFileSync(path.resolve("src/content/settingsBridge.ts"), "utf8");
+    const policySource = readFileSync(path.resolve("src/shared/native-runtime-policy.ts"), "utf8");
+    const fetchSource = readFileSync(path.resolve("src/content/fetchInterceptor.ts"), "utf8");
+    const sitesConfig = JSON.parse(readFileSync(path.resolve("sites.config.json"), "utf8")) as Array<{
+        id: string;
+        selectors?: { messageTurn?: string; scrollContainer?: string };
+        messageUnit?: { elementsPerMessage?: number };
+        messageIdAttribute?: string;
+    }>;
+    const chatgpt = sitesConfig.find((site) => site.id === "chatgpt");
+
+    expect(chatgpt?.selectors?.messageTurn).toBe('section[data-testid^="conversation-turn-"]');
+    expect(chatgpt?.selectors?.scrollContainer).toBe("div[data-scroll-root]");
+    expect(chatgpt?.messageUnit?.elementsPerMessage).toBe(2);
+    expect(chatgpt?.messageIdAttribute).toBe("data-turn-id");
+
+    expect(bridgeSource).toContain("fetchInterceptEnabled: false");
+    expect(policySource).toContain("fetchInterceptEnabled: false");
+    expect(policySource).not.toContain("fetchInterceptEnabled: true");
+    expect(fetchSource).not.toContain("responseCache");
+    expect(fetchSource).not.toContain("restoreCachedChunkState");
+
+    expect(contentSource).toContain("const effectiveHiddenMessages = status.hiddenMessages");
+    expect(contentSource).toContain("const downloading = false");
+    expect(contentSource).toContain("messageManager.loadMore()");
+    expect(contentSource).toContain("preserveViewportAnchor(previousFirstVisible, previousTop)");
+    expect(contentSource).not.toContain("loadNextStableChunk");
+    expect(contentSource).not.toContain("readStableVirtualHiddenMessages");
+    expect(contentSource).not.toContain("window.location.reload(), 120");
+
+    expect(managerSource).toContain("display:none!important");
+    expect(managerSource).toContain("overflow-anchor:none!important");
+    expect(managerSource).toContain("candidate.getAttribute(\"data-turn-id-container\") === turnId");
+    expect(managerSource).toContain("layoutElement = candidate");
 });
 
 test("Stable managed turns hide the outer ChatGPT layout wrapper", () => {
