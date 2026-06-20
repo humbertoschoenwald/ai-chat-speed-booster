@@ -138,6 +138,7 @@ test("Stable fetch policy keeps the initial render bounded", () => {
     expect(fetchSource).toContain("acsb_fetch_loaded_visible");
     expect(fetchSource).toContain("acsb_fetch_total_visible");
     expect(fetchSource).toContain("acsb_fetch_has_more");
+    expect(fetchSource).toContain("restoreCachedChunkState");
 });
 
 test("Stable trimmed history loads older messages in bounded chunks", () => {

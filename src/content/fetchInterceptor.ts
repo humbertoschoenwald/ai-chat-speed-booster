@@ -106,6 +106,9 @@ interface CachedResponse {
     statusText: string;
     headers: [string, string][];
     url: string;
+    totalVisible?: number;
+    loadedVisible?: number;
+    hasMore?: boolean;
 }
 const responseCache = new Map<string, CachedResponse>();
 
@@ -207,6 +210,7 @@ function cacheGet(key: string): CachedResponse | undefined {
             if (__DEV__) console.debug(PREFIX, "serving from cache", url);
             if (cached.trimmed) {
                 document.documentElement.setAttribute(TRIMMED_ATTR, "true");
+                restoreCachedChunkState(cached);
             } else {
                 clearChunkState();
             }
@@ -259,6 +263,7 @@ function cacheGet(key: string): CachedResponse | undefined {
                 statusText: response.statusText,
                 headers: [...new Headers(response.headers)],
                 url: response.url,
+                ...readChunkState(),
             });
 
             if (__DEV__) console.debug(PREFIX, "response trimmed and cached");
@@ -331,6 +336,35 @@ function cacheGet(key: string): CachedResponse | undefined {
         }
         document.documentElement.removeAttribute("data-acsb-virtual-total");
         document.documentElement.removeAttribute("data-acsb-virtual-loaded");
+    }
+
+    function readChunkState(): Pick<CachedResponse, "totalVisible" | "loadedVisible" | "hasMore"> {
+        const totalVisible = readDomNumber("data-acsb-virtual-total");
+        const loadedVisible = readDomNumber("data-acsb-virtual-loaded");
+        return {
+            totalVisible,
+            loadedVisible,
+            hasMore: totalVisible !== undefined && loadedVisible !== undefined
+                ? totalVisible > loadedVisible
+                : undefined,
+        };
+    }
+
+    function restoreCachedChunkState(entry: CachedResponse): void {
+        if (entry.totalVisible === undefined || entry.loadedVisible === undefined) {
+            try {
+                localStorage.setItem(HAS_MORE_KEY, "true");
+            } catch {
+                // localStorage can be unavailable; the trimmed marker still survives this paint.
+            }
+            return;
+        }
+        recordChunkState(entry.totalVisible, entry.loadedVisible);
+    }
+
+    function readDomNumber(attribute: string): number | undefined {
+        const value = Number(document.documentElement.getAttribute(attribute) ?? "");
+        return Number.isFinite(value) && value > 0 ? Math.floor(value) : undefined;
     }
 
     async function cacheUntrimmedResponse(url: string, response: Response, body?: string): Promise<Response> {
