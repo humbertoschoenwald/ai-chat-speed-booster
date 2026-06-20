@@ -2,7 +2,20 @@ import { test, expect } from "@playwright/test";
 import { readdirSync, readFileSync, statSync } from "fs";
 import path from "path";
 
-const CHATGPT_STABLE_MODE_LAST_REVIEWED_AT = "2026-06-20T17:40:00-05:00";
+type TestSiteConfig = {
+    id: string;
+    review?: {
+        stableModeLastReviewedAt: string | null;
+        nativeModeLastReviewedAt: string | null;
+    };
+    selectors?: { messageTurn?: string; scrollContainer?: string };
+    messageUnit?: { elementsPerMessage?: number };
+    messageIdAttribute?: string;
+};
+
+const SITES_CONFIG = JSON.parse(readFileSync(path.resolve("sites.config.json"), "utf8")) as TestSiteConfig[];
+const CHATGPT_STABLE_MODE_LAST_REVIEWED_AT = SITES_CONFIG.find((site) => site.id === "chatgpt")
+    ?.review?.stableModeLastReviewedAt ?? null;
 
 test("content entrypoint loads native code only behind dynamic Native Mode imports", () => {
     const source = readFileSync(path.resolve("src/content/index.ts"), "utf8");
@@ -148,17 +161,7 @@ test("ChatGPT Stable Mode reviewed behavior is locked", () => {
     const bridgeSource = readFileSync(path.resolve("src/content/settingsBridge.ts"), "utf8");
     const policySource = readFileSync(path.resolve("src/shared/native-runtime-policy.ts"), "utf8");
     const fetchSource = readFileSync(path.resolve("src/content/fetchInterceptor.ts"), "utf8");
-    const sitesConfig = JSON.parse(readFileSync(path.resolve("sites.config.json"), "utf8")) as Array<{
-        id: string;
-        review?: {
-            stableModeLastReviewedAt: string | null;
-            nativeModeLastReviewedAt: string | null;
-        };
-        selectors?: { messageTurn?: string; scrollContainer?: string };
-        messageUnit?: { elementsPerMessage?: number };
-        messageIdAttribute?: string;
-    }>;
-    const chatgpt = sitesConfig.find((site) => site.id === "chatgpt");
+    const chatgpt = SITES_CONFIG.find((site) => site.id === "chatgpt");
 
     expect(chatgpt?.review?.stableModeLastReviewedAt).toBe(CHATGPT_STABLE_MODE_LAST_REVIEWED_AT);
     expect(chatgpt?.review?.nativeModeLastReviewedAt).toBeNull();
@@ -185,7 +188,7 @@ test("ChatGPT Stable Mode reviewed behavior is locked", () => {
     expect(contentSource).not.toContain("readStableVirtualHiddenMessages");
     expect(contentSource).not.toContain("window.location.reload(), 120");
 
-    for (const site of sitesConfig.filter((site) => site.id !== "chatgpt")) {
+    for (const site of SITES_CONFIG.filter((site) => site.id !== "chatgpt")) {
         expect(site.review?.stableModeLastReviewedAt).toBeNull();
         expect(site.review?.nativeModeLastReviewedAt).toBeNull();
     }
