@@ -113,6 +113,24 @@ for (const site of SITES) {
             );
         });
 
+        if (site.id === "chatgpt") {
+            test("Load More anchors directly before the first visible turn", async ({ page }) => {
+                await loadMockPage(page);
+
+                const placement = await page.evaluate(() => {
+                    const wrapper = document.querySelector(".acsb-load-more-wrapper");
+                    const firstVisible = Array.from(document.querySelectorAll("section[data-testid^='conversation-turn-']"))
+                        .find((element) => getComputedStyle(element).display !== "none");
+                    return {
+                        sameParent: wrapper?.parentElement === firstVisible?.parentElement,
+                        wrapperBeforeVisible: wrapper?.nextElementSibling === firstVisible,
+                    };
+                });
+
+                expect(placement).toEqual({ sameParent: true, wrapperBeforeVisible: true });
+            });
+        }
+
         test("clicking Load More reveals more messages", async ({ page }) => {
             await loadMockPage(page);
 

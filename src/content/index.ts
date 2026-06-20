@@ -8,13 +8,11 @@ import { DOMObserver } from "./DOMObserver";
 import { MessageManager } from "./MessageManager";
 import { RequestLifecycleTracker } from "./RequestLifecycleTracker";
 import { LoadMoreButton, StatusIndicator } from "./UIComponents";
-import { EditorInputOptimizer } from "./native/EditorInputOptimizer";
-import { NativeModeController } from "./native/NativeModeController";
-import { ChatGptContentRuntime } from "./native/chatgpt/ChatGptContentRuntime";
+
 import { ContentBootstrapLease } from "./runtime/ContentBootstrapLease";
 import { ContentReloadCoordinator } from "./runtime/ContentReloadCoordinator";
 import { ContentTimerRegistry } from "./runtime/ContentTimerRegistry";
-import { createExtensionStatus } from "./status/ContentStatusPresenter";
+import { createExtensionStatus, type ContentStatusPresenterInput } from "./status/ContentStatusPresenter";
 import { detectCurrentSite, type SiteConfig } from "../shared/sites";
 import { deriveRuntimeConfigForSite } from "../shared/native-runtime-policy";
 import { loadConfig, onConfigChanged } from "../shared/storage";
@@ -37,18 +35,95 @@ const timers = new ContentTimerRegistry();
 let config: ExtensionConfig;
 let currentSite: SiteConfig;
 const messageManager = new MessageManager();
-const editorLatencyGuard = new EditorInputOptimizer();
+let editorLatencyGuard: EditorLatencyGuardPort = createStableEditorLatencyGuard();
 let requestLifecycleTracker: RequestLifecycleTracker | null = null;
 let loadMoreButton: LoadMoreButton;
 let statusIndicator: StatusIndicator;
 let domObserver: DOMObserver;
-let nativeModeController: NativeModeController | null = null;
-let chatGptRuntime: ChatGptContentRuntime | null = null;
+let nativeModeController: NativeModeControllerPort | null = null;
+let chatGptRuntime: ChatGptRuntimePort | null = null;
 const contentBootTime = Date.now();
 let contentLifecycleState: ContentLifecycleState = "initializing";
 let contentLastUiRefreshAt: number | null = null;
 let contentLastRecoverableErrorClass: string | null = null;
 const FETCH_TRIMMED_ATTR = "data-acsb-trimmed" as const;
+
+type EditorLatencyGuardPort = {
+    start(): void;
+    stop(): void;
+    shouldDeferBackgroundWork(): boolean;
+    deferTask(): void;
+    snapshot(): ContentStatusPresenterInput["editorInput"];
+};
+
+type NativeModeControllerPort = {
+    updateConfig(config: ExtensionConfig): void;
+    shouldDeferBackgroundWork(): boolean;
+    deferBackgroundWork(): void;
+    protectBackgroundWork(reason: string, durationMs: number): void;
+    snapshot(): NonNullable<ContentStatusPresenterInput["nativeState"]>;
+    stop(reason: string): void;
+};
+
+type ChatGptRuntimePort = {
+    updateConfig(config: ExtensionConfig): void;
+    invalidateTurnVisibility(): void;
+    resetNativeTracking(): void;
+    inspectPage(): NonNullable<ContentStatusPresenterInput["chatGptInspection"]>;
+    getDisplayStatus(status: ExtensionStatus): ExtensionStatus;
+    scheduleNativeScrollWork(controller: NativeModeControllerPort | null): void;
+    snapshot(): NonNullable<ContentStatusPresenterInput["chatGptStatus"]>;
+    dispose(): void;
+};
+
+function createStableEditorLatencyGuard(): EditorLatencyGuardPort {
+    return {
+        start: () => {},
+        stop: () => {},
+        shouldDeferBackgroundWork: () => false,
+        deferTask: () => {},
+        snapshot: () => ({
+            active: false,
+            composing: false,
+            deferredTaskCount: 0,
+            eventCount: 0,
+            lastEventType: null,
+            lastEventAt: null,
+            protectedUntilMs: null,
+            lastPasteLength: null,
+            lastPasteChunkCount: null,
+        }),
+    };
+}
+
+async function initialiseNativeControllerIfNeeded(): Promise<void> {
+    if (config.performanceMode !== "native") return;
+    const [{ EditorInputOptimizer }, { NativeModeController }] = await Promise.all([
+        import("./native/EditorInputOptimizer"),
+        import("./native/NativeModeController"),
+    ]);
+    editorLatencyGuard.stop();
+    editorLatencyGuard = new EditorInputOptimizer();
+    editorLatencyGuard.start();
+    nativeModeController = new NativeModeController(currentSite);
+    nativeModeController.updateConfig(config);
+}
+
+async function initialiseChatGptNativeRuntimeIfNeeded(): Promise<void> {
+    if (config.performanceMode !== "native" || currentSite.id !== "chatgpt") return;
+    const { ChatGptContentRuntime } = await import("./native/chatgpt/ChatGptContentRuntime");
+    chatGptRuntime = new ChatGptContentRuntime({
+        document,
+        window,
+        queryTurns: () => domObserver.queryAllMessages(),
+        findScrollContainer: () => domObserver.findScrollContainer(),
+        onViewportResize: handleViewportResize,
+        onRecoverableError: (errorClass: string | null) => {
+            contentLastRecoverableErrorClass = errorClass;
+        },
+    });
+    chatGptRuntime.updateConfig(config);
+}
 
 async function bootstrap(): Promise<void> {
     const site = detectCurrentSite();
@@ -71,9 +146,7 @@ async function bootstrap(): Promise<void> {
 
     config = deriveRuntimeConfigForSite(await loadConfig(), currentSite.id);
     requestLifecycleTracker = new RequestLifecycleTracker(currentSite.id, currentSite.selectors.userMessageSelector);
-    nativeModeController = new NativeModeController(currentSite);
-    nativeModeController.updateConfig(config);
-    editorLatencyGuard.start();
+    await initialiseNativeControllerIfNeeded();
     messageManager.updateConfig(config);
     if (currentSite.messageIdAttribute) {
         messageManager.setMessageIdAttribute(currentSite.messageIdAttribute);
@@ -102,19 +175,7 @@ async function bootstrap(): Promise<void> {
             nativeModeController?.deferBackgroundWork();
         },
     });
-    chatGptRuntime = currentSite.id === "chatgpt"
-        ? new ChatGptContentRuntime({
-            document,
-            window,
-            queryTurns: () => domObserver.queryAllMessages(),
-            findScrollContainer: () => domObserver.findScrollContainer(),
-            onViewportResize: handleViewportResize,
-            onRecoverableError: (errorClass) => {
-                contentLastRecoverableErrorClass = errorClass;
-            },
-        })
-        : null;
-    chatGptRuntime?.updateConfig(config);
+    await initialiseChatGptNativeRuntimeIfNeeded();
 
     domObserver.start();
     domObserver.SetAutoLoad(config.autoLoad);
@@ -391,11 +452,12 @@ function handleExtensionMessage(message: unknown): ExtensionStatus | undefined {
  * Exhausted stable batches hide the control; they never trigger a page reload.
  */
 function handleLoadMore(): void {
+    const previousFirstVisible = findFirstVisibleMessage();
+    const previousTop = previousFirstVisible?.getBoundingClientRect().top ?? null;
     const revealed = messageManager.loadMore();
-    if (revealed > 0) {
-        refreshUI();
-    } else {
-        refreshUI();
+    refreshUI();
+    if (revealed > 0 && previousFirstVisible && previousTop !== null) {
+        preserveViewportAnchor(previousFirstVisible, previousTop);
     }
 }
 
@@ -445,7 +507,7 @@ function refreshUI(): void {
 
         if (status.hiddenMessages > 0 && config.enabled) {
             const firstVisible = findFirstVisibleMessage();
-            const container = findMessageContainer();
+            const container = firstVisible?.parentElement ?? findMessageContainer();
             if (container) {
                 loadMoreButton.show(container, firstVisible, status.hiddenMessages, config.loadMoreBatchSize);
             }
@@ -489,6 +551,20 @@ function findFirstVisibleMessage(): HTMLElement | null {
         if (!el.classList.contains("acsb-hidden")) return el;
     }
     return null;
+}
+
+function preserveViewportAnchor(anchor: HTMLElement, previousTop: number): void {
+    requestAnimationFrame(() => {
+        const currentTop = anchor.getBoundingClientRect().top;
+        const delta = currentTop - previousTop;
+        if (Math.abs(delta) < 1) return;
+        const scrollEl = domObserver.findScrollContainer();
+        if (scrollEl) {
+            scrollEl.scrollTop += delta;
+        } else {
+            window.scrollBy(0, delta);
+        }
+    });
 }
 
 function findMessageContainer(): HTMLElement | null {

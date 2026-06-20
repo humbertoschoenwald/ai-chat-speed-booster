@@ -345,6 +345,7 @@ modeButtons.forEach((button) => {
             ? "legacy"
             : requestedMode;
         if (mode === currentConfig.performanceMode) return;
+        renderConfig({ ...currentConfig, performanceMode: mode });
         const config = await safeSendMessage<ExtensionConfig>({
             type: MessageType.SET_CONFIG,
             payload: { performanceMode: mode },

@@ -2,11 +2,13 @@ import { test, expect } from "@playwright/test";
 import { readdirSync, readFileSync, statSync } from "fs";
 import path from "path";
 
-test("content entrypoint depends on ChatGPT through one provider runtime adapter", () => {
+test("content entrypoint loads native code only behind dynamic Native Mode imports", () => {
     const source = readFileSync(path.resolve("src/content/index.ts"), "utf8");
 
-    expect(source).toContain('import { ChatGptContentRuntime }');
-    expect(source).toContain('import { createExtensionStatus }');
+    expect(source).not.toMatch(/from \"\.\/native\//);
+    expect(source).toContain('import("./native/NativeModeController")');
+    expect(source).toContain('import("./native/chatgpt/ChatGptContentRuntime")');
+    expect(source).toContain("createExtensionStatus");
     for (const forbidden of [
         "ensureChatGptTextSnapshotRendererState",
         "syncChatGptNativeSnapshots",
