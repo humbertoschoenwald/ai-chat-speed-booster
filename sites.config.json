@@ -12,10 +12,7 @@
             "messageTurn": "section[data-testid^=\"conversation-turn-\"]",
             "scrollContainer": "div[data-scroll-root]",
             "scrollContainerAlt": "main",
-            "userMessageSelector": "[data-message-author-role=\"user\"]",
-            "excludedMessageAncestorSelectors": [
-                "[class*=\"convSearchResultHighlightRoot\"]"
-            ]
+            "userMessageSelector": "[data-message-author-role=\"user\"]"
         },
         "messageUnit": {
             "elementsPerMessage": 2
