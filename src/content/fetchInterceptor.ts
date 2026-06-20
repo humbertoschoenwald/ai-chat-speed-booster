@@ -211,8 +211,6 @@ function cacheGet(key: string): CachedResponse | undefined {
             if (cached.trimmed) {
                 document.documentElement.setAttribute(TRIMMED_ATTR, "true");
                 restoreCachedChunkState(cached);
-            } else {
-                clearChunkState();
             }
             const headers = new Headers(cached.headers);
             const cachedRes = new Response(cached.body, {
@@ -325,18 +323,6 @@ function cacheGet(key: string): CachedResponse | undefined {
         }
     }
 
-    function clearChunkState(): void {
-        try {
-            localStorage.removeItem(TOTAL_VISIBLE_KEY);
-            localStorage.removeItem(LOADED_VISIBLE_KEY);
-            localStorage.removeItem(DOWNLOADING_KEY);
-            localStorage.removeItem(HAS_MORE_KEY);
-        } catch {
-            // localStorage can be unavailable; cache still works in memory.
-        }
-        document.documentElement.removeAttribute("data-acsb-virtual-total");
-        document.documentElement.removeAttribute("data-acsb-virtual-loaded");
-    }
 
     function readChunkState(): Pick<CachedResponse, "totalVisible" | "loadedVisible" | "hasMore"> {
         const totalVisible = readDomNumber("data-acsb-virtual-total");
@@ -369,7 +355,6 @@ function cacheGet(key: string): CachedResponse | undefined {
 
     async function cacheUntrimmedResponse(url: string, response: Response, body?: string): Promise<Response> {
         if (!response.ok) return response;
-        clearChunkState();
         const text = body ?? await response.clone().text();
         cachePut(url, {
             body: text,
