@@ -118,6 +118,12 @@ test("observer source keeps narrow mutation helpers", () => {
     expect(source).toContain("TOOL_CALL_MUTATION_SELECTOR");
 });
 
+test("Stable DOM observation reads live turns instead of cache snapshots", () => {
+    const source = readFileSync(path.resolve("src/content/DOMObserver.ts"), "utf8");
+    expect(source).not.toContain("MessageQueryCache");
+    expect(source).toContain("document.querySelectorAll<HTMLElement>(this.selectors.messageTurn)");
+});
+
 test("auto-load observer never forces the scroll position away from the top", () => {
     const source = readFileSync(path.resolve("src/content/DOMObserver.ts"), "utf8");
 
