@@ -57,6 +57,7 @@
 
 #### Chatgpt
 
+- pin Load More as overlay ([ee6bb54](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/ee6bb549ab50bdb7ac1b96c47f488729ff64b2f5)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - reset response cache on full load ([87fe86e](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/87fe86e3bf96a0921a2cd25b5f753d58606eb2bd)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - debounce spa url changes ([fd598b7](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/fd598b77787e7ba3e2e70934214b57c6ed62800e)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - add native sync failure cooldown ([2e8c099](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/2e8c099ff7a3dc5306162252357c2aecd4d5f19a)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
