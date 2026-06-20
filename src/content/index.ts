@@ -613,7 +613,10 @@ function normaliseStableBatchSize(): number {
 }
 
 function readStableHasMoreHistory(): boolean {
-    return document.documentElement.getAttribute("data-acsb-virtual-has-more") === "true";
+    if (document.documentElement.getAttribute("data-acsb-virtual-has-more") === "true") return true;
+    const total = readStableChunkNumber(FETCH_TOTAL_VISIBLE_KEY);
+    const loaded = readStableChunkNumber(FETCH_LOADED_VISIBLE_KEY);
+    return total !== null && loaded !== null && total > loaded;
 }
 
 function scheduleStableDownloadingRecovery(): void {
@@ -652,6 +655,7 @@ function clearStableVirtualHistoryState(): void {
     stableChunkDownloadPending = false;
     try {
         sessionStorage.removeItem(FETCH_LOADED_VISIBLE_KEY);
+        sessionStorage.removeItem(FETCH_TOTAL_VISIBLE_KEY);
         sessionStorage.removeItem(FETCH_DOWNLOADING_KEY);
         sessionStorage.removeItem(FETCH_DOWNLOADING_STARTED_KEY);
     } catch {
@@ -664,8 +668,14 @@ function clearStableVirtualHistoryState(): void {
 
 function readStableChunkNumber(key: string): number | null {
     const attr = key === FETCH_TOTAL_VISIBLE_KEY ? "data-acsb-virtual-total" : "data-acsb-virtual-loaded";
-    const value = Number(document.documentElement.getAttribute(attr) ?? "");
-    return Number.isFinite(value) && value > 0 ? Math.floor(value) : null;
+    const domValue = Number(document.documentElement.getAttribute(attr) ?? "");
+    if (Number.isFinite(domValue) && domValue > 0) return Math.floor(domValue);
+    try {
+        const sessionValue = Number(sessionStorage.getItem(key) ?? "");
+        return Number.isFinite(sessionValue) && sessionValue > 0 ? Math.floor(sessionValue) : null;
+    } catch {
+        return null;
+    }
 }
 
 function scheduleStableAppendRebalance(): void {

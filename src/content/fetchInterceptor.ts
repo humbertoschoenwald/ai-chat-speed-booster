@@ -86,6 +86,7 @@ const PREFIX = "[ACSB Fetch]";
  */
 const TRIMMED_ATTR = "data-acsb-trimmed";
 const LOADED_VISIBLE_KEY = "acsb_fetch_loaded_visible";
+const TOTAL_VISIBLE_KEY = "acsb_fetch_total_visible";
 const DOWNLOADING_KEY = "acsb_fetch_downloading";
 
 
@@ -242,8 +243,9 @@ const DOWNLOADING_KEY = "acsb_fetch_downloading";
         document.documentElement.setAttribute("data-acsb-virtual-loaded", String(loadedVisible));
         document.documentElement.setAttribute("data-acsb-virtual-has-more", totalVisible > loadedVisible ? "true" : "false");
         try {
+            sessionStorage.setItem(TOTAL_VISIBLE_KEY, String(totalVisible));
+            sessionStorage.setItem(LOADED_VISIBLE_KEY, String(loadedVisible));
             sessionStorage.removeItem(DOWNLOADING_KEY);
-            sessionStorage.removeItem(LOADED_VISIBLE_KEY);
         } catch {
             // sessionStorage can be unavailable; DOM attributes still cover this paint.
         }
