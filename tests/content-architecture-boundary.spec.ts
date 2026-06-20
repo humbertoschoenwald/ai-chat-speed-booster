@@ -147,7 +147,8 @@ test("Stable trimmed history loads older messages in bounded chunks", () => {
     const uiSource = readFileSync(path.resolve("src/content/UIComponents.ts"), "utf8");
 
     expect(contentSource).toContain("MAX_BATCH_LOGICAL_MESSAGES = 100");
-    expect(contentSource).toContain("loadNextStableChunk");
+    expect(contentSource).toContain("messageManager.loadMore()");
+    expect(contentSource).toContain("loadNextStableChunk(clickedAnchor)");
     expect(contentSource).toContain('if (config.performanceMode !== "legacy") return false');
     expect(contentSource).toContain("total === null || remaining > batchElements ? loaded + batchElements : total");
     expect(uiSource).toContain("Downloading…");

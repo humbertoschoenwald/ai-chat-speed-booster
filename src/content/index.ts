@@ -470,14 +470,17 @@ function handleExtensionMessage(message: unknown): ExtensionStatus | undefined {
 function handleLoadMore(): void {
     clearStableChunkScrollAnchor();
     const clickedAnchor = captureStableChunkScrollAnchor();
-    if (loadNextStableChunk(clickedAnchor)) return;
     const previousFirstVisible = findFirstVisibleMessage();
     const previousTop = previousFirstVisible?.getBoundingClientRect().top ?? null;
     const revealed = messageManager.loadMore();
     refreshUI();
-    if (revealed > 0 && previousFirstVisible && previousTop !== null) {
-        preserveViewportAnchor(previousFirstVisible, previousTop);
+    if (revealed > 0) {
+        if (previousFirstVisible && previousTop !== null) {
+            preserveViewportAnchor(previousFirstVisible, previousTop);
+        }
+        return;
     }
+    loadNextStableChunk(clickedAnchor);
 }
 
 /**
