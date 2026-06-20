@@ -116,6 +116,7 @@
 
 #### Native
 
+- ignore Stable virtual history ([5662e05](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/5662e05d5ae638be85d10262bd478e9db7e8e562)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - prioritize visible turns ([ab490c4](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/ab490c4d9791d2511ea9b7223555204c2c1c473c)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - reuse snapshot text hashes ([70d0b1f](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/70d0b1f6a3c6ce72aa416b1dd9fba622875fb7d5)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - track dirty turns ([2774c20](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/2774c20a75e215946e6c08b64ddb3d0800510cf3)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
