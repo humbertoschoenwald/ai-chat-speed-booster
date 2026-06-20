@@ -134,11 +134,12 @@ test("Stable fetch policy keeps the initial render bounded", () => {
 
     expect(bridgeSource).toContain('fetchInterceptEnabled: performanceMode === "native" ? false : true');
     expect(policySource).toContain("fetchInterceptEnabled: true");
-    expect(fetchSource).toContain("const RESPONSE_CACHE_MAX = 5");
-    expect(fetchSource).toContain("acsb_fetch_loaded_visible");
-    expect(fetchSource).toContain("acsb_fetch_total_visible");
-    expect(fetchSource).toContain("acsb_fetch_has_more");
-    expect(fetchSource).toContain("restoreCachedChunkState");
+    expect(fetchSource).toContain("Stable deliberately does not cache conversation responses");
+    expect(fetchSource).not.toContain("RESPONSE_CACHE_MAX");
+    expect(fetchSource).not.toContain("responseCache");
+    expect(fetchSource).not.toContain("restoreCachedChunkState");
+    expect(fetchSource).toContain("sessionStorage.getItem(key)");
+    expect(fetchSource).toContain("data-acsb-virtual-has-more");
 });
 
 test("Stable trimmed history loads older messages in bounded chunks", () => {

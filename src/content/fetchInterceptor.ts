@@ -86,51 +86,10 @@ const PREFIX = "[ACSB Fetch]";
  */
 const TRIMMED_ATTR = "data-acsb-trimmed";
 const LOADED_VISIBLE_KEY = "acsb_fetch_loaded_visible";
-const TOTAL_VISIBLE_KEY = "acsb_fetch_total_visible";
 const DOWNLOADING_KEY = "acsb_fetch_downloading";
-const HAS_MORE_KEY = "acsb_fetch_has_more";
 
 
-/**
- * In-memory LRU cache for the last N trimmed conversation responses.
- * Keyed by request URL so SPA navigations between recent chats can be
- * served instantly without hitting the network.  The cache lives only in
- * JS memory — a hard page refresh clears it automatically, which is the
- * desired behaviour (the user expects fresh data on F5).
- */
-const RESPONSE_CACHE_MAX = 5;
-interface CachedResponse {
-    body: string;
-    trimmed: boolean;
-    status: number;
-    statusText: string;
-    headers: [string, string][];
-    url: string;
-    totalVisible?: number;
-    loadedVisible?: number;
-    hasMore?: boolean;
-}
-const responseCache = new Map<string, CachedResponse>();
-
-function cachePut(key: string, entry: CachedResponse): void {
-    // Delete first so re-insertion moves key to the end (Map preserves insertion order)
-    responseCache.delete(key);
-    responseCache.set(key, entry);
-    // Evict oldest entries beyond the limit
-    while (responseCache.size > RESPONSE_CACHE_MAX) {
-        const oldest = responseCache.keys().next().value!;
-        responseCache.delete(oldest);
-    }
-}
-
-function cacheGet(key: string): CachedResponse | undefined {
-    const entry = responseCache.get(key);
-    if (!entry) return undefined;
-    // Move to end (most recently used)
-    responseCache.delete(key);
-    responseCache.set(key, entry);
-    return entry;
-}
+// Stable deliberately does not cache conversation responses.
 
 // ---------------------------------------------------------------------------
 // Bootstrap
@@ -204,25 +163,8 @@ function cacheGet(key: string): CachedResponse | undefined {
         if (__DEV__) console.debug(PREFIX, "intercepting", method, url,
             `(fetchLimit=${fetchLimit})`);
 
-        // Cache lookup 
-        const cached = cacheGet(url);
-        if (cached) {
-            if (__DEV__) console.debug(PREFIX, "serving from cache", url);
-            if (cached.trimmed) {
-                document.documentElement.setAttribute(TRIMMED_ATTR, "true");
-                restoreCachedChunkState(cached);
-            }
-            const headers = new Headers(cached.headers);
-            const cachedRes = new Response(cached.body, {
-                status: cached.status,
-                statusText: cached.statusText,
-                headers,
-            });
-            Object.defineProperty(cachedRes, "url", { value: cached.url });
-            return cachedRes;
-        }
+        // Fetch and trim fresh responses only; Stable never serves cached conversation data.
 
-        // Fetch & intercept 
         const response = await originalFetch.call(this, input, init);
         if (!response.ok) return response;
 
@@ -243,9 +185,7 @@ function cacheGet(key: string): CachedResponse | undefined {
 
             if (!trimmed) {
                 if (__DEV__) console.debug(PREFIX, "no trimming needed");
-                // Cache the untrimmed response too (small chats that
-                // don't need trimming also benefit from instant reload).
-                return cacheUntrimmedResponse(url, response, text);
+                return response;
             }
 
             // Signal to the content script that messages were removed.
@@ -253,18 +193,7 @@ function cacheGet(key: string): CachedResponse | undefined {
 
             const trimmedBody = JSON.stringify(trimmed);
 
-            // Cache the trimmed response
-            cachePut(url, {
-                body: trimmedBody,
-                trimmed: true,
-                status: response.status,
-                statusText: response.statusText,
-                headers: [...new Headers(response.headers)],
-                url: response.url,
-                ...readChunkState(),
-            });
-
-            if (__DEV__) console.debug(PREFIX, "response trimmed and cached");
+            if (__DEV__) console.debug(PREFIX, "response trimmed");
             return buildResponse(response, trimmedBody);
         } catch (err) {
             if (__DEV__) console.warn(PREFIX, "intercept failed, returning original", err);
@@ -295,13 +224,13 @@ function cacheGet(key: string): CachedResponse | undefined {
     function readFetchLimit(settings: BridgeSettings, entry: SiteEntry): number {
         const unitSize = elementsPerLogicalMessage(entry);
         const initialLimit = Math.max(1, Math.floor(settings.visibleMessageLimit)) * unitSize;
-        const storedLimit = readNumber(LOADED_VISIBLE_KEY);
-        return Math.max(initialLimit, storedLimit ?? initialLimit);
+        const requestedLimit = readSessionNumber(LOADED_VISIBLE_KEY);
+        return Math.max(initialLimit, requestedLimit ?? initialLimit);
     }
 
-    function readNumber(key: string): number | null {
+    function readSessionNumber(key: string): number | null {
         try {
-            const value = Number(localStorage.getItem(key) ?? "");
+            const value = Number(sessionStorage.getItem(key) ?? "");
             return Number.isFinite(value) && value > 0 ? Math.floor(value) : null;
         } catch {
             return null;
@@ -309,62 +238,15 @@ function cacheGet(key: string): CachedResponse | undefined {
     }
 
     function recordChunkState(totalVisible: number, loadedVisible: number): void {
+        document.documentElement.setAttribute("data-acsb-virtual-total", String(totalVisible));
+        document.documentElement.setAttribute("data-acsb-virtual-loaded", String(loadedVisible));
+        document.documentElement.setAttribute("data-acsb-virtual-has-more", totalVisible > loadedVisible ? "true" : "false");
         try {
-            localStorage.setItem(TOTAL_VISIBLE_KEY, String(totalVisible));
-            localStorage.setItem(LOADED_VISIBLE_KEY, String(loadedVisible));
-            localStorage.setItem(HAS_MORE_KEY, totalVisible > loadedVisible ? "true" : "false");
-            localStorage.removeItem(DOWNLOADING_KEY);
-            document.documentElement.setAttribute("data-acsb-virtual-total", String(totalVisible));
-            document.documentElement.setAttribute("data-acsb-virtual-loaded", String(loadedVisible));
+            sessionStorage.removeItem(DOWNLOADING_KEY);
+            sessionStorage.removeItem(LOADED_VISIBLE_KEY);
         } catch {
-            // localStorage can be unavailable; DOM attributes still cover this paint.
-            document.documentElement.setAttribute("data-acsb-virtual-total", String(totalVisible));
-            document.documentElement.setAttribute("data-acsb-virtual-loaded", String(loadedVisible));
+            // sessionStorage can be unavailable; DOM attributes still cover this paint.
         }
-    }
-
-
-    function readChunkState(): Pick<CachedResponse, "totalVisible" | "loadedVisible" | "hasMore"> {
-        const totalVisible = readDomNumber("data-acsb-virtual-total");
-        const loadedVisible = readDomNumber("data-acsb-virtual-loaded");
-        return {
-            totalVisible,
-            loadedVisible,
-            hasMore: totalVisible !== undefined && loadedVisible !== undefined
-                ? totalVisible > loadedVisible
-                : undefined,
-        };
-    }
-
-    function restoreCachedChunkState(entry: CachedResponse): void {
-        if (entry.totalVisible === undefined || entry.loadedVisible === undefined) {
-            try {
-                localStorage.setItem(HAS_MORE_KEY, "true");
-            } catch {
-                // localStorage can be unavailable; the trimmed marker still survives this paint.
-            }
-            return;
-        }
-        recordChunkState(entry.totalVisible, entry.loadedVisible);
-    }
-
-    function readDomNumber(attribute: string): number | undefined {
-        const value = Number(document.documentElement.getAttribute(attribute) ?? "");
-        return Number.isFinite(value) && value > 0 ? Math.floor(value) : undefined;
-    }
-
-    async function cacheUntrimmedResponse(url: string, response: Response, body?: string): Promise<Response> {
-        if (!response.ok) return response;
-        const text = body ?? await response.clone().text();
-        cachePut(url, {
-            body: text,
-            trimmed: false,
-            status: response.status,
-            statusText: response.statusText,
-            headers: [...new Headers(response.headers)],
-            url: response.url,
-        });
-        return response;
     }
 
     function buildResponse(original: Response, body: string): Response {

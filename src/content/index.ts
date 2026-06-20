@@ -51,7 +51,6 @@ const FETCH_LOADED_VISIBLE_KEY = "acsb_fetch_loaded_visible" as const;
 const FETCH_TOTAL_VISIBLE_KEY = "acsb_fetch_total_visible" as const;
 const FETCH_DOWNLOADING_KEY = "acsb_fetch_downloading" as const;
 const FETCH_DOWNLOADING_STARTED_KEY = "acsb_fetch_downloading_started" as const;
-const FETCH_HAS_MORE_KEY = "acsb_fetch_has_more" as const;
 const STABLE_SCROLL_ANCHOR_KEY = "acsb_stable_scroll_anchor" as const;
 const STABLE_CHUNK_DOWNLOAD_STALE_MS = 15000;
 const STABLE_SCROLL_RESTORE_MAX_MS = 350;
@@ -595,11 +594,11 @@ function loadNextStableChunk(clickedAnchor: StableScrollAnchor | null): boolean 
     stableChunkDownloadPending = true;
     storeStableChunkScrollAnchor(clickedAnchor, nextLoaded);
     try {
-        localStorage.setItem(FETCH_LOADED_VISIBLE_KEY, String(nextLoaded));
-        localStorage.setItem(FETCH_DOWNLOADING_KEY, "true");
-        localStorage.setItem(FETCH_DOWNLOADING_STARTED_KEY, String(Date.now()));
+        sessionStorage.setItem(FETCH_LOADED_VISIBLE_KEY, String(nextLoaded));
+        sessionStorage.setItem(FETCH_DOWNLOADING_KEY, "true");
+        sessionStorage.setItem(FETCH_DOWNLOADING_STARTED_KEY, String(Date.now()));
     } catch {
-        // localStorage can be unavailable; fall back to the normal DOM reveal path.
+        // sessionStorage can be unavailable; fall back to the normal DOM reveal path.
         return false;
     }
     refreshUI();
@@ -614,11 +613,7 @@ function normaliseStableBatchSize(): number {
 }
 
 function readStableHasMoreHistory(): boolean {
-    try {
-        return localStorage.getItem(FETCH_HAS_MORE_KEY) === "true";
-    } catch {
-        return false;
-    }
+    return document.documentElement.getAttribute("data-acsb-virtual-has-more") === "true";
 }
 
 function scheduleStableDownloadingRecovery(): void {
@@ -631,8 +626,8 @@ function scheduleStableDownloadingRecovery(): void {
 
 function readStableChunkDownloading(): boolean {
     try {
-        if (localStorage.getItem(FETCH_DOWNLOADING_KEY) !== "true") return false;
-        const startedAt = Number(localStorage.getItem(FETCH_DOWNLOADING_STARTED_KEY) ?? "0");
+        if (sessionStorage.getItem(FETCH_DOWNLOADING_KEY) !== "true") return false;
+        const startedAt = Number(sessionStorage.getItem(FETCH_DOWNLOADING_STARTED_KEY) ?? "0");
         if (!Number.isFinite(startedAt) || Date.now() - startedAt > STABLE_CHUNK_DOWNLOAD_STALE_MS) {
             clearStableChunkDownloadPending();
             return false;
@@ -646,36 +641,31 @@ function readStableChunkDownloading(): boolean {
 function clearStableChunkDownloadPending(): void {
     stableChunkDownloadPending = false;
     try {
-        localStorage.removeItem(FETCH_DOWNLOADING_KEY);
-        localStorage.removeItem(FETCH_DOWNLOADING_STARTED_KEY);
+        sessionStorage.removeItem(FETCH_DOWNLOADING_KEY);
+        sessionStorage.removeItem(FETCH_DOWNLOADING_STARTED_KEY);
     } catch {
-        // ignore unavailable localStorage
+        // ignore unavailable sessionStorage
     }
 }
 
 function clearStableVirtualHistoryState(): void {
     stableChunkDownloadPending = false;
     try {
-        localStorage.removeItem(FETCH_LOADED_VISIBLE_KEY);
-        localStorage.removeItem(FETCH_TOTAL_VISIBLE_KEY);
-        localStorage.removeItem(FETCH_DOWNLOADING_KEY);
-        localStorage.removeItem(FETCH_DOWNLOADING_STARTED_KEY);
-        localStorage.removeItem(FETCH_HAS_MORE_KEY);
+        sessionStorage.removeItem(FETCH_LOADED_VISIBLE_KEY);
+        sessionStorage.removeItem(FETCH_DOWNLOADING_KEY);
+        sessionStorage.removeItem(FETCH_DOWNLOADING_STARTED_KEY);
     } catch {
-        // ignore unavailable localStorage
+        // ignore unavailable sessionStorage
     }
     document.documentElement.removeAttribute("data-acsb-virtual-total");
     document.documentElement.removeAttribute("data-acsb-virtual-loaded");
+    document.documentElement.removeAttribute("data-acsb-virtual-has-more");
 }
 
 function readStableChunkNumber(key: string): number | null {
-    try {
-        const attr = key === FETCH_TOTAL_VISIBLE_KEY ? "data-acsb-virtual-total" : "data-acsb-virtual-loaded";
-        const value = Number(localStorage.getItem(key) ?? document.documentElement.getAttribute(attr) ?? "");
-        return Number.isFinite(value) && value > 0 ? Math.floor(value) : null;
-    } catch {
-        return null;
-    }
+    const attr = key === FETCH_TOTAL_VISIBLE_KEY ? "data-acsb-virtual-total" : "data-acsb-virtual-loaded";
+    const value = Number(document.documentElement.getAttribute(attr) ?? "");
+    return Number.isFinite(value) && value > 0 ? Math.floor(value) : null;
 }
 
 function scheduleStableAppendRebalance(): void {
