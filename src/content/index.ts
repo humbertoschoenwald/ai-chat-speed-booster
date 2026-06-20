@@ -157,13 +157,17 @@ function scheduleInitialScan(): void {
             // scroll position and will fight a forced scroll, causing layout
             // issues or even triggering a full re-render.
             if (currentSite.id === "chatgpt" || currentSite.isDynamic) {
-                requestAnimationFrame(() => {
-                    const scrollEl = domObserver.findScrollContainer();
-                    if (scrollEl) {
-                        scrollEl.scrollTop = scrollEl.scrollHeight;
-                    } else {
-                        window.scrollTo(0, document.body.scrollHeight);
-                    }
+                [0, 50, 150, 350].forEach((delayMs) => {
+                    window.setTimeout(() => {
+                        requestAnimationFrame(() => {
+                            const scrollEl = domObserver.findScrollContainer();
+                            if (scrollEl) {
+                                scrollEl.scrollTop = scrollEl.scrollHeight;
+                            } else {
+                                window.scrollTo(0, document.body.scrollHeight);
+                            }
+                        });
+                    }, delayMs);
                 });
             }
             return;
