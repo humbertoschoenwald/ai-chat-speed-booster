@@ -152,6 +152,7 @@
 
 #### Stable
 
+- restore bounded ChatGPT layout ([96c5d2c](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/96c5d2cf3283a2fd48b6177e344f12f82535d723)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - collapse hidden ChatGPT wrappers ([fff7f59](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/fff7f592afa8d66bfa9ca5d5a73a3b87ae8df60c)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - anchor load more and lazy load native ([46050bc](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/46050bce7e0905b722c49a1abdc9e700febac881)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - read live DOM turns ([108284a](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/108284ac4fa37d4bf5fca6d1aa4fcfb518f85ea4)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
