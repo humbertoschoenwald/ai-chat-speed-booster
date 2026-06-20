@@ -514,10 +514,13 @@ function refreshUI(): void {
         if (document.documentElement.hasAttribute(FETCH_TRIMMED_ATTR)) {
             document.documentElement.removeAttribute(FETCH_TRIMMED_ATTR);
         }
-        const virtualHiddenMessages = readStableVirtualHiddenMessages();
+        const stableVirtualHistoryEnabled = config.performanceMode === "legacy";
+        if (!stableVirtualHistoryEnabled) clearStableVirtualHistoryState();
+        const virtualHiddenMessages = stableVirtualHistoryEnabled ? readStableVirtualHiddenMessages() : 0;
         const effectiveHiddenMessages = Math.max(status.hiddenMessages, virtualHiddenMessages);
         const effectiveTotalMessages = Math.max(displayStatus.totalMessages, status.visibleMessages + effectiveHiddenMessages);
-        const downloading = stableChunkDownloadPending || readStableChunkDownloading();
+        const downloading = stableVirtualHistoryEnabled
+            && (stableChunkDownloadPending || readStableChunkDownloading());
 
         if (effectiveHiddenMessages > 0 && config.enabled) {
             const firstVisible = findFirstVisibleMessage();
@@ -568,6 +571,7 @@ function readStableVirtualHiddenMessages(): number {
 }
 
 function loadNextStableChunk(): boolean {
+    if (config.performanceMode !== "legacy") return false;
     const total = readStableChunkNumber(FETCH_TOTAL_VISIBLE_KEY);
     const unitSize = Math.max(1, currentSite.messageUnit?.elementsPerMessage ?? 1);
     const loaded = readStableChunkNumber(FETCH_LOADED_VISIBLE_KEY)
@@ -619,6 +623,20 @@ function clearStableChunkDownloadPending(): void {
     } catch {
         // ignore unavailable localStorage
     }
+}
+
+function clearStableVirtualHistoryState(): void {
+    stableChunkDownloadPending = false;
+    try {
+        localStorage.removeItem(FETCH_LOADED_VISIBLE_KEY);
+        localStorage.removeItem(FETCH_TOTAL_VISIBLE_KEY);
+        localStorage.removeItem(FETCH_DOWNLOADING_KEY);
+        localStorage.removeItem(FETCH_HAS_MORE_KEY);
+    } catch {
+        // ignore unavailable localStorage
+    }
+    document.documentElement.removeAttribute("data-acsb-virtual-total");
+    document.documentElement.removeAttribute("data-acsb-virtual-loaded");
 }
 
 function readStableChunkNumber(key: string): number | null {

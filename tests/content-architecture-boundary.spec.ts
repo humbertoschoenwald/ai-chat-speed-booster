@@ -147,8 +147,17 @@ test("Stable trimmed history loads older messages in bounded chunks", () => {
 
     expect(contentSource).toContain("MAX_BATCH_LOGICAL_MESSAGES = 100");
     expect(contentSource).toContain("loadNextStableChunk");
+    expect(contentSource).toContain('if (config.performanceMode !== "legacy") return false');
     expect(contentSource).toContain("total === null || remaining > batchElements ? loaded + batchElements : total");
     expect(uiSource).toContain("Downloading…");
+});
+
+test("Stable virtual history is isolated from Native Mode", () => {
+    const contentSource = readFileSync(path.resolve("src/content/index.ts"), "utf8");
+
+    expect(contentSource).toContain('const stableVirtualHistoryEnabled = config.performanceMode === "legacy"');
+    expect(contentSource).toContain("stableVirtualHistoryEnabled ? readStableVirtualHiddenMessages() : 0");
+    expect(contentSource).toContain("clearStableVirtualHistoryState");
 });
 
 test("auto-load observer never forces the scroll position away from the top", () => {
