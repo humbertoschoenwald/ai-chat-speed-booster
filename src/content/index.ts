@@ -548,7 +548,7 @@ function findFirstVisibleMessage(): HTMLElement | null {
         currentSite.selectors,
     );
     for (const el of all) {
-        if (!el.classList.contains("acsb-hidden")) return el;
+        if (!el.closest(".acsb-hidden")) return el;
     }
     return null;
 }

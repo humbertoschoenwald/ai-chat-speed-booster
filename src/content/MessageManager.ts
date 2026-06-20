@@ -22,7 +22,7 @@ function injectHideStyle(): void {
     if (styleInjected) return;
     styleInjected = true;
     const style = document.createElement("style");
-    style.textContent = `[${DATA_ATTR}].${HIDE_CLASS}{display:none!important}`;
+    style.textContent = `.${HIDE_CLASS}{display:none!important}`;
     (document.head ?? document.documentElement).appendChild(style);
 }
 
@@ -202,26 +202,50 @@ export class MessageManager {
     }
 
     private hideMessage(msg: TrackedMessage): void {
+        const layoutElement = this.resolveLayoutElement(msg.element);
         if (!msg.visible) {
-            if (!msg.element.classList.contains(HIDE_CLASS)) {
+            if (!msg.element.classList.contains(HIDE_CLASS) || !layoutElement.classList.contains(HIDE_CLASS)) {
                 this.recordLegacyRevealLoop();
-                msg.element.classList.add(HIDE_CLASS);
-                msg.element.setAttribute("aria-hidden", "true");
+                this.applyHiddenState(msg.element, layoutElement);
             }
             return;
         }
         msg.visible = false;
         this.visibleCounter--;
-        msg.element.classList.add(HIDE_CLASS);
-        msg.element.setAttribute("aria-hidden", "true");
+        this.applyHiddenState(msg.element, layoutElement);
     }
 
     private showMessage(msg: TrackedMessage): void {
-        if (msg.visible) return; // already visible — skip DOM write
+        const layoutElement = this.resolveLayoutElement(msg.element);
+        if (msg.visible) {
+            this.clearHiddenState(msg.element, layoutElement);
+            return;
+        }
         msg.visible = true;
         this.visibleCounter++;
-        msg.element.classList.remove(HIDE_CLASS);
-        msg.element.removeAttribute("aria-hidden");
+        this.clearHiddenState(msg.element, layoutElement);
+    }
+
+    private resolveLayoutElement(element: HTMLElement): HTMLElement {
+        return element.closest<HTMLElement>("[data-turn-id-container]") ?? element;
+    }
+
+    private applyHiddenState(element: HTMLElement, layoutElement: HTMLElement): void {
+        element.classList.add(HIDE_CLASS);
+        element.setAttribute("aria-hidden", "true");
+        if (layoutElement !== element) {
+            layoutElement.classList.add(HIDE_CLASS);
+            layoutElement.setAttribute("aria-hidden", "true");
+        }
+    }
+
+    private clearHiddenState(element: HTMLElement, layoutElement: HTMLElement): void {
+        element.classList.remove(HIDE_CLASS);
+        element.removeAttribute("aria-hidden");
+        if (layoutElement !== element) {
+            layoutElement.classList.remove(HIDE_CLASS);
+            layoutElement.removeAttribute("aria-hidden");
+        }
     }
 
     private recordLegacyRevealLoop(): void {

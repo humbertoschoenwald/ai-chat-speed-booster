@@ -120,7 +120,7 @@ for (const site of SITES) {
                 const placement = await page.evaluate(() => {
                     const wrapper = document.querySelector(".acsb-load-more-wrapper");
                     const firstVisible = Array.from(document.querySelectorAll("section[data-testid^='conversation-turn-']"))
-                        .find((element) => getComputedStyle(element).display !== "none");
+                        .find((element) => !element.closest(".acsb-hidden"));
                     return {
                         sameParent: wrapper?.parentElement === firstVisible?.parentElement,
                         wrapperBeforeVisible: wrapper?.nextElementSibling === firstVisible,
@@ -128,6 +128,13 @@ for (const site of SITES) {
                 });
 
                 expect(placement).toEqual({ sameParent: true, wrapperBeforeVisible: true });
+            });
+
+            test("hidden ChatGPT turns collapse their outer layout wrappers", async ({ page }) => {
+                await loadMockPage(page);
+
+                const hiddenWrapperCount = await page.locator("[data-turn-id-container].acsb-hidden").count();
+                expect(hiddenWrapperCount).toBe(MESSAGE_COUNT - visibleElementLimit());
             });
         }
 
