@@ -154,6 +154,7 @@
 
 #### Stable
 
+- keep ephemeral chunk window across batches ([79b5a16](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/79b5a1681ea4f6f14a1936eb813b48ff4a7d32f5)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - remove persistent cache state ([7a1e306](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/7a1e3065591871a9736ead0e11a494be344170d9)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - capture scroll anchor on click ([545d9cf](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/545d9cf7f36f6c020fe3f0aad810e8cf0afd75f5)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - make chunk scroll restore bounded ([38d2975](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/38d2975ca6d4faca37bce5aac723ac8c060b6f61)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
