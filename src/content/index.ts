@@ -48,6 +48,7 @@ let contentLastUiRefreshAt: number | null = null;
 let contentLastRecoverableErrorClass: string | null = null;
 const FETCH_TRIMMED_ATTR = "data-acsb-trimmed" as const;
 const FETCH_BYPASS_UNTIL_KEY = "acsb_fetch_bypass_until" as const;
+const FETCH_HYDRATION_PENDING_KEY = "acsb_fetch_hydration_pending" as const;
 const STABLE_FULL_HYDRATION_WINDOW_MS = 15000;
 let stableFullHydrationScheduled = false;
 let stableFullHydrationPending = false;
@@ -505,7 +506,8 @@ function refreshUI(): void {
             }
         }
 
-        const fetchWasTrimmed = document.documentElement.hasAttribute(FETCH_TRIMMED_ATTR);
+        const fetchWasTrimmed = document.documentElement.hasAttribute(FETCH_TRIMMED_ATTR)
+            || readStableHydrationPending();
         if (fetchWasTrimmed) {
             stableFullHydrationPending = true;
             scheduleStableFullHydration();
@@ -514,6 +516,7 @@ function refreshUI(): void {
 
         if (status.hiddenMessages > 0 && config.enabled) {
             stableFullHydrationPending = false;
+            clearStableHydrationPending();
             const firstVisible = findFirstVisibleMessage();
             const container = firstVisible?.parentElement ?? findMessageContainer();
             if (container) {
@@ -568,6 +571,22 @@ function scheduleStableFullHydration(): void {
         // localStorage can be unavailable; the user can still refresh manually.
     }
     setTimeout(() => window.location.reload(), 650);
+}
+
+function readStableHydrationPending(): boolean {
+    try {
+        return localStorage.getItem(FETCH_HYDRATION_PENDING_KEY) === "true";
+    } catch {
+        return false;
+    }
+}
+
+function clearStableHydrationPending(): void {
+    try {
+        localStorage.removeItem(FETCH_HYDRATION_PENDING_KEY);
+    } catch {
+        // ignore unavailable localStorage
+    }
 }
 
 function findFirstVisibleMessage(): HTMLElement | null {

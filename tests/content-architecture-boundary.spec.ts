@@ -136,6 +136,7 @@ test("Stable fetch policy keeps the initial render bounded", () => {
     expect(policySource).toContain("fetchInterceptEnabled: true");
     expect(fetchSource).toContain("const RESPONSE_CACHE_MAX = 5");
     expect(fetchSource).toContain("acsb_fetch_bypass_until");
+    expect(fetchSource).toContain("acsb_fetch_hydration_pending");
 });
 
 test("Stable trimmed first paint hydrates the full conversation automatically", () => {

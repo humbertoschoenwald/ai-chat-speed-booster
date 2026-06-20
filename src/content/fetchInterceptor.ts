@@ -86,6 +86,9 @@ const PREFIX = "[ACSB Fetch]";
  */
 const TRIMMED_ATTR = "data-acsb-trimmed";
 const BYPASS_TRIM_UNTIL_KEY = "acsb_fetch_bypass_until";
+const HYDRATION_PENDING_KEY = "acsb_fetch_hydration_pending";
+const FULL_HYDRATION_WINDOW_MS = 15000;
+let fullHydrationReloadScheduled = false;
 /**
  * Stable fast loading keeps only the configured initial window in the response.
  * Manual older batches operate on DOM that is already present, not extra API buffer.
@@ -249,6 +252,7 @@ function cacheGet(key: string): CachedResponse | undefined {
 
             // Signal to the content script that messages were removed.
             document.documentElement.setAttribute(TRIMMED_ATTR, "true");
+            scheduleFullHydrationReload();
 
             const trimmedBody = JSON.stringify(trimmed);
 
@@ -289,6 +293,18 @@ function cacheGet(key: string): CachedResponse | undefined {
         };
     }
 
+    function scheduleFullHydrationReload(): void {
+        if (fullHydrationReloadScheduled) return;
+        fullHydrationReloadScheduled = true;
+        try {
+            localStorage.setItem(HYDRATION_PENDING_KEY, "true");
+            localStorage.setItem(BYPASS_TRIM_UNTIL_KEY, String(Date.now() + FULL_HYDRATION_WINDOW_MS));
+        } catch {
+            // localStorage can be unavailable; keep the trimmed first paint.
+        }
+        setTimeout(() => window.location.reload(), 650);
+    }
+
     function shouldBypassTrim(): boolean {
         try {
             const until = Number(localStorage.getItem(BYPASS_TRIM_UNTIL_KEY) ?? "0");
@@ -304,6 +320,11 @@ function cacheGet(key: string): CachedResponse | undefined {
 
     async function cacheUntrimmedResponse(url: string, response: Response, body?: string): Promise<Response> {
         if (!response.ok) return response;
+        try {
+            localStorage.removeItem(HYDRATION_PENDING_KEY);
+        } catch {
+            // localStorage can be unavailable; cache still works in memory.
+        }
         const text = body ?? await response.clone().text();
         cachePut(url, {
             body: text,
