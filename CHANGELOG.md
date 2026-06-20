@@ -104,6 +104,7 @@
 
 #### Lifecycle
 
+- handle invalidated extension contexts ([41e4075](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/41e4075524654226b34cf9c3890853b120fe6008)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - distinguish missing content script (#31) ([940c839](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/940c839326a13548f7701c899c73432b13f86d7e)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - recover stale content bootstrap ownership (#31) ([f028fb0](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/f028fb06e61b8c4d949139c0f21336f1c4a4d585)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - degrade on observer callback errors (#31) ([c1dd9dd](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/c1dd9dd0659260d91e7ee0aa6e1b20514cf5bc8a)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
