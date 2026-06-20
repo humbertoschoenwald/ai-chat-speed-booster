@@ -161,6 +161,14 @@ test("Stable virtual history is isolated from Native Mode", () => {
     expect(contentSource).toContain("clearStableVirtualHistoryState");
 });
 
+test("Stable chunk scroll restore suppresses ChatGPT bottom pinning", () => {
+    const contentSource = readFileSync(path.resolve("src/content/index.ts"), "utf8");
+
+    expect(contentSource).toContain("const suppressInitialBottomPin = hasStableChunkScrollAnchor()");
+    expect(contentSource).toContain('&& !suppressInitialBottomPin');
+    expect(contentSource).toContain("restoreStableChunkScrollAnchor");
+});
+
 test("auto-load observer never forces the scroll position away from the top", () => {
     const source = readFileSync(path.resolve("src/content/DOMObserver.ts"), "utf8");
 

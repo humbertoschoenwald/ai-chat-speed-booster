@@ -207,6 +207,7 @@ function scheduleInitialScan(): void {
             messageManager.initialise(existing);
             contentLifecycleState = "active";
             refreshUI();
+            const suppressInitialBottomPin = hasStableChunkScrollAnchor();
             restoreStableChunkScrollAnchor();
             logger.info(`initial scan: ${existing.length} messages`);
             // Moved the log here so it runs after actually finding messages.
@@ -226,7 +227,7 @@ function scheduleInitialScan(): void {
             // infinite-scroller element).  ChatGPT and Claude manage their own
             // scroll position and will fight a forced scroll, causing layout
             // issues or even triggering a full re-render.
-            if (currentSite.id === "chatgpt" || currentSite.isDynamic) {
+            if ((currentSite.id === "chatgpt" || currentSite.isDynamic) && !suppressInitialBottomPin) {
                 [0, 50, 150, 350].forEach((delayMs) => {
                     window.setTimeout(() => {
                         requestAnimationFrame(() => {
@@ -683,6 +684,14 @@ function storeStableChunkScrollAnchor(): void {
         localStorage.setItem(STABLE_SCROLL_ANCHOR_KEY, JSON.stringify(anchor));
     } catch {
         // ignore unavailable localStorage
+    }
+}
+
+function hasStableChunkScrollAnchor(): boolean {
+    try {
+        return localStorage.getItem(STABLE_SCROLL_ANCHOR_KEY) !== null;
+    } catch {
+        return false;
     }
 }
 
