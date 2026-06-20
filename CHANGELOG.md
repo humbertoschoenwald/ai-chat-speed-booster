@@ -76,7 +76,7 @@
 
 #### Content
 
-- start ChatGPT conversations at bottom ([c19eaf6](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/c19eaf6d2ecb03d147ca8f509185b451762671cb)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
+- start ChatGPT conversations at bottom (#32) ([714276e](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/714276eaff594a98b15a154ee6fc69a67d94218c)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - isolate composer mutations ([e5e784c](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/e5e784cded816d9d29c450a3995d285a56d09de3)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - cache message queries ([e3ab1e1](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/e3ab1e1b45a1d227e83c25f3d42a2ac23a0e2856)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - reduce observer churn ([ca13789](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/ca1378965cfe22a6246d42e573db9caef6f0a5f1)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
@@ -150,7 +150,6 @@
 
 #### Stable
 
-- target concrete ChatGPT turn nodes ([f8fd3ff](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/f8fd3ff5f4716761c99e9d00ca45209e19d71296)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - restore manual batch hiding boundaries ([9f80e30](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/9f80e3016ef6155a4619baa2aa1a87bb2cb21550)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - recover empty scans ([36d0f7a](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/36d0f7ab6e56116f25acc55d6bd6576c1041dc59)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - restore logical batch loading ([caed90a](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/caed90a4a82e58b5e4d76f77b76e70c936b7af8c)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
