@@ -48,11 +48,11 @@ test.describe("popup mode view model", () => {
         expect(text).not.toContain("message counts disabled");
     });
 
-    test("Stable Fast Mode uses experimental window copy", () => {
+    test("Stable Fast loading still reports message counts", () => {
         expect(renderPopupStatusText(
             config({ performanceMode: "legacy", fetchInterceptEnabled: true }),
             status({ performanceMode: "legacy" }),
-        )).toBe("Fast Mode active · experimental window");
+        )).toBe("3/12 messages visible · 9 hidden");
     });
 
     test("Stable non-Fast Mode reports message counts", () => {
@@ -66,7 +66,7 @@ test.describe("popup mode view model", () => {
         expect(renderPopupStatusText(
             config({ performanceMode: "legacy", fetchInterceptEnabled: false }),
             status({ performanceMode: "legacy", contentLifecycleState: "degraded", totalMessages: 0, visibleMessages: 0, hiddenMessages: 0 }),
-        )).toBe("Loading content script · 0/0 messages visible");
+        )).toBe("Loading content script");
     });
 
     test("lifecycle prefix composes with Native Mode without leaking Stable/Fast state", () => {
@@ -80,7 +80,7 @@ test.describe("popup mode view model", () => {
         expect(renderPerformanceModeHint("native", status({ performanceMode: "native" })))
             .toBe("Experimental; switching modes reloads the chat tab.");
         expect(renderPerformanceModeHint("legacy", status({ performanceMode: "legacy" })))
-            .toBe("Stable runtime with optional speed controls.");
+            .toBe("Stable runtime with manual older batches.");
         expect(renderPerformanceModeHint("native", status({ performanceMode: "legacy" })))
             .toBe("Native is unavailable here; Stable is active.");
     });

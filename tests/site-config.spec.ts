@@ -60,3 +60,14 @@ test("site detection from URL distinguishes ChatGPT, Gemini, and guarded Search 
     expect(detectSiteFromUrl("https://www.google.com/search?q=test&udm=50")?.id).toBe("search-ai-mode");
     expect(detectSiteFromUrl(undefined)).toBeNull();
 });
+
+test("stable adapters declare logical message unit sizes", () => {
+    const units = Object.fromEntries(
+        SITES.map((site) => [site.id, site.messageUnit?.elementsPerMessage]),
+    );
+
+    expect(units.chatgpt).toBe(2);
+    expect(units.gemini).toBe(2);
+    expect(units.grok).toBe(1);
+    expect(units.perplexity).toBe(1);
+});

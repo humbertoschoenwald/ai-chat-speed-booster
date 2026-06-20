@@ -67,6 +67,17 @@ test("ChatGPT display counts report hidden logical turns from hidden user and as
     expect(status.hiddenMessages).toBe(2);
 });
 
+test("ChatGPT display counts do not inflate Stable logical message counts", () => {
+    const status = createChatGptLogicalDisplayStatus(
+        Array.from({ length: 20 }, (_, index) => chatGptTurn([index % 2 === 0 ? "user" : "assistant"], index < 14)),
+        { ...baseStatus, totalMessages: 10, visibleMessages: 3, hiddenMessages: 7 },
+    );
+
+    expect(status.totalMessages).toBe(10);
+    expect(status.visibleMessages).toBe(3);
+    expect(status.hiddenMessages).toBe(7);
+});
+
 let turnCounter = 0;
 function chatGptTurn(roles: readonly string[], hidden = false): HTMLElement {
     const id = `turn-${turnCounter++}`;

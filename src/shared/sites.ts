@@ -18,6 +18,11 @@ export interface SiteUI {
     readonly loadMoreMargin?: string;
 }
 
+export interface MessageUnitConfig {
+    /** Managed DOM turn elements that represent one user-visible chat message. */
+    readonly elementsPerMessage: number;
+}
+
 export interface FetchInterceptTreeWalkConfig {
     readonly nodesKey: string;
     readonly currentNodeKey: string;
@@ -58,6 +63,7 @@ export interface SiteConfig {
     readonly urlPatterns: readonly string[];
     readonly requiredSearchParams?: readonly { readonly name: string; readonly values: readonly string[] }[];
     readonly selectors: SiteSelectors;
+    readonly messageUnit?: MessageUnitConfig;
     readonly messageIdAttribute?: string;
     readonly statusAnchors?: StatusAnchors;
     readonly ui?: SiteUI;

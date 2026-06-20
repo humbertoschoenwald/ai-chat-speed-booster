@@ -1,3 +1,9 @@
+/**
+ * License: MIT. Provenance: AI Chat Speed Booster extension source.
+ * Responsibility: manage Stable Mode DOM turn visibility and logical message counts.
+ * Boundary: DOM hiding and reveal-window state only; site detection and popup rendering live elsewhere.
+ * ADR: docs/adr/architecture/message-management/stable-fast-logical-message-contract.md.
+ */
 import type {
     ExtensionConfig,
     TrackedMessage,
@@ -13,10 +19,7 @@ function injectHideStyle(): void {
     if (styleInjected) return;
     styleInjected = true;
     const style = document.createElement("style");
-    // Keep visible managed turns in normal provider layout. Only offscreen
-    // managed turns receive bounded placeholder sizing.
-    style.textContent = `[${DATA_ATTR}].${HIDE_CLASS}{content-visibility:hidden!important;contain-intrinsic-size:1px 240px!important;overflow:hidden!important;pointer-events:none!important}` +
-        `[${DATA_ATTR}].${HIDE_CLASS}>*{visibility:hidden!important}`;
+    style.textContent = `[${DATA_ATTR}].${HIDE_CLASS}{display:none!important}`;
     (document.head ?? document.documentElement).appendChild(style);
 }
 
@@ -34,6 +37,7 @@ export class MessageManager {
     private visibleCounter = 0;
     private legacyRevealLoopCount = 0;
     private legacyLastRevealLoopAt: number | null = null;
+    private elementsPerLogicalMessage = 1;
 
     private get visibleCount(): number {
         return this.visibleCounter;
@@ -41,6 +45,14 @@ export class MessageManager {
 
     setMessageIdAttribute(attr: string): void {
         this.messageIdAttribute = attr;
+    }
+
+    setMessageUnitSize(elementsPerLogicalMessage: number): void {
+        const normalized = Number.isFinite(elementsPerLogicalMessage)
+            ? Math.max(1, Math.floor(elementsPerLogicalMessage))
+            : 1;
+        this.elementsPerLogicalMessage = normalized;
+        this.recalculateVisibility();
     }
 
     updateConfig(config: ExtensionConfig): void {
@@ -85,21 +97,23 @@ export class MessageManager {
 
     loadMore(toLoad?: number): number {
         if (!this.config.enabled || this.firstVisibleIndex <= 0) return 0;
-        const requestedTurns = toLoad ?? this.config.loadMoreBatchSize;
-        const revealStart = Math.max(0, this.firstVisibleIndex - Math.max(1, requestedTurns));
-        let revealed = 0;
+        const requestedMessages = toLoad ?? this.config.loadMoreBatchSize;
+        const requestedElements = this.logicalToElementCount(requestedMessages);
+        const revealStart = Math.max(0, this.firstVisibleIndex - requestedElements);
+        let revealedElements = 0;
 
         for (let i = revealStart; i < this.firstVisibleIndex; i++) {
             const msg = this.messages[i];
             if (!msg || msg.visible) continue;
             this.showMessage(msg);
-            revealed++;
+            revealedElements++;
         }
 
         this.firstVisibleIndex = revealStart;
         this.cachedVisibleCount = this.visibleCount;
-        logger.debug(`revealed ${revealed} additional messages`);
-        return revealed;
+        const revealedMessages = this.elementsToLogicalCount(revealedElements);
+        logger.debug(`revealed ${revealedMessages} additional messages`);
+        return revealedMessages;
     }
 
     hasHiddenMessages(): boolean {
@@ -107,13 +121,13 @@ export class MessageManager {
     }
 
     getStatus(): ExtensionStatus {
-        const total = this.messages.length;
-        const visible = this.visibleCount;
+        const total = this.elementsToLogicalCount(this.messages.length);
+        const visible = this.elementsToLogicalCount(this.visibleCount);
         return {
             enabled: this.config.enabled,
             totalMessages: total,
             visibleMessages: visible,
-            hiddenMessages: total - visible,
+            hiddenMessages: Math.max(0, total - visible),
             showStatus: this.config.showStatus,
             statusPosition: this.config.statusPosition,
             legacyRevealLoopCount: this.legacyRevealLoopCount,
@@ -159,12 +173,15 @@ export class MessageManager {
         injectHideStyle();
         if (!this.config.enabled || !this.config.hideOldMessages) {
             // Filtering off: leave the DOM intact and let the site handle
-            // its own virtualization. Fast Mode still trims the API payload.
+            // its own virtualization. Fast loading can still trim the initial API payload.
             for (const msg of this.messages) this.showMessage(msg);
             this.firstVisibleIndex = 0;
             return;
         }
-        const limit = Math.max(this.cachedVisibleCount, this.config.visibleMessageLimit);
+        const limit = Math.max(
+            this.cachedVisibleCount,
+            this.logicalToElementCount(this.config.visibleMessageLimit),
+        );
         const total = this.messages.length;
         const firstVisible = Math.max(0, total - limit);
 
@@ -205,6 +222,18 @@ export class MessageManager {
     private recordLegacyRevealLoop(): void {
         this.legacyRevealLoopCount += 1;
         this.legacyLastRevealLoopAt = Date.now();
+    }
+
+    private logicalToElementCount(logicalMessages: number): number {
+        const normalizedMessages = Number.isFinite(logicalMessages)
+            ? Math.max(1, Math.floor(logicalMessages))
+            : 1;
+        return normalizedMessages * this.elementsPerLogicalMessage;
+    }
+
+    private elementsToLogicalCount(elementCount: number): number {
+        if (elementCount <= 0) return 0;
+        return Math.ceil(elementCount / this.elementsPerLogicalMessage);
     }
 
     private deriveId(el: HTMLElement): string {

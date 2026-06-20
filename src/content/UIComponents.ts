@@ -1,3 +1,9 @@
+/**
+ * License: MIT. Provenance: AI Chat Speed Booster extension source.
+ * Responsibility: render Stable Mode in-page controls and the floating status badge.
+ * Boundary: DOM control rendering only; message accounting lives in MessageManager.
+ * ADR: docs/adr/architecture/message-management/stable-fast-logical-message-contract.md.
+ */
 import { CSS_PREFIX } from "../shared/constants";
 import { logger } from "../shared/logger";
 import type { SiteConfig } from "../shared/sites";
@@ -57,29 +63,6 @@ export class LoadMoreButton {
         }
 
         this.updateLabel();
-
-        if (
-            firstVisibleElement &&
-            firstVisibleElement.parentElement === anchorParent
-        ) {
-            anchorParent.insertBefore(this.container, firstVisibleElement);
-        } else {
-            anchorParent.prepend(this.container);
-        }
-    }
-
-    showFetchTrimmed(
-        anchorParent: HTMLElement,
-        firstVisibleElement: HTMLElement | null,
-        onFetchTrimmedLoadMore: LoadMoreHandler,
-    ): void {
-        this.activeHandler = onFetchTrimmedLoadMore;
-
-        if (!this.container) {
-            this.container = this.createElement();
-        }
-
-        this.updateFetchTrimmedLabel();
 
         if (
             firstVisibleElement &&
@@ -188,17 +171,8 @@ export class LoadMoreButton {
         );
         if (label) {
             const hidden = this.hiddenCount;
-            const perClick = Math.min(this.loadMoreBatchSize * 2, hidden);
-            label.textContent = `Load ${perClick} more (${hidden} hidden)`;
-        }
-    }
-
-    private updateFetchTrimmedLabel(): void {
-        const label = this.container?.querySelector<HTMLElement>(
-            `.${CSS_PREFIX}-load-more-label`,
-        );
-        if (label) {
-            label.textContent = "Load older messages";
+            const perClick = Math.min(this.loadMoreBatchSize, hidden);
+            label.textContent = `Load ${perClick} older (${hidden} hidden)`;
         }
     }
 

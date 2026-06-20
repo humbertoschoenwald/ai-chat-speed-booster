@@ -2,6 +2,7 @@
  * License: MIT. Provenance: AI Chat Speed Booster extension source.
  * Responsibility: provide popup display text from config/status state.
  * Boundary: pure view-model helpers only; DOM events and storage messages stay in popup.ts.
+ * ADR: docs/adr/architecture/message-management/stable-fast-logical-message-contract.md.
  */
 import type { ExtensionConfig, ExtensionStatus, PerformanceMode } from "../shared/types";
 
@@ -16,7 +17,7 @@ export function renderPerformanceModeHint(
     if (requestedMode === "native") {
         return "Experimental; switching modes reloads the chat tab.";
     }
-    return "Stable runtime with optional speed controls.";
+    return "Stable runtime with manual older batches.";
 }
 
 export function renderPopupStatusText(config: ExtensionConfig, status: ExtensionStatus): string {
@@ -25,14 +26,19 @@ export function renderPopupStatusText(config: ExtensionConfig, status: Extension
     }
 
     const countText = renderModeCountText(config, status);
+    const hasEmptyCounts = status.totalMessages === 0
+        && status.visibleMessages === 0
+        && status.hiddenMessages === 0;
     switch (status.contentLifecycleState) {
         case "initializing":
+            if (hasEmptyCounts) return "Initializing content script";
             return `Initializing content script · ${countText}`;
         case "recovering":
+            if (hasEmptyCounts) return "Recovering content script";
             return `Recovering content script · ${countText}`;
         case "degraded":
-            return status.totalMessages === 0
-                ? `Loading content script · ${countText}`
+            return hasEmptyCounts
+                ? "Loading content script"
                 : `Degraded content script · ${countText}`;
         case "stopped":
             return `Content script stopped · ${countText}`;
@@ -49,9 +55,6 @@ function renderModeCountText(config: ExtensionConfig, status: ExtensionStatus): 
         return status.performanceMode === "native"
             ? "Native Mode active · experimental"
             : "Native Mode requested · reloading chat tab";
-    }
-    if (config.fetchInterceptEnabled) {
-        return "Fast Mode active · experimental window";
     }
     return `${status.visibleMessages}/${status.totalMessages} messages visible` +
         (status.hiddenMessages > 0 ? ` · ${status.hiddenMessages} hidden` : "");

@@ -2,7 +2,7 @@
  * License: MIT. Provenance: AI Chat Speed Booster extension source.
  * Responsibility: patch supported conversation fetches and safely trim host responses.
  * Boundary: MAIN-world fetch interception only; no browser extension APIs or persistent chat data.
- * ADR: docs/adr/architecture/message-management/chatgpt-fetch-trim-reference-preservation.md.
+ * ADR: docs/adr/architecture/message-management/stable-fast-logical-message-contract.md.
  * Large-file note: MAIN-world fetch patch and trim strategies stay bundled. Extract pure trim strategies if this grows further.
  *
  * Fetch Interceptor — runs in the MAIN world (same JS context as the page).
@@ -59,10 +59,15 @@ interface SiteFetchIntercept {
     arraySlice?: ArraySliceConfig;
 }
 
+interface MessageUnitConfig {
+    elementsPerMessage: number;
+}
+
 interface SiteEntry {
     id: string;
     name: string;
     hostnames: string[];
+    messageUnit?: MessageUnitConfig;
     fetchIntercept?: SiteFetchIntercept;
 }
 
@@ -82,7 +87,7 @@ const PREFIX = "[ACSB Fetch]";
 const TRIMMED_ATTR = "data-acsb-trimmed";
 /**
  * How many stable batch reveals worth of extra messages to keep in the response.
- * Fast Mode is experimental and never exposes a reload bypass from the content UI.
+ * Fast loading never exposes a reload bypass from the content UI.
  */
 const BUFFER_ROUNDS = 10;
 
@@ -189,14 +194,10 @@ function cacheGet(key: string): CachedResponse | undefined {
         // Clear stale trim telemetry before this response decides whether it trimmed.
         document.documentElement.removeAttribute(TRIMMED_ATTR);
 
-        // The fetch limit keeps extra messages beyond the visible limit
-        // so the content script can reveal them with "Load More".
-        // Multiply by 2 because the content script's MessageManager treats
-        // each conversation "turn" as 2 DOM elements (user + assistant),
-        // using visibleMessageLimit * 2 for its internal limit.  Keeping
-        // an even number of API messages prevents fractional display counts.
+        // The fetch limit is expressed in logical messages, then projected to
+        // provider API nodes with the site-owned message unit metadata.
         const fetchLimit = (settings.visibleMessageLimit
-            + (settings.loadMoreBatchSize * BUFFER_ROUNDS)) * 2;
+            + (settings.loadMoreBatchSize * BUFFER_ROUNDS)) * elementsPerLogicalMessage(site);
 
         if (__DEV__) console.debug(PREFIX, "intercepting", method, url,
             `(fetchLimit=${fetchLimit})`);
@@ -307,6 +308,11 @@ function cacheGet(key: string): CachedResponse | undefined {
         });
         Object.defineProperty(res, "url", { value: original.url });
         return res;
+    }
+
+    function elementsPerLogicalMessage(entry: SiteEntry): number {
+        const configured = entry.messageUnit?.elementsPerMessage ?? 1;
+        return Number.isFinite(configured) ? Math.max(1, Math.floor(configured)) : 1;
     }
 
     // -------------------------------------------------------------------

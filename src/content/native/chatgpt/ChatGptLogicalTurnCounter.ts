@@ -2,6 +2,7 @@
  * License: MIT. Provenance: AI Chat Speed Booster extension source.
  * Responsibility: derive ChatGPT Stable Mode display counts from unique conversation turns.
  * Boundary: pure DOM read model; no mutation, storage, or content-script lifecycle orchestration.
+ * ADR: docs/adr/architecture/message-management/stable-fast-logical-message-contract.md.
  */
 import type { ExtensionStatus } from "../../../shared/types";
 
@@ -15,11 +16,13 @@ export function createChatGptLogicalDisplayStatus(
     if (logicalTurns.length === 0) return status;
 
     const visibleTurns = logicalTurns.filter(isVisibleTurn);
+    const totalMessages = Math.min(status.totalMessages, logicalTurns.length);
+    const visibleMessages = Math.min(status.visibleMessages, visibleTurns.length, totalMessages);
     return {
         ...status,
-        totalMessages: logicalTurns.length,
-        visibleMessages: visibleTurns.length,
-        hiddenMessages: Math.max(0, logicalTurns.length - visibleTurns.length),
+        totalMessages,
+        visibleMessages,
+        hiddenMessages: Math.max(0, totalMessages - visibleMessages),
     };
 }
 

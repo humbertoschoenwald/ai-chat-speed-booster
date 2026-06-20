@@ -73,7 +73,7 @@ function sanitiseConfig(raw: Partial<ExtensionConfig> | undefined): ExtensionCon
             ? base.statusPosition
             : DEFAULT_CONFIG.statusPosition,
         fetchInterceptEnabled: typeof base.fetchInterceptEnabled === "boolean" ? base.fetchInterceptEnabled : DEFAULT_CONFIG.fetchInterceptEnabled,
-        autoLoad: typeof base.autoLoad === "boolean" ? base.autoLoad : DEFAULT_CONFIG.autoLoad,
+        autoLoad: false,
         weeklyRequestLimit: clamp(base.weeklyRequestLimit ?? DEFAULT_CONFIG.weeklyRequestLimit, CONFIG_LIMITS.weeklyRequestLimit.min, CONFIG_LIMITS.weeklyRequestLimit.max),
         theme: base.theme === "light" || base.theme === "dark" ? base.theme : DEFAULT_CONFIG.theme,
         hideOldMessages: typeof base.hideOldMessages === "boolean" ? base.hideOldMessages : DEFAULT_CONFIG.hideOldMessages,
@@ -95,7 +95,7 @@ export async function loadConfig(): Promise<ExtensionConfig> {
 /**
  * One-time reset: Auto Load originally shipped enabled by default and caused
  * scroll regressions, so we force it off once per profile and remember we did.
- * Users who want the Beta can re-enable it from the popup.
+ * The popup no longer exposes Auto Load; Stable uses explicit Load More only.
  */
 async function applyAutoLoadReset(config: ExtensionConfig): Promise<ExtensionConfig> {
     try {

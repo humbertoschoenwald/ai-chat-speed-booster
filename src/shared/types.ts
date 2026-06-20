@@ -10,27 +10,29 @@ export type ContentLifecycleState = "initializing" | "active" | "recovering" | "
 export type MutationBatchClass = "small" | "heavy" | "extreme";
 
 export interface ExtensionConfig {
+    // Logical chat messages, where one message is one user prompt plus the following assistant response.
     readonly visibleMessageLimit: number;
+    // Logical chat messages revealed per Stable Load More click.
     readonly loadMoreBatchSize: number;
     readonly enabled: boolean;
-    // Selects the performance architecture. Legacy preserves current behavior.
+    // Selects the performance architecture. Legacy is Stable Mode; Native is ChatGPT-only.
     readonly performanceMode: PerformanceMode;
     // Controls whether the floating in-page status indicator is rendered.
     readonly showStatus: boolean;
     // Corner placement for the floating status badge.
     readonly statusPosition: StatusPosition;
-    // When true, intercept fetch responses to trim messages before rendering.
+    // When true, intercept fetch responses to trim the initial Stable render window before rendering.
     readonly fetchInterceptEnabled: boolean;
     // UI theme preference.
     readonly theme: Theme;
-    // Auto loads 1 extra conversation turn when the user scrolls to the top of the chat.
+    // Legacy storage for the retired Auto Load experiment. The popup no longer exposes it.
     readonly autoLoad: boolean;
     // Weekly request limit shown in the popup counter. 0 = just count, no limit displayed.
     readonly weeklyRequestLimit: number;
     // When true, hide older turns from the DOM beyond visibleMessageLimit.
     // When false, leave the DOM alone (handy if the site already does its own
     // viewport-based virtualization and our hiding makes scrolling janky).
-    // Fast Mode (fetchInterceptEnabled) is independent and still useful here.
+    // Fast loading remains independent and does not change Stable logical counts.
     readonly hideOldMessages: boolean;
     // When true, refresh ChatGPT after a persistent delivery-timeout UI is detected.
     readonly autoRefreshDeliveryTimeout: boolean;

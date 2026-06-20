@@ -8,7 +8,10 @@ Accepted.
 
 Native Mode needs user-facing controls before aggressive behavior ships. The popup must expose the mode boundary without deleting or overwriting existing Legacy settings.
 
-Stable Mode remains the default and keeps Fast Mode, Hide Old Turns, visible limit, batch size, status indicator, theme, and request-counter behavior. Auto Load remains a stored experimental flag but is no longer rendered in the popup.
+Stable Mode remains the default and keeps Hide Old Turns, initial-batch size, Load More batch size,
+status indicator, theme, and request-counter behavior. Fast loading is a stored/default Stable
+acceleration layer rather than a visible mode control. Auto Load remains a stored legacy flag but is
+no longer rendered in the popup or enabled at runtime.
 
 ## Decision
 
@@ -20,10 +23,10 @@ Non-ChatGPT sites must not show Native Mode controls, warnings, or diagnostics y
 surface stays Stable-only until that provider has a tested native adapter and a provider-specific
 ADR accepts the added behavior.
 
-Fast Mode, Hide Old Turns, visible-count controls, and the floating status badge are Stable-only
+Hide Old Turns, logical message-count controls, and the floating status badge are Stable-only
 controls. They are hidden and disabled while Native Mode is effectively active so their saved
-Stable values cannot leak into Native status copy or runtime behavior. Fast Mode status copy must
-say it is experimental and must never be shown while Native Mode is requested or active.
+Stable values cannot leak into Native status copy or runtime behavior. Fast loading must not render
+separate popup status copy; Stable status continues to show logical message counts.
 
 Delivery-timeout auto-refresh is mode-neutral and stays visible in both Stable and Native Mode.
 
@@ -37,6 +40,6 @@ Native requires a page reload so the two runtimes do not mix in the same ChatGPT
   workflow.
 - Gemini, Claude, Grok, Perplexity, DeepSeek, and Search AI Mode do not expose unsupported Native
   concepts.
-- Existing Legacy controls remain present and stored values are preserved.
+- Existing Stable controls remain present and stored values are preserved.
 - Native Mode cannot display Fast Mode count-disabled status text.
 - No chat text, raw HTML, tool output, or conversation identifiers are shown or stored by the popup controls.

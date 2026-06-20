@@ -26,6 +26,9 @@ export interface SiteConfig {
         scrollContainer: string;
         scrollContainerAlt?: string;
     };
+    messageUnit?: {
+        elementsPerMessage: number;
+    };
     messageIdAttribute?: string;
 }
 

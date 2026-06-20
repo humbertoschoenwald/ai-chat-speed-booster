@@ -60,12 +60,14 @@ test("stable load-more never exposes a full-conversation reload bypass", () => {
 
     for (const source of [contentSource, uiSource, fetchSource]) {
         expect(source).not.toContain("Load full conversation");
+        expect(source).not.toContain("showFetchTrimmed");
+        expect(source).not.toContain("handleFetchTrimmed");
+        expect(source).not.toContain("reloadCurrentPage");
         expect(source).not.toContain("showFullLoad");
         expect(source).not.toContain("handleFullLoad");
         expect(source).not.toContain("__retired_full_load_bypass__");
     }
-    expect(contentSource).toContain("showFetchTrimmed");
-    expect(uiSource).toContain("Load older messages");
+    expect(uiSource).toContain("Load ${perClick} older");
 });
 
 test("stable load-more reveal path stays bounded to the requested batch", () => {
@@ -73,9 +75,9 @@ test("stable load-more reveal path stays bounded to the requested batch", () => 
     const loadMoreBody = source.match(/loadMore\(toLoad\?: number\): number \{(?<body>[\s\S]*?)\n    \}/)?.groups?.body ?? "";
 
     expect(loadMoreBody).toContain("firstVisibleIndex");
+    expect(loadMoreBody).toContain("logicalToElementCount");
     expect(loadMoreBody).not.toContain(".filter(");
     expect(loadMoreBody).not.toContain(".slice(");
-    expect(loadMoreBody).not.toContain("requestedElements");
 });
 
 test("popup does not render the retired Auto Load Beta control", () => {
@@ -96,11 +98,19 @@ test("delivery-timeout refresh is not grouped with Stable-only controls", () => 
     expect(controlOpeningTag).not.toContain("data-legacy-control");
 });
 
-test("fast-mode status invariants stay wired", () => {
+test("fast loading does not disable stable status counts", () => {
     const source = readFileSync(path.resolve("src/content/index.ts"), "utf8");
 
-    expect(source).toContain("previousFastMode");
-    expect(source).toContain("fastModeChanged");
+    expect(source).not.toContain("previousFastMode");
+    expect(source).not.toContain("fastModeChanged");
+    expect(source).not.toContain("config.fetchInterceptEnabled || displayStatus.totalMessages");
+});
+
+test("stable hidden turns leave the page flow", () => {
+    const source = readFileSync(path.resolve("src/content/MessageManager.ts"), "utf8");
+
+    expect(source).toContain("display:none!important");
+    expect(source).not.toContain("contain-intrinsic-size");
 });
 
 test("observer source keeps narrow mutation helpers", () => {

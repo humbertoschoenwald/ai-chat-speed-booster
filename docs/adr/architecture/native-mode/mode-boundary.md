@@ -25,10 +25,11 @@ Native Mode must not delete chat content. Persistent storage may contain only sa
 
 Every invasive Native Mode behavior must have a user-facing setting or a conservative default, diagnostics, and a rollback path. This includes virtualization, editor input protection, telemetry contamination marking, resource pruning, tool-call grouping, stale layout recovery, and multi-tab scheduling.
 
-Stable/Fast Mode and Native Mode are separate runtime paths. Native Mode derives an effective
-runtime configuration that disables Stable-only Fast Mode, Auto Load, Hide Old Turns, and floating
-status behavior without overwriting the user's saved Stable preferences. The popup must render
-status text from the effective runtime mode, not from the saved Fast Mode preference.
+Stable Mode and Native Mode are separate runtime paths. Fast loading is an internal Stable
+acceleration layer, not a third popup mode. Native Mode derives an effective runtime configuration
+that disables Stable-only Fast loading, Auto Load, Hide Old Turns, and floating status behavior
+without overwriting the user's saved Stable preferences. The popup must render status text from the
+effective runtime mode, not from the saved Fast-loading preference.
 
 Switching between Stable and Native schedules a page reload so provider DOM state, fetch trimming,
 and native runtime state cannot coexist in one ChatGPT document.

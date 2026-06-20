@@ -23,7 +23,6 @@ import { renderPerformanceModeHint, renderPopupStatusText } from "./popupViewMod
 
 const toggleEnabled = document.getElementById("toggle-enabled") as HTMLInputElement;
 const toggleStatus = document.getElementById("toggle-status") as HTMLInputElement;
-const toggleFetchIntercept = document.getElementById("toggle-fetch-intercept") as HTMLInputElement;
 // Auto Load remains storage-only; the popup intentionally does not render a control.
 const toggleHideOld = document.getElementById("toggle-hide-old") as HTMLInputElement;
 const visibleLimitInput = document.getElementById("visible-limit") as HTMLInputElement;
@@ -191,7 +190,6 @@ function renderConfig(config: ExtensionConfig): void {
     toggleEnabled.checked = config.enabled;
     toggleStatus.checked = config.showStatus;
     toggleHideOld.checked = config.hideOldMessages;
-    toggleFetchIntercept.checked = config.fetchInterceptEnabled;
     toggleDeliveryTimeoutRefresh.checked = config.autoRefreshDeliveryTimeout;
     visibleLimitInput.value = String(config.visibleMessageLimit);
     batchSizeInput.value = String(config.loadMoreBatchSize);
@@ -218,7 +216,7 @@ async function refreshStatus(): Promise<void> {
             await refreshRequestCounter();
         } else {
             settingsSection.style.display = "none";
-            statusText.textContent = "Open a supported AI chat to see status";
+            statusText.textContent = "Open a supported AI chat, or refresh a chat tab opened before install.";
             currentSiteId = undefined;
             renderPerformanceMode(currentConfig.performanceMode);
             renderNativeDiagnostics(undefined);
@@ -323,12 +321,6 @@ toggleDeliveryTimeoutRefresh.addEventListener("change", async () => {
         type: MessageType.SET_CONFIG,
         payload: { autoRefreshDeliveryTimeout: toggleDeliveryTimeoutRefresh.checked },
     });
-    if (config) renderConfig(config);
-    await refreshStatus();
-});
-
-toggleFetchIntercept.addEventListener("change", async () => {
-    const config = await safeSendMessage<ExtensionConfig>({ type: MessageType.TOGGLE_FETCH_INTERCEPT });
     if (config) renderConfig(config);
     await refreshStatus();
 });

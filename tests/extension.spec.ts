@@ -25,10 +25,8 @@ import { generateMockPage, getMessageTestAttr } from "./helpers/mock-page";
 test.describe.configure({ mode: "parallel" });
 
 const MESSAGE_COUNT = 20; // enough to exceed default visible window
-// Config defaults: visibleMessageLimit=3, loadMoreBatchSize=3
-// Actual visible = limit * 2 (user+assistant pairs), actual batch = batch * 2
-const DEFAULT_VISIBLE_LIMIT = 6; // 3 * 2
-const DEFAULT_BATCH_SIZE = 6; // 3 * 2
+const DEFAULT_VISIBLE_MESSAGES = 3;
+const DEFAULT_BATCH_MESSAGES = 3;
 
 for (const site of SITES) {
     test.describe(`${site.name}`, () => {
@@ -46,6 +44,22 @@ for (const site of SITES) {
             if (site.id === "grok") return `https://${site.hostnames[0]}/c/mock-conversation`;
             if (site.id === "search-ai-mode") return `https://${site.hostnames[0]}/search?q=mock-test&udm=50`;
             return `https://${site.hostnames[0]}/mock-test`;
+        }
+
+        function elementsPerMessage(): number {
+            return Math.max(1, site.messageUnit?.elementsPerMessage ?? 1);
+        }
+
+        function visibleElementLimit(): number {
+            return DEFAULT_VISIBLE_MESSAGES * elementsPerMessage();
+        }
+
+        function batchElementSize(): number {
+            return DEFAULT_BATCH_MESSAGES * elementsPerMessage();
+        }
+
+        function logicalHiddenCount(): number {
+            return Math.max(0, Math.ceil((MESSAGE_COUNT - visibleElementLimit()) / elementsPerMessage()));
         }
 
         /** Navigate to mock page and wait for the extension to process messages */
@@ -76,7 +90,7 @@ for (const site of SITES) {
         test("hides excess messages (FIFO)", async ({ page }) => {
             await loadMockPage(page);
 
-            const hiddenCount = MESSAGE_COUNT - DEFAULT_VISIBLE_LIMIT;
+            const hiddenCount = MESSAGE_COUNT - visibleElementLimit();
 
             for (let i = 1; i <= hiddenCount; i++) {
                 await expect(messageLocator(page, i)).toHaveCSS("display", "none");
@@ -90,24 +104,23 @@ for (const site of SITES) {
         test("Load More button appears with correct counts", async ({ page }) => {
             await loadMockPage(page);
 
-            const hiddenCount = MESSAGE_COUNT - DEFAULT_VISIBLE_LIMIT;
             await expect(page.locator(".acsb-load-more-wrapper")).toBeVisible();
             await expect(page.locator(".acsb-load-more-label")).toContainText(
-                `${hiddenCount} hidden`,
+                `${logicalHiddenCount()} hidden`,
             );
             await expect(page.locator(".acsb-load-more-label")).toContainText(
-                `${DEFAULT_BATCH_SIZE} more`
+                `Load ${Math.min(DEFAULT_BATCH_MESSAGES, logicalHiddenCount())} older`
             );
         });
 
         test("clicking Load More reveals more messages", async ({ page }) => {
             await loadMockPage(page);
 
-            const hiddenBefore = MESSAGE_COUNT - DEFAULT_VISIBLE_LIMIT;
+            const hiddenBefore = MESSAGE_COUNT - visibleElementLimit();
             await page.locator(".acsb-load-more-btn").click();
             await page.waitForTimeout(500);
 
-            const expectedHidden = Math.max(0, hiddenBefore - DEFAULT_BATCH_SIZE);
+            const expectedHidden = Math.max(0, hiddenBefore - batchElementSize());
             const { attr, prefix } = getMessageTestAttr(site);
             let actualHidden = 0;
             for (let i = 1; i <= MESSAGE_COUNT; i++) {
@@ -123,9 +136,8 @@ for (const site of SITES) {
             await loadMockPage(page);
 
             await expect(page.locator(".acsb-status-indicator")).toBeVisible();
-            const hiddenCount = MESSAGE_COUNT - DEFAULT_VISIBLE_LIMIT;
             await expect(page.locator(".acsb-status-label")).toContainText(
-                `${hiddenCount} hidden`,
+                `${logicalHiddenCount()} hidden`,
             );
         });
 

@@ -28,5 +28,7 @@ The extension must not fabricate message content or persist raw conversation dat
 - ChatGPT can dereference original mapping IDs after Fast Mode trimming.
 - The rendered current chain remains bounded to the configured recent-turn window.
 - Network payload reduction is less aggressive for ChatGPT, but host compatibility is safer.
-- DOM hiding remains the Stable Mode reveal mechanism.
-- The retired full-conversation reload bypass must not return; exhausted Stable batches hide the load control instead of refreshing the page.
+- DOM hiding remains the Stable Mode reveal mechanism and follows
+  `stable-fast-logical-message-contract.md` for logical message counts.
+- The retired full-conversation reload bypass must not return; exhausted or API-trimmed Stable
+  batches hide the load control instead of disabling Fast loading and refreshing the page.

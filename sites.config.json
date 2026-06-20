@@ -17,6 +17,9 @@
                 "[class*=\"convSearchResultHighlightRoot\"]"
             ]
         },
+        "messageUnit": {
+            "elementsPerMessage": 2
+        },
         "messageIdAttribute": "data-turn-id",
         "statusAnchors": {
             "name": "[data-testid=\"model-switcher-dropdown-button\"] > div",
@@ -63,6 +66,9 @@
             "scrollContainer": "div[data-autoscroll-container]",
             "scrollContainerAlt": ".overflow-y-scroll"
         },
+        "messageUnit": {
+            "elementsPerMessage": 2
+        },
         "statusAnchors": {
             "name": "[data-testid=\"chat-title-button\"]",
             "controls": "[data-testid=\"wiggle-controls-actions\"]",
@@ -104,6 +110,9 @@
             "scrollContainer": "infinite-scroller[data-test-id=\"chat-history-container\"]",
             "scrollContainerAlt": "infinite-scroller.chat-history"
         },
+        "messageUnit": {
+            "elementsPerMessage": 2
+        },
         "statusAnchors": {
             "name": "bard-logo",
             "controls": "div.boqOnegoogleliteOgbOneGoogleBar",
@@ -126,6 +135,9 @@
             "messageTurn": ".ds-virtual-list-visible-items > [data-virtual-list-item-key]",
             "scrollContainer": ".ds-virtual-list.ds-scroll-area",
             "scrollContainerAlt": "div.ds-scroll-area.ds-virtual-list"
+        },
+        "messageUnit": {
+            "elementsPerMessage": 2
         },
         "messageIdAttribute": "data-virtual-list-item-key",
         "statusAnchors": {
@@ -150,6 +162,9 @@
             "scrollContainerAlt": "main > div > div.overflow-y-auto",
             "userMessageSelector": "[data-testid=\"user-message\"]"
         },
+        "messageUnit": {
+            "elementsPerMessage": 1
+        },
         "messageIdAttribute": "id",
         "statusAnchors": {
             "name": "Grok"
@@ -172,6 +187,9 @@
         "selectors": {
             "messageTurn": "main .scrollable-container [role=\"tabpanel\"][data-state=\"active\"]",
             "scrollContainer": "main .scrollable-container"
+        },
+        "messageUnit": {
+            "elementsPerMessage": 1
         },
         "messageIdAttribute": "id",
         "statusAnchors": {
@@ -201,6 +219,9 @@
         "selectors": {
             "messageTurn": "div[data-xid^=\"aim-mars-turn-root\"] > div[data-asrc=\"true\"]",
             "scrollContainer": "body"
+        },
+        "messageUnit": {
+            "elementsPerMessage": 1
         },
         "statusAnchors": {
             "name": "Search AI Mode"
