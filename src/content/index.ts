@@ -51,6 +51,7 @@ const FETCH_LOADED_VISIBLE_KEY = "acsb_fetch_loaded_visible" as const;
 const FETCH_TOTAL_VISIBLE_KEY = "acsb_fetch_total_visible" as const;
 const FETCH_DOWNLOADING_KEY = "acsb_fetch_downloading" as const;
 const FETCH_HAS_MORE_KEY = "acsb_fetch_has_more" as const;
+const STABLE_SCROLL_ANCHOR_KEY = "acsb_stable_scroll_anchor" as const;
 const MAX_BATCH_LOGICAL_MESSAGES = 100;
 let stableChunkDownloadPending = false;
 let stableAppendRebalanceTimer: ReturnType<typeof setTimeout> | null = null;
@@ -206,6 +207,7 @@ function scheduleInitialScan(): void {
             messageManager.initialise(existing);
             contentLifecycleState = "active";
             refreshUI();
+            restoreStableChunkScrollAnchor();
             logger.info(`initial scan: ${existing.length} messages`);
             // Moved the log here so it runs after actually finding messages.
             setTimeout(() => {
@@ -582,6 +584,7 @@ function loadNextStableChunk(): boolean {
     const remaining = total === null ? batchElements : total - loaded;
     const nextLoaded = total === null || remaining > batchElements ? loaded + batchElements : total;
     stableChunkDownloadPending = true;
+    storeStableChunkScrollAnchor();
     try {
         localStorage.setItem(FETCH_LOADED_VISIBLE_KEY, String(nextLoaded));
         localStorage.setItem(FETCH_DOWNLOADING_KEY, "true");
@@ -656,6 +659,86 @@ function scheduleStableAppendRebalance(): void {
         messageManager.rebalanceVisibility();
         refreshUI();
     }, 1800);
+}
+
+interface StableScrollAnchor {
+    readonly id: string | null;
+    readonly fallbackText: string;
+    readonly viewportTop: number;
+}
+
+function storeStableChunkScrollAnchor(): void {
+    const element = findFirstVisibleMessage();
+    if (!element) return;
+    const layoutElement = element.closest<HTMLElement>("[data-turn-id-container]") ?? element;
+    const anchor: StableScrollAnchor = {
+        id: layoutElement.getAttribute("data-turn-id")
+            ?? layoutElement.getAttribute("data-testid")
+            ?? element.getAttribute("data-turn-id")
+            ?? element.getAttribute("data-testid"),
+        fallbackText: (element.textContent ?? "").replace(/\s+/g, " ").slice(0, 160),
+        viewportTop: element.getBoundingClientRect().top,
+    };
+    try {
+        localStorage.setItem(STABLE_SCROLL_ANCHOR_KEY, JSON.stringify(anchor));
+    } catch {
+        // ignore unavailable localStorage
+    }
+}
+
+function restoreStableChunkScrollAnchor(): void {
+    let raw: string | null = null;
+    try {
+        raw = localStorage.getItem(STABLE_SCROLL_ANCHOR_KEY);
+        if (raw) localStorage.removeItem(STABLE_SCROLL_ANCHOR_KEY);
+    } catch {
+        return;
+    }
+    if (!raw) return;
+    let anchor: StableScrollAnchor;
+    try {
+        anchor = JSON.parse(raw) as StableScrollAnchor;
+    } catch {
+        return;
+    }
+    let attempts = 0;
+    const restore = (): void => {
+        const target = findStableScrollAnchorElement(anchor);
+        if (!target && attempts++ < 8) {
+            setTimeout(restore, 100);
+            return;
+        }
+        if (!target) return;
+        const delta = target.getBoundingClientRect().top - anchor.viewportTop;
+        const scrollEl = domObserver.findScrollContainer();
+        if (scrollEl) {
+            scrollEl.scrollTop += delta;
+        } else {
+            window.scrollBy(0, delta);
+        }
+    };
+    requestAnimationFrame(restore);
+}
+
+function findStableScrollAnchorElement(anchor: StableScrollAnchor): HTMLElement | null {
+    const turns = filterMessageTurns(
+        Array.from(document.querySelectorAll<HTMLElement>(currentSite.selectors.messageTurn)),
+        currentSite.selectors,
+    );
+    if (anchor.id) {
+        const byId = turns.find((turn) => {
+            const layoutElement = turn.closest<HTMLElement>("[data-turn-id-container]") ?? turn;
+            return layoutElement.getAttribute("data-turn-id") === anchor.id
+                || layoutElement.getAttribute("data-testid") === anchor.id
+                || turn.getAttribute("data-turn-id") === anchor.id
+                || turn.getAttribute("data-testid") === anchor.id;
+        });
+        if (byId) return byId;
+    }
+    if (anchor.fallbackText) {
+        return turns.find((turn) => (turn.textContent ?? "").replace(/\s+/g, " ").includes(anchor.fallbackText.slice(0, 80))) ?? null;
+    }
+    return null;
 }
 
 function findFirstVisibleMessage(): HTMLElement | null {

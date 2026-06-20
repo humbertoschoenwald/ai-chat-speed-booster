@@ -42,6 +42,11 @@ export class LoadMoreButton {
     private loadMoreBatchSize = 3;
     private downloading = false;
     private siteConfig: SiteConfig;
+    private readonly handleOverlayResize = (): void => {
+        if (this.container?.isConnected && this.usesFixedOverlay()) {
+            this.applyFixedOverlayPlacement();
+        }
+    };
 
     constructor(onLoadMore: LoadMoreHandler, siteConfig: SiteConfig) {
         this.onLoadMore = onLoadMore;
@@ -68,8 +73,10 @@ export class LoadMoreButton {
         this.updateLabel();
 
         if (this.usesFixedOverlay()) {
-            this.applyFixedOverlayPlacement();
             document.body.appendChild(this.container);
+            this.applyFixedOverlayPlacement();
+            requestAnimationFrame(() => this.applyFixedOverlayPlacement());
+            window.addEventListener("resize", this.handleOverlayResize, { passive: true });
             return;
         }
 
@@ -90,6 +97,7 @@ export class LoadMoreButton {
     }
 
     hide(): void {
+        window.removeEventListener("resize", this.handleOverlayResize);
         this.container?.remove();
     }
 
@@ -104,10 +112,21 @@ export class LoadMoreButton {
 
     private applyFixedOverlayPlacement(): void {
         if (!this.container) return;
+        const shareAnchor = this.findShareAnchor();
+        const wrapperWidth = this.container.offsetWidth || 190;
+        const wrapperHeight = this.container.offsetHeight || 36;
+        const anchorRect = shareAnchor?.getBoundingClientRect();
+        const left = anchorRect
+            ? Math.max(8, anchorRect.left - wrapperWidth - 10)
+            : Math.max(8, window.innerWidth - wrapperWidth - 168);
+        const top = anchorRect
+            ? Math.max(8, anchorRect.top + ((anchorRect.height - wrapperHeight) / 2))
+            : 12;
         Object.assign(this.container.style, {
             position: "fixed",
-            top: "52px",
-            right: "116px",
+            top: `${Math.round(top)}px`,
+            left: `${Math.round(left)}px`,
+            right: "auto",
             zIndex: "2147483646",
             display: "flex",
             alignSelf: "auto",
@@ -119,6 +138,28 @@ export class LoadMoreButton {
             background: "transparent",
             pointerEvents: "auto",
         } satisfies Partial<CSSStyleDeclaration>);
+    }
+
+    private findShareAnchor(): HTMLElement | null {
+        const candidates = Array.from(document.querySelectorAll<HTMLElement>(
+            [
+                'button[aria-label="Share"]',
+                'button[aria-label*="Share"]',
+                '[data-testid="share-button"]',
+                'a[aria-label*="Share"]',
+                'button',
+            ].join(","),
+        ));
+        return candidates.find((element) => {
+            const text = element.textContent?.trim().toLowerCase() ?? "";
+            const label = element.getAttribute("aria-label")?.toLowerCase() ?? "";
+            const rect = element.getBoundingClientRect();
+            return (text === "share" || label.includes("share"))
+                && rect.width > 0
+                && rect.height > 0
+                && rect.top < 96
+                && rect.left > window.innerWidth / 2;
+        }) ?? null;
     }
 
     private applyInlinePlacement(): void {

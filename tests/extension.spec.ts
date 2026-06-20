@@ -123,16 +123,14 @@ for (const site of SITES) {
                         parentIsBody: wrapper?.parentElement === document.body,
                         position: wrapper ? getComputedStyle(wrapper).position : null,
                         top: wrapper?.style.top,
-                        right: wrapper?.style.right,
+                        left: wrapper?.style.left,
                     };
                 });
 
-                expect(placement).toEqual({
-                    parentIsBody: true,
-                    position: "fixed",
-                    top: "52px",
-                    right: "116px",
-                });
+                expect(placement.parentIsBody).toBe(true);
+                expect(placement.position).toBe("fixed");
+                expect(placement.top).toMatch(/px$/);
+                expect(placement.left).toMatch(/px$/);
             });
 
             test("hidden ChatGPT turns collapse their outer layout wrappers", async ({ page }) => {
