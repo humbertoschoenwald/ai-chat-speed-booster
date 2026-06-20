@@ -152,6 +152,7 @@
 
 #### Stable
 
+- auto hydrate after first trim ([f1fa09a](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/f1fa09ae0fa944916271c055dd04c38330fa526a)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - hydrate full chat after initial trim ([ffda412](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/ffda4128e880a01bc6ec2e19527db82f31d305e6)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - restore bounded ChatGPT layout ([96c5d2c](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/96c5d2cf3283a2fd48b6177e344f12f82535d723)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - collapse hidden ChatGPT wrappers ([fff7f59](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/fff7f592afa8d66bfa9ca5d5a73a3b87ae8df60c)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
