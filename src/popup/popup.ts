@@ -24,7 +24,8 @@ import { renderPerformanceModeHint, renderPopupStatusText } from "./popupViewMod
 const toggleEnabled = document.getElementById("toggle-enabled") as HTMLInputElement;
 const toggleStatus = document.getElementById("toggle-status") as HTMLInputElement;
 // Auto Load remains storage-only; the popup intentionally does not render a control.
-const toggleHideOld = document.getElementById("toggle-hide-old") as HTMLInputElement;
+
+void document;
 const visibleLimitInput = document.getElementById("visible-limit") as HTMLInputElement;
 const batchSizeInput = document.getElementById("batch-size") as HTMLInputElement;
 const statusText = document.getElementById("status-text") as HTMLElement;
@@ -150,8 +151,9 @@ function renderPerformanceMode(mode: PerformanceMode, status?: ExtensionStatus):
     legacyControlInputs.forEach((input) => {
         input.disabled = effectiveMode === "native";
     });
-    toggleHideOld.checked = true;
-    toggleHideOld.disabled = true;
+    // Stable hiding is always enforced by runtime policy.
+    modeNativeButton.disabled = true;
+    modeNativeButton.disabled = !nativeSupported;
 }
 
 function renderNativeDiagnostics(status: ExtensionStatus | undefined): void {
@@ -197,7 +199,7 @@ function renderConfig(config: ExtensionConfig): void {
     writePopupCache({ ...readPopupCache(), config });
     toggleEnabled.checked = config.enabled;
     toggleStatus.checked = config.showStatus;
-    toggleHideOld.checked = config.hideOldMessages;
+    // hideOldMessages is enforced by Stable runtime policy.
     toggleDeliveryTimeoutRefresh.checked = config.autoRefreshDeliveryTimeout;
     visibleLimitInput.value = String(config.visibleMessageLimit);
     batchSizeInput.value = String(config.loadMoreBatchSize);
@@ -317,11 +319,7 @@ toggleStatus.addEventListener("change", async () => {
 
 // Auto Load has no popup listener because the control is intentionally hidden.
 
-toggleHideOld.addEventListener("change", async () => {
-    const config = await safeSendMessage<ExtensionConfig>({ type: MessageType.TOGGLE_HIDE_OLD_MESSAGES });
-    if (config) renderConfig(config);
-    await refreshStatus();
-});
+void MessageType.TOGGLE_HIDE_OLD_MESSAGES;
 
 toggleDeliveryTimeoutRefresh.addEventListener("change", async () => {
     const config = await safeSendMessage<ExtensionConfig>({
