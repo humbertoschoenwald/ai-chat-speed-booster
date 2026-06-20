@@ -52,11 +52,6 @@ const FETCH_TOTAL_VISIBLE_KEY = "acsb_fetch_total_visible" as const;
 const FETCH_DOWNLOADING_KEY = "acsb_fetch_downloading" as const;
 const FETCH_DOWNLOADING_STARTED_KEY = "acsb_fetch_downloading_started" as const;
 const STABLE_SCROLL_ANCHOR_KEY = "acsb_stable_scroll_anchor" as const;
-const STABLE_CHUNK_DOWNLOAD_STALE_MS = 15000;
-const STABLE_SCROLL_RESTORE_MAX_MS = 350;
-const STABLE_SCROLL_RESTORE_RETRY_MS = 75;
-const MAX_BATCH_LOGICAL_MESSAGES = 100;
-let stableChunkDownloadPending = false;
 let stableAppendRebalanceTimer: ReturnType<typeof setTimeout> | null = null;
 
 type EditorLatencyGuardPort = {
@@ -210,9 +205,8 @@ function scheduleInitialScan(): void {
             messageManager.initialise(existing);
             contentLifecycleState = "active";
             refreshUI();
-            const suppressInitialBottomPin = hasStableChunkScrollAnchor();
-            restoreStableChunkScrollAnchor();
-            scheduleStableDownloadingRecovery();
+            clearStableVirtualHistoryState();
+            const suppressInitialBottomPin = false;
             logger.info(`initial scan: ${existing.length} messages`);
             // Moved the log here so it runs after actually finding messages.
             setTimeout(() => {
@@ -469,18 +463,13 @@ function handleExtensionMessage(message: unknown): ExtensionStatus | undefined {
  */
 function handleLoadMore(): void {
     clearStableChunkScrollAnchor();
-    const clickedAnchor = captureStableChunkScrollAnchor();
     const previousFirstVisible = findFirstVisibleMessage();
     const previousTop = previousFirstVisible?.getBoundingClientRect().top ?? null;
     const revealed = messageManager.loadMore();
     refreshUI();
-    if (revealed > 0) {
-        if (previousFirstVisible && previousTop !== null) {
-            preserveViewportAnchor(previousFirstVisible, previousTop);
-        }
-        return;
+    if (revealed > 0 && previousFirstVisible && previousTop !== null) {
+        preserveViewportAnchor(previousFirstVisible, previousTop);
     }
-    loadNextStableChunk(clickedAnchor);
 }
 
 /**
@@ -526,13 +515,10 @@ function refreshUI(): void {
         if (document.documentElement.hasAttribute(FETCH_TRIMMED_ATTR)) {
             document.documentElement.removeAttribute(FETCH_TRIMMED_ATTR);
         }
-        const stableVirtualHistoryEnabled = config.performanceMode === "legacy";
-        if (!stableVirtualHistoryEnabled) clearStableVirtualHistoryState();
-        const virtualHiddenMessages = stableVirtualHistoryEnabled ? readStableVirtualHiddenMessages() : 0;
-        const effectiveHiddenMessages = Math.max(status.hiddenMessages, virtualHiddenMessages);
-        const effectiveTotalMessages = Math.max(displayStatus.totalMessages, status.visibleMessages + effectiveHiddenMessages);
-        const downloading = stableVirtualHistoryEnabled
-            && (stableChunkDownloadPending || readStableChunkDownloading());
+        clearStableVirtualHistoryState();
+        const effectiveHiddenMessages = status.hiddenMessages;
+        const effectiveTotalMessages = displayStatus.totalMessages;
+        const downloading = false;
 
         if (effectiveHiddenMessages > 0 && config.enabled && config.performanceMode === "legacy") {
             const firstVisible = findFirstVisibleMessage();
@@ -541,7 +527,7 @@ function refreshUI(): void {
                 loadMoreButton.show(container, firstVisible, effectiveHiddenMessages, config.loadMoreBatchSize, downloading);
             }
         } else {
-            clearStableChunkDownloadPending();
+            clearStableVirtualHistoryState();
             loadMoreButton.hide();
         }
 
@@ -572,90 +558,7 @@ function cancelDeliveryTimeoutRefresh(): void {
     reloadCoordinator.cancelDeliveryTimeoutRefresh();
 }
 
-function readStableVirtualHiddenMessages(): number {
-    const total = readStableChunkNumber(FETCH_TOTAL_VISIBLE_KEY);
-    const loaded = readStableChunkNumber(FETCH_LOADED_VISIBLE_KEY);
-    const unitSize = currentSite.messageUnit?.elementsPerMessage ?? 1;
-    if (total !== null && loaded !== null) {
-        return Math.max(0, Math.ceil((total - loaded) / Math.max(1, unitSize)));
-    }
-    return readStableHasMoreHistory() ? normaliseStableBatchSize() : 0;
-}
-
-function loadNextStableChunk(clickedAnchor: StableScrollAnchor | null): boolean {
-    if (config.performanceMode !== "legacy") return false;
-    const total = readStableChunkNumber(FETCH_TOTAL_VISIBLE_KEY);
-    const unitSize = Math.max(1, currentSite.messageUnit?.elementsPerMessage ?? 1);
-    const loaded = readStableChunkNumber(FETCH_LOADED_VISIBLE_KEY)
-        ?? (messageManager.getStatus().totalMessages * unitSize);
-    if ((total === null && !readStableHasMoreHistory()) || (total !== null && loaded >= total)) return false;
-    const batchMessages = normaliseStableBatchSize();
-    const batchElements = batchMessages * unitSize;
-    const remaining = total === null ? batchElements : total - loaded;
-    const nextLoaded = total === null || remaining > batchElements ? loaded + batchElements : total;
-    if (!clickedAnchor) return false;
-    stableChunkDownloadPending = true;
-    storeStableChunkScrollAnchor(clickedAnchor, nextLoaded);
-    try {
-        sessionStorage.setItem(FETCH_LOADED_VISIBLE_KEY, String(nextLoaded));
-        sessionStorage.setItem(FETCH_DOWNLOADING_KEY, "true");
-        sessionStorage.setItem(FETCH_DOWNLOADING_STARTED_KEY, String(Date.now()));
-    } catch {
-        // sessionStorage can be unavailable; fall back to the normal DOM reveal path.
-        return false;
-    }
-    refreshUI();
-    setTimeout(() => window.location.reload(), 120);
-    return true;
-}
-
-function normaliseStableBatchSize(): number {
-    let batchMessages = Math.min(MAX_BATCH_LOGICAL_MESSAGES, Math.max(1, Math.floor(config.loadMoreBatchSize)));
-    if (batchMessages % 2 !== 0) batchMessages = Math.min(MAX_BATCH_LOGICAL_MESSAGES, batchMessages + 1);
-    return batchMessages;
-}
-
-function readStableHasMoreHistory(): boolean {
-    if (document.documentElement.getAttribute("data-acsb-virtual-has-more") === "true") return true;
-    const total = readStableChunkNumber(FETCH_TOTAL_VISIBLE_KEY);
-    const loaded = readStableChunkNumber(FETCH_LOADED_VISIBLE_KEY);
-    return total !== null && loaded !== null && total > loaded;
-}
-
-function scheduleStableDownloadingRecovery(): void {
-    if (!readStableChunkDownloading()) return;
-    setTimeout(() => {
-        if (readStableChunkDownloading()) return;
-        refreshUI();
-    }, STABLE_CHUNK_DOWNLOAD_STALE_MS + 250);
-}
-
-function readStableChunkDownloading(): boolean {
-    try {
-        if (sessionStorage.getItem(FETCH_DOWNLOADING_KEY) !== "true") return false;
-        const startedAt = Number(sessionStorage.getItem(FETCH_DOWNLOADING_STARTED_KEY) ?? "0");
-        if (!Number.isFinite(startedAt) || Date.now() - startedAt > STABLE_CHUNK_DOWNLOAD_STALE_MS) {
-            clearStableChunkDownloadPending();
-            return false;
-        }
-        return true;
-    } catch {
-        return false;
-    }
-}
-
-function clearStableChunkDownloadPending(): void {
-    stableChunkDownloadPending = false;
-    try {
-        sessionStorage.removeItem(FETCH_DOWNLOADING_KEY);
-        sessionStorage.removeItem(FETCH_DOWNLOADING_STARTED_KEY);
-    } catch {
-        // ignore unavailable sessionStorage
-    }
-}
-
 function clearStableVirtualHistoryState(): void {
-    stableChunkDownloadPending = false;
     try {
         sessionStorage.removeItem(FETCH_LOADED_VISIBLE_KEY);
         sessionStorage.removeItem(FETCH_TOTAL_VISIBLE_KEY);
@@ -669,18 +572,6 @@ function clearStableVirtualHistoryState(): void {
     document.documentElement.removeAttribute("data-acsb-virtual-has-more");
 }
 
-function readStableChunkNumber(key: string): number | null {
-    const attr = key === FETCH_TOTAL_VISIBLE_KEY ? "data-acsb-virtual-total" : "data-acsb-virtual-loaded";
-    const domValue = Number(document.documentElement.getAttribute(attr) ?? "");
-    if (Number.isFinite(domValue) && domValue > 0) return Math.floor(domValue);
-    try {
-        const sessionValue = Number(sessionStorage.getItem(key) ?? "");
-        return Number.isFinite(sessionValue) && sessionValue > 0 ? Math.floor(sessionValue) : null;
-    } catch {
-        return null;
-    }
-}
-
 function scheduleStableAppendRebalance(): void {
     if (stableAppendRebalanceTimer) clearTimeout(stableAppendRebalanceTimer);
     stableAppendRebalanceTimer = setTimeout(() => {
@@ -690,135 +581,12 @@ function scheduleStableAppendRebalance(): void {
     }, 1800);
 }
 
-interface StableScrollAnchor {
-    readonly id: string | null;
-    readonly fallbackText: string;
-    readonly viewportTop: number;
-    readonly requestedLoadedVisible: number;
-    readonly createdAt: number;
-}
-
-function captureStableChunkScrollAnchor(): StableScrollAnchor | null {
-    const element = findFirstVisibleMessage();
-    if (!element) return null;
-    const layoutElement = element.closest<HTMLElement>("[data-turn-id-container]") ?? element;
-    return {
-        id: layoutElement.getAttribute("data-turn-id")
-            ?? layoutElement.getAttribute("data-testid")
-            ?? element.getAttribute("data-turn-id")
-            ?? element.getAttribute("data-testid"),
-        fallbackText: (element.textContent ?? "").replace(/\s+/g, " ").slice(0, 160),
-        viewportTop: element.getBoundingClientRect().top,
-        requestedLoadedVisible: 0,
-        createdAt: Date.now(),
-    };
-}
-
-function storeStableChunkScrollAnchor(clickedAnchor: StableScrollAnchor, requestedLoadedVisible: number): void {
-    const anchor: StableScrollAnchor = {
-        ...clickedAnchor,
-        requestedLoadedVisible,
-        createdAt: Date.now(),
-    };
-    try {
-        sessionStorage.setItem(STABLE_SCROLL_ANCHOR_KEY, JSON.stringify(anchor));
-    } catch {
-        // ignore unavailable sessionStorage
-    }
-}
-
 function clearStableChunkScrollAnchor(): void {
     try {
         sessionStorage.removeItem(STABLE_SCROLL_ANCHOR_KEY);
     } catch {
         // ignore unavailable sessionStorage
     }
-}
-
-function hasStableChunkScrollAnchor(): boolean {
-    try {
-        return sessionStorage.getItem(STABLE_SCROLL_ANCHOR_KEY) !== null;
-    } catch {
-        return false;
-    }
-}
-
-function restoreStableChunkScrollAnchor(): void {
-    let raw: string | null = null;
-    try {
-        raw = sessionStorage.getItem(STABLE_SCROLL_ANCHOR_KEY);
-        if (raw) sessionStorage.removeItem(STABLE_SCROLL_ANCHOR_KEY);
-    } catch {
-        return;
-    }
-    if (!raw) return;
-    let anchor: StableScrollAnchor;
-    try {
-        anchor = JSON.parse(raw) as StableScrollAnchor;
-    } catch {
-        return;
-    }
-    const startedAt = performance.now();
-    let cancelled = false;
-    const cancelRestore = (): void => {
-        cancelled = true;
-        cleanup();
-    };
-    const cleanup = (): void => {
-        window.removeEventListener("wheel", cancelRestore, true);
-        window.removeEventListener("touchstart", cancelRestore, true);
-        window.removeEventListener("pointerdown", cancelRestore, true);
-        window.removeEventListener("keydown", cancelRestore, true);
-    };
-    window.addEventListener("wheel", cancelRestore, { capture: true, passive: true });
-    window.addEventListener("touchstart", cancelRestore, { capture: true, passive: true });
-    window.addEventListener("pointerdown", cancelRestore, true);
-    window.addEventListener("keydown", cancelRestore, true);
-
-    const restore = (): void => {
-        if (cancelled) return;
-        const target = findStableScrollAnchorElement(anchor);
-        if (!target) {
-            if (performance.now() - startedAt < STABLE_SCROLL_RESTORE_MAX_MS) {
-                setTimeout(restore, STABLE_SCROLL_RESTORE_RETRY_MS);
-            } else {
-                cleanup();
-            }
-            return;
-        }
-        const delta = target.getBoundingClientRect().top - anchor.viewportTop;
-        if (Math.abs(delta) > 1) {
-            const scrollEl = domObserver.findScrollContainer();
-            if (scrollEl) {
-                scrollEl.scrollTop += delta;
-            } else {
-                window.scrollBy(0, delta);
-            }
-        }
-        cleanup();
-    };
-    requestAnimationFrame(restore);
-}
-
-function findStableScrollAnchorElement(anchor: StableScrollAnchor): HTMLElement | null {
-    const turns = filterMessageTurns(
-        Array.from(document.querySelectorAll<HTMLElement>(currentSite.selectors.messageTurn)),
-        currentSite.selectors,
-    );
-    if (anchor.id) {
-        const byId = turns.find((turn) => {
-            const layoutElement = turn.closest<HTMLElement>("[data-turn-id-container]") ?? turn;
-            return layoutElement.getAttribute("data-turn-id") === anchor.id
-                || layoutElement.getAttribute("data-testid") === anchor.id
-                || turn.getAttribute("data-turn-id") === anchor.id
-                || turn.getAttribute("data-testid") === anchor.id;
-        });
-        if (byId) return byId;
-    }
-    if (anchor.fallbackText) {
-        return turns.find((turn) => (turn.textContent ?? "").replace(/\s+/g, " ").includes(anchor.fallbackText.slice(0, 80))) ?? null;
-    }
-    return null;
 }
 
 function findFirstVisibleMessage(): HTMLElement | null {

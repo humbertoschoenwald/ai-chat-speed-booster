@@ -127,56 +127,35 @@ test("Stable DOM observation reads live turns instead of cache snapshots", () =>
     expect(source).toContain("document.querySelectorAll<HTMLElement>(this.selectors.messageTurn)");
 });
 
-test("Stable fetch policy keeps the initial render bounded", () => {
+test("Stable fetch policy leaves ChatGPT rendering in control", () => {
     const bridgeSource = readFileSync(path.resolve("src/content/settingsBridge.ts"), "utf8");
     const policySource = readFileSync(path.resolve("src/shared/native-runtime-policy.ts"), "utf8");
     const fetchSource = readFileSync(path.resolve("src/content/fetchInterceptor.ts"), "utf8");
 
-    expect(bridgeSource).toContain('fetchInterceptEnabled: performanceMode === "native" ? false : true');
-    expect(policySource).toContain("fetchInterceptEnabled: true");
+    expect(bridgeSource).toContain("fetchInterceptEnabled: false");
+    expect(policySource).toContain("fetchInterceptEnabled: false");
     expect(fetchSource).toContain("Stable deliberately does not cache conversation responses");
     expect(fetchSource).not.toContain("RESPONSE_CACHE_MAX");
     expect(fetchSource).not.toContain("responseCache");
     expect(fetchSource).not.toContain("restoreCachedChunkState");
-    expect(fetchSource).toContain("sessionStorage.getItem(key)");
-    expect(fetchSource).toContain("data-acsb-virtual-has-more");
 });
 
-test("Stable trimmed history loads older messages in bounded chunks", () => {
+test("Stable Load More reveals downloaded DOM without chunk reload", () => {
     const contentSource = readFileSync(path.resolve("src/content/index.ts"), "utf8");
-    const uiSource = readFileSync(path.resolve("src/content/UIComponents.ts"), "utf8");
 
-    expect(contentSource).toContain("MAX_BATCH_LOGICAL_MESSAGES = 100");
     expect(contentSource).toContain("messageManager.loadMore()");
-    expect(contentSource).toContain("loadNextStableChunk(clickedAnchor)");
-    expect(contentSource).toContain('if (config.performanceMode !== "legacy") return false');
-    expect(contentSource).toContain("total === null || remaining > batchElements ? loaded + batchElements : total");
-    expect(uiSource).toContain("Downloading…");
+    expect(contentSource).toContain("preserveViewportAnchor(previousFirstVisible, previousTop)");
+    expect(contentSource).not.toContain("loadNextStableChunk");
+    expect(contentSource).not.toContain("setTimeout(() => window.location.reload(), 120)");
 });
 
-test("Stable virtual history is isolated from Native Mode", () => {
+test("Stable ignores virtual history state", () => {
     const contentSource = readFileSync(path.resolve("src/content/index.ts"), "utf8");
 
-    expect(contentSource).toContain('const stableVirtualHistoryEnabled = config.performanceMode === "legacy"');
-    expect(contentSource).toContain("stableVirtualHistoryEnabled ? readStableVirtualHiddenMessages() : 0");
-    expect(contentSource).toContain('effectiveHiddenMessages > 0 && config.enabled && config.performanceMode === "legacy"');
+    expect(contentSource).toContain("const effectiveHiddenMessages = status.hiddenMessages");
+    expect(contentSource).toContain("const downloading = false");
     expect(contentSource).toContain("clearStableVirtualHistoryState");
-});
-
-test("Stable chunk scroll restore suppresses ChatGPT bottom pinning", () => {
-    const contentSource = readFileSync(path.resolve("src/content/index.ts"), "utf8");
-
-    expect(contentSource).toContain("const suppressInitialBottomPin = hasStableChunkScrollAnchor()");
-    expect(contentSource).toContain('&& !suppressInitialBottomPin');
-    expect(contentSource).toContain("restoreStableChunkScrollAnchor");
-    expect(contentSource).toContain("STABLE_CHUNK_DOWNLOAD_STALE_MS");
-    expect(contentSource).toContain("scheduleStableDownloadingRecovery");
-    expect(contentSource).toContain("STABLE_SCROLL_RESTORE_MAX_MS = 350");
-    expect(contentSource).toContain("clearStableChunkScrollAnchor()");
-    expect(contentSource).toContain("captureStableChunkScrollAnchor()");
-    expect(contentSource).toContain("storeStableChunkScrollAnchor(clickedAnchor, nextLoaded)");
-    expect(contentSource).toContain("sessionStorage.setItem(STABLE_SCROLL_ANCHOR_KEY");
-    expect(contentSource).toContain("window.addEventListener(\"wheel\", cancelRestore");
+    expect(contentSource).not.toContain("readStableVirtualHiddenMessages");
 });
 
 test("auto-load observer never forces the scroll position away from the top", () => {
