@@ -42,7 +42,9 @@ const requestLimitInput = document.getElementById("request-limit-input") as HTML
 const requestCountHint = document.getElementById("request-counter-hint") as HTMLElement;
 const requestCountReset = document.getElementById("request-count-reset") as HTMLButtonElement;
 const toggleDeliveryTimeoutRefresh = document.getElementById("toggle-delivery-timeout-refresh") as HTMLInputElement;
-const toggleNativeMode = document.getElementById("toggle-native-mode") as HTMLInputElement;
+const modeStableButton = document.getElementById("mode-stable") as HTMLButtonElement;
+const modeNativeButton = document.getElementById("mode-native") as HTMLButtonElement;
+const modeButtons = [modeStableButton, modeNativeButton] as const;
 const nativeModeSetting = document.querySelector(".setting--mode") as HTMLElement;
 const performanceModeHint = document.getElementById("performance-mode-hint") as HTMLElement;
 const nativeDiagnosticsBody = document.getElementById("native-diagnostics-body") as HTMLElement;
@@ -128,11 +130,15 @@ async function init(): Promise<void> {
 function renderPerformanceMode(mode: PerformanceMode, status?: ExtensionStatus): void {
     const nativeSupported = shouldShowNativeModeControl(currentSiteId);
     const effectiveMode: PerformanceMode = nativeSupported ? (status?.performanceMode ?? mode) : "legacy";
-    const nativeRequested = nativeSupported && mode === "native";
 
-    nativeModeSetting.hidden = !nativeSupported;
-    toggleNativeMode.checked = nativeRequested;
-    toggleNativeMode.disabled = !nativeSupported;
+    nativeModeSetting.hidden = false;
+    modeButtons.forEach((button) => {
+        const buttonMode = button.dataset.mode as PerformanceMode;
+        const selected = buttonMode === effectiveMode;
+        button.classList.toggle("active", selected);
+        button.setAttribute("aria-checked", String(selected));
+        button.disabled = buttonMode === "native" && !nativeSupported;
+    });
     performanceModeHint.textContent = renderPerformanceModeHint(mode, status);
 
     nativePanels.forEach((panel) => {
@@ -196,7 +202,6 @@ function renderConfig(config: ExtensionConfig): void {
     visibleLimitInput.value = String(config.visibleMessageLimit);
     batchSizeInput.value = String(config.loadMoreBatchSize);
     requestLimitInput.value = String(config.weeklyRequestLimit);
-    toggleNativeMode.checked = config.performanceMode === "native";
     renderPerformanceMode(config.performanceMode);
     settingsSection.setAttribute("aria-disabled", String(!config.enabled));
 
@@ -327,18 +332,20 @@ toggleDeliveryTimeoutRefresh.addEventListener("change", async () => {
     await refreshStatus();
 });
 
-toggleNativeMode.addEventListener("change", async () => {
-    const requestedMode: PerformanceMode = toggleNativeMode.checked ? "native" : "legacy";
-    const mode: PerformanceMode = requestedMode === "native" && !isNativeModeAllowedForSite(currentSiteId)
-        ? "legacy"
-        : requestedMode;
-    const payload: Partial<ExtensionConfig> = { performanceMode: mode };
-    const config = await safeSendMessage<ExtensionConfig>({
-        type: MessageType.SET_CONFIG,
-        payload,
+modeButtons.forEach((button) => {
+    button.addEventListener("click", async () => {
+        const requestedMode = button.dataset.mode as PerformanceMode;
+        const mode: PerformanceMode = requestedMode === "native" && !isNativeModeAllowedForSite(currentSiteId)
+            ? "legacy"
+            : requestedMode;
+        if (mode === currentConfig.performanceMode) return;
+        const config = await safeSendMessage<ExtensionConfig>({
+            type: MessageType.SET_CONFIG,
+            payload: { performanceMode: mode },
+        });
+        if (config) renderConfig(config);
+        await refreshStatus();
     });
-    if (config) renderConfig(config);
-    await refreshStatus();
 });
 
 visibleLimitInput.addEventListener("input", scheduleAutoSave);

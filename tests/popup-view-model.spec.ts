@@ -76,13 +76,13 @@ test.describe("popup mode view model", () => {
         )).toBe("Degraded content script · Native Mode active · experimental");
     });
 
-    test("mode hint is the SSOT for the experimental warning", () => {
+    test("mode hint is the SSOT for the Stable versus Native selector", () => {
         expect(renderPerformanceModeHint("native", status({ performanceMode: "native" })))
-            .toBe("Experimental; switching modes reloads the chat tab.");
+            .toBe("Native active · ChatGPT only");
         expect(renderPerformanceModeHint("legacy", status({ performanceMode: "legacy" })))
-            .toBe("Stable runtime with manual older batches.");
+            .toBe("Stable active · manual older batches");
         expect(renderPerformanceModeHint("native", status({ performanceMode: "legacy" })))
-            .toBe("Native is unavailable here; Stable is active.");
+            .toBe("Native unavailable here · Stable active");
     });
 
     test("Native Mode control is ChatGPT-only", () => {

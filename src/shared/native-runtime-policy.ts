@@ -1,14 +1,24 @@
+import nativeSites from "../../native-sites.config.json";
 import type { ExtensionConfig, PerformanceMode } from "./types";
 
-export const NATIVE_CHATGPT_SITE_ID = "chatgpt" as const;
-export const NATIVE_CHATGPT_HOSTNAME = "chatgpt.com" as const;
+type NativeSiteMode = "enabled" | "planned";
+interface NativeSiteConfig {
+    readonly siteId: string;
+    readonly nativeMode: NativeSiteMode;
+}
+
+const NATIVE_SITES = nativeSites as readonly NativeSiteConfig[];
 
 export function isNativeModeAllowedForSite(siteId: string | undefined): boolean {
-    return siteId === NATIVE_CHATGPT_SITE_ID;
+    return NATIVE_SITES.some((site) => site.siteId === siteId && site.nativeMode === "enabled");
+}
+
+export function getNativeModeSiteState(siteId: string | undefined): NativeSiteMode | "unsupported" {
+    return NATIVE_SITES.find((site) => site.siteId === siteId)?.nativeMode ?? "unsupported";
 }
 
 export function isNativeModeAllowedForHostname(hostname: string): boolean {
-    return hostname === NATIVE_CHATGPT_HOSTNAME || hostname.endsWith(`.${NATIVE_CHATGPT_HOSTNAME}`);
+    return hostname === "chatgpt.com" || hostname.endsWith(".chatgpt.com");
 }
 
 export function getEffectivePerformanceMode(

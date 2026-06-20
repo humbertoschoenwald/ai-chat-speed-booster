@@ -174,6 +174,43 @@ body {
     border-color: rgba(24, 198, 163, 0.38);
 }
 
+.mode-switch {
+    display: flex;
+    padding: 2px;
+    border-radius: 999px;
+    background: var(--bg-tertiary);
+    border: 1px solid var(--border);
+}
+
+.mode-switch__btn {
+    min-width: 64px;
+    border: 0;
+    border-radius: 999px;
+    padding: 6px 10px;
+    color: var(--text-secondary);
+    background: transparent;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background var(--transition), color var(--transition), opacity var(--transition);
+}
+
+.mode-switch__btn.active {
+    color: #fff;
+    background: var(--accent);
+}
+
+.mode-switch__btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
+}
+
+.mode-switch__btn:focus-visible {
+    outline: 2px solid var(--border-focus);
+    outline-offset: 2px;
+}
+
 .setting[data-tooltip] {
     cursor: default;
 }
