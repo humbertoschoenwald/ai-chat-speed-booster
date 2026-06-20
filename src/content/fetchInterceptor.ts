@@ -88,6 +88,7 @@ const TRIMMED_ATTR = "data-acsb-trimmed";
 const LOADED_VISIBLE_KEY = "acsb_fetch_loaded_visible";
 const TOTAL_VISIBLE_KEY = "acsb_fetch_total_visible";
 const DOWNLOADING_KEY = "acsb_fetch_downloading";
+const HAS_MORE_KEY = "acsb_fetch_has_more";
 
 
 /**
@@ -308,6 +309,7 @@ function cacheGet(key: string): CachedResponse | undefined {
         try {
             localStorage.setItem(TOTAL_VISIBLE_KEY, String(totalVisible));
             localStorage.setItem(LOADED_VISIBLE_KEY, String(loadedVisible));
+            localStorage.setItem(HAS_MORE_KEY, totalVisible > loadedVisible ? "true" : "false");
             localStorage.removeItem(DOWNLOADING_KEY);
             document.documentElement.setAttribute("data-acsb-virtual-total", String(totalVisible));
             document.documentElement.setAttribute("data-acsb-virtual-loaded", String(loadedVisible));
@@ -323,6 +325,7 @@ function cacheGet(key: string): CachedResponse | undefined {
             localStorage.removeItem(TOTAL_VISIBLE_KEY);
             localStorage.removeItem(LOADED_VISIBLE_KEY);
             localStorage.removeItem(DOWNLOADING_KEY);
+            localStorage.removeItem(HAS_MORE_KEY);
         } catch {
             // localStorage can be unavailable; cache still works in memory.
         }

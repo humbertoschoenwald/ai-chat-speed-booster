@@ -50,6 +50,7 @@ const FETCH_TRIMMED_ATTR = "data-acsb-trimmed" as const;
 const FETCH_LOADED_VISIBLE_KEY = "acsb_fetch_loaded_visible" as const;
 const FETCH_TOTAL_VISIBLE_KEY = "acsb_fetch_total_visible" as const;
 const FETCH_DOWNLOADING_KEY = "acsb_fetch_downloading" as const;
+const FETCH_HAS_MORE_KEY = "acsb_fetch_has_more" as const;
 const MAX_BATCH_LOGICAL_MESSAGES = 100;
 let stableChunkDownloadPending = false;
 let stableAppendRebalanceTimer: ReturnType<typeof setTimeout> | null = null;
@@ -515,6 +516,7 @@ function refreshUI(): void {
         }
         const virtualHiddenMessages = readStableVirtualHiddenMessages();
         const effectiveHiddenMessages = Math.max(status.hiddenMessages, virtualHiddenMessages);
+        const effectiveTotalMessages = Math.max(displayStatus.totalMessages, status.visibleMessages + effectiveHiddenMessages);
         const downloading = stableChunkDownloadPending || readStableChunkDownloading();
 
         if (effectiveHiddenMessages > 0 && config.enabled) {
@@ -531,10 +533,10 @@ function refreshUI(): void {
         domObserver.updateMessageStats(status.totalMessages, status.visibleMessages);
         domObserver.SetAutoLoad(config.autoLoad); // Update auto-load state in DOM observer based on latest config
 
-        if (!config.enabled || !config.showStatus || displayStatus.totalMessages === 0) {
+        if (!config.enabled || !config.showStatus || effectiveTotalMessages === 0) {
             statusIndicator.hide();
         } else {
-            statusIndicator.update(displayStatus.hiddenMessages, displayStatus.totalMessages, config.statusPosition, false, config.theme === "light");
+            statusIndicator.update(effectiveHiddenMessages, effectiveTotalMessages, config.statusPosition, false, config.theme === "light");
         }
 
         if (config.performanceMode === "native") {
@@ -558,21 +560,23 @@ function cancelDeliveryTimeoutRefresh(): void {
 function readStableVirtualHiddenMessages(): number {
     const total = readStableChunkNumber(FETCH_TOTAL_VISIBLE_KEY);
     const loaded = readStableChunkNumber(FETCH_LOADED_VISIBLE_KEY);
-    if (total === null || loaded === null) return 0;
     const unitSize = currentSite.messageUnit?.elementsPerMessage ?? 1;
-    return Math.max(0, Math.ceil((total - loaded) / Math.max(1, unitSize)));
+    if (total !== null && loaded !== null) {
+        return Math.max(0, Math.ceil((total - loaded) / Math.max(1, unitSize)));
+    }
+    return readStableHasMoreHistory() ? normaliseStableBatchSize() : 0;
 }
 
 function loadNextStableChunk(): boolean {
     const total = readStableChunkNumber(FETCH_TOTAL_VISIBLE_KEY);
-    const loaded = readStableChunkNumber(FETCH_LOADED_VISIBLE_KEY);
-    if (total === null || loaded === null || loaded >= total) return false;
     const unitSize = Math.max(1, currentSite.messageUnit?.elementsPerMessage ?? 1);
-    let batchMessages = Math.min(MAX_BATCH_LOGICAL_MESSAGES, Math.max(1, Math.floor(config.loadMoreBatchSize)));
-    if (batchMessages % 2 !== 0) batchMessages = Math.min(MAX_BATCH_LOGICAL_MESSAGES, batchMessages + 1);
+    const loaded = readStableChunkNumber(FETCH_LOADED_VISIBLE_KEY)
+        ?? (messageManager.getStatus().totalMessages * unitSize);
+    if ((total === null && !readStableHasMoreHistory()) || (total !== null && loaded >= total)) return false;
+    const batchMessages = normaliseStableBatchSize();
     const batchElements = batchMessages * unitSize;
-    const remaining = total - loaded;
-    const nextLoaded = remaining <= batchElements ? total : loaded + batchElements;
+    const remaining = total === null ? batchElements : total - loaded;
+    const nextLoaded = total === null || remaining > batchElements ? loaded + batchElements : total;
     stableChunkDownloadPending = true;
     try {
         localStorage.setItem(FETCH_LOADED_VISIBLE_KEY, String(nextLoaded));
@@ -584,6 +588,20 @@ function loadNextStableChunk(): boolean {
     refreshUI();
     setTimeout(() => window.location.reload(), 120);
     return true;
+}
+
+function normaliseStableBatchSize(): number {
+    let batchMessages = Math.min(MAX_BATCH_LOGICAL_MESSAGES, Math.max(1, Math.floor(config.loadMoreBatchSize)));
+    if (batchMessages % 2 !== 0) batchMessages = Math.min(MAX_BATCH_LOGICAL_MESSAGES, batchMessages + 1);
+    return batchMessages;
+}
+
+function readStableHasMoreHistory(): boolean {
+    try {
+        return localStorage.getItem(FETCH_HAS_MORE_KEY) === "true";
+    } catch {
+        return false;
+    }
 }
 
 function readStableChunkDownloading(): boolean {

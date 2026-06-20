@@ -137,6 +137,7 @@ test("Stable fetch policy keeps the initial render bounded", () => {
     expect(fetchSource).toContain("const RESPONSE_CACHE_MAX = 5");
     expect(fetchSource).toContain("acsb_fetch_loaded_visible");
     expect(fetchSource).toContain("acsb_fetch_total_visible");
+    expect(fetchSource).toContain("acsb_fetch_has_more");
 });
 
 test("Stable trimmed history loads older messages in bounded chunks", () => {
@@ -145,7 +146,7 @@ test("Stable trimmed history loads older messages in bounded chunks", () => {
 
     expect(contentSource).toContain("MAX_BATCH_LOGICAL_MESSAGES = 100");
     expect(contentSource).toContain("loadNextStableChunk");
-    expect(contentSource).toContain("remaining <= batchElements ? total : loaded + batchElements");
+    expect(contentSource).toContain("total === null || remaining > batchElements ? loaded + batchElements : total");
     expect(uiSource).toContain("Downloading…");
 });
 
