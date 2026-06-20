@@ -18,6 +18,11 @@ export interface SiteUI {
     readonly loadMoreMargin?: string;
 }
 
+export interface SiteReviewMetadata {
+    readonly stableModeLastReviewedAt: string | null;
+    readonly nativeModeLastReviewedAt: string | null;
+}
+
 export interface MessageUnitConfig {
     /** Managed DOM turn elements that represent one user-visible chat message. */
     readonly elementsPerMessage: number;
@@ -58,6 +63,7 @@ export interface FetchInterceptConfig {
 export interface SiteConfig {
     readonly id: string;
     readonly name: string;
+    readonly review?: SiteReviewMetadata;
     readonly hostnames: readonly string[];
     readonly isDynamic?: boolean; // Indicates if the site has dynamic content loading that may require special handling (e.g. Gemini)
     readonly urlPatterns: readonly string[];

@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 import { readdirSync, readFileSync, statSync } from "fs";
 import path from "path";
 
-const REVIEWED_STABLE_MODE_CHATGPT = "REVISADO STABLE MODE CHATGPT 6 20 2026 5:40 PM";
+const CHATGPT_STABLE_MODE_LAST_REVIEWED_AT = "2026-06-20T17:40:00-05:00";
 
 test("content entrypoint loads native code only behind dynamic Native Mode imports", () => {
     const source = readFileSync(path.resolve("src/content/index.ts"), "utf8");
@@ -142,7 +142,7 @@ test("Stable fetch policy leaves ChatGPT rendering in control", () => {
     expect(fetchSource).not.toContain("restoreCachedChunkState");
 });
 
-test(REVIEWED_STABLE_MODE_CHATGPT, () => {
+test("ChatGPT Stable Mode reviewed behavior is locked", () => {
     const contentSource = readFileSync(path.resolve("src/content/index.ts"), "utf8");
     const managerSource = readFileSync(path.resolve("src/content/MessageManager.ts"), "utf8");
     const bridgeSource = readFileSync(path.resolve("src/content/settingsBridge.ts"), "utf8");
@@ -150,12 +150,18 @@ test(REVIEWED_STABLE_MODE_CHATGPT, () => {
     const fetchSource = readFileSync(path.resolve("src/content/fetchInterceptor.ts"), "utf8");
     const sitesConfig = JSON.parse(readFileSync(path.resolve("sites.config.json"), "utf8")) as Array<{
         id: string;
+        review?: {
+            stableModeLastReviewedAt: string | null;
+            nativeModeLastReviewedAt: string | null;
+        };
         selectors?: { messageTurn?: string; scrollContainer?: string };
         messageUnit?: { elementsPerMessage?: number };
         messageIdAttribute?: string;
     }>;
     const chatgpt = sitesConfig.find((site) => site.id === "chatgpt");
 
+    expect(chatgpt?.review?.stableModeLastReviewedAt).toBe(CHATGPT_STABLE_MODE_LAST_REVIEWED_AT);
+    expect(chatgpt?.review?.nativeModeLastReviewedAt).toBeNull();
     expect(chatgpt?.selectors?.messageTurn).toBe('section[data-testid^="conversation-turn-"]');
     expect(chatgpt?.selectors?.scrollContainer).toBe("div[data-scroll-root]");
     expect(chatgpt?.messageUnit?.elementsPerMessage).toBe(2);
@@ -166,6 +172,10 @@ test(REVIEWED_STABLE_MODE_CHATGPT, () => {
     expect(policySource).not.toContain("fetchInterceptEnabled: true");
     expect(fetchSource).not.toContain("responseCache");
     expect(fetchSource).not.toContain("restoreCachedChunkState");
+    for (const runtimeSource of [contentSource, managerSource, bridgeSource, policySource, fetchSource]) {
+        expect(runtimeSource).not.toContain("stableModeLastReviewedAt");
+        expect(runtimeSource).not.toContain("nativeModeLastReviewedAt");
+    }
 
     expect(contentSource).toContain("const effectiveHiddenMessages = status.hiddenMessages");
     expect(contentSource).toContain("const downloading = false");
@@ -174,6 +184,11 @@ test(REVIEWED_STABLE_MODE_CHATGPT, () => {
     expect(contentSource).not.toContain("loadNextStableChunk");
     expect(contentSource).not.toContain("readStableVirtualHiddenMessages");
     expect(contentSource).not.toContain("window.location.reload(), 120");
+
+    for (const site of sitesConfig.filter((site) => site.id !== "chatgpt")) {
+        expect(site.review?.stableModeLastReviewedAt).toBeNull();
+        expect(site.review?.nativeModeLastReviewedAt).toBeNull();
+    }
 
     expect(managerSource).toContain("display:none!important");
     expect(managerSource).toContain("overflow-anchor:none!important");

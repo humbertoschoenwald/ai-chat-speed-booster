@@ -2,6 +2,10 @@
     {
         "id": "chatgpt",
         "name": "ChatGPT",
+        "review": {
+            "stableModeLastReviewedAt": "2026-06-20T17:40:00-05:00",
+            "nativeModeLastReviewedAt": null
+        },
         "hostnames": [
             "chatgpt.com"
         ],
@@ -52,6 +56,10 @@
     {
         "id": "claude",
         "name": "Claude",
+        "review": {
+            "stableModeLastReviewedAt": null,
+            "nativeModeLastReviewedAt": null
+        },
         "hostnames": [
             "claude.ai"
         ],
@@ -95,6 +103,10 @@
     {
         "id": "gemini",
         "name": "Gemini",
+        "review": {
+            "stableModeLastReviewedAt": null,
+            "nativeModeLastReviewedAt": null
+        },
         "hostnames": [
             "gemini.google.com"
         ],
@@ -122,6 +134,10 @@
     {
         "id": "deepseek",
         "name": "DeepSeek",
+        "review": {
+            "stableModeLastReviewedAt": null,
+            "nativeModeLastReviewedAt": null
+        },
         "hostnames": [
             "chat.deepseek.com"
         ],
@@ -147,6 +163,10 @@
     {
         "id": "grok",
         "name": "Grok",
+        "review": {
+            "stableModeLastReviewedAt": null,
+            "nativeModeLastReviewedAt": null
+        },
         "hostnames": [
             "grok.com"
         ],
@@ -173,6 +193,10 @@
     {
         "id": "perplexity",
         "name": "Perplexity",
+        "review": {
+            "stableModeLastReviewedAt": null,
+            "nativeModeLastReviewedAt": null
+        },
         "hostnames": [
             "www.perplexity.ai",
             "perplexity.ai"
@@ -199,6 +223,10 @@
     {
         "id": "search-ai-mode",
         "name": "Search AI Mode",
+        "review": {
+            "stableModeLastReviewedAt": null,
+            "nativeModeLastReviewedAt": null
+        },
         "hostnames": [
             "www.g\u006f\u006fgle.com"
         ],
