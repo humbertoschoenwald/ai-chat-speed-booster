@@ -108,11 +108,12 @@ test("fast loading does not disable stable status counts", () => {
     expect(source).not.toContain("config.fetchInterceptEnabled || displayStatus.totalMessages");
 });
 
-test("stable hidden turns leave the page flow", () => {
+test("stable hidden turns leave the page flow while visible turns opt out of host placeholders", () => {
     const source = readFileSync(path.resolve("src/content/MessageManager.ts"), "utf8");
 
     expect(source).toContain("display:none!important");
-    expect(source).not.toContain("contain-intrinsic-size");
+    expect(source).toContain("content-visibility:visible!important");
+    expect(source).toContain("contain-intrinsic-size:auto!important");
 });
 
 test("observer source keeps narrow mutation helpers", () => {
@@ -124,6 +125,16 @@ test("Stable DOM observation reads live turns instead of cache snapshots", () =>
     const source = readFileSync(path.resolve("src/content/DOMObserver.ts"), "utf8");
     expect(source).not.toContain("MessageQueryCache");
     expect(source).toContain("document.querySelectorAll<HTMLElement>(this.selectors.messageTurn)");
+});
+
+test("Stable fetch policy keeps the initial render bounded", () => {
+    const bridgeSource = readFileSync(path.resolve("src/content/settingsBridge.ts"), "utf8");
+    const policySource = readFileSync(path.resolve("src/shared/native-runtime-policy.ts"), "utf8");
+    const fetchSource = readFileSync(path.resolve("src/content/fetchInterceptor.ts"), "utf8");
+
+    expect(bridgeSource).toContain('fetchInterceptEnabled: performanceMode === "native" ? false : true');
+    expect(policySource).toContain("fetchInterceptEnabled: true");
+    expect(fetchSource).toContain("const RESPONSE_CACHE_MAX = 0");
 });
 
 test("auto-load observer never forces the scroll position away from the top", () => {

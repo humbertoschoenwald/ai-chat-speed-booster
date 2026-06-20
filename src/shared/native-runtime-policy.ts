@@ -36,6 +36,7 @@ export function deriveRuntimeConfigForSite(config: ExtensionConfig, siteId: stri
         return {
             ...config,
             performanceMode,
+            fetchInterceptEnabled: true,
             autoLoad: false,
             hideOldMessages: true,
         };

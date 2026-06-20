@@ -30,11 +30,7 @@ function writeBridge(raw: Record<string, unknown> | undefined): void {
         schemaVersion: 1,
         enabled: typeof raw?.enabled === "boolean" ? raw.enabled : true,
         performanceMode,
-        fetchInterceptEnabled: performanceMode === "native"
-            ? false
-            : typeof raw?.fetchInterceptEnabled === "boolean"
-                ? raw.fetchInterceptEnabled
-                : true,
+        fetchInterceptEnabled: performanceMode === "native" ? false : true,
         visibleMessageLimit:
             typeof raw?.visibleMessageLimit === "number"
                 ? raw.visibleMessageLimit

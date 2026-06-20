@@ -18,11 +18,16 @@ const DOCUMENT_POSITION_PRECEDING = 0x02;
 const DOCUMENT_POSITION_FOLLOWING = 0x04;
 
 let styleInjected = false;
+function buildHideStyle(): string {
+    const visibleOverride = `[${DATA_ATTR}]:not(.${HIDE_CLASS}){content-visibility:visible!important;contain-intrinsic-size:auto!important}`;
+    return `.${HIDE_CLASS}{display:none!important}` + visibleOverride;
+}
+
 function injectHideStyle(): void {
     if (styleInjected) return;
     styleInjected = true;
     const style = document.createElement("style");
-    style.textContent = `.${HIDE_CLASS}{display:none!important}`;
+    style.textContent = buildHideStyle();
     (document.head ?? document.documentElement).appendChild(style);
 }
 

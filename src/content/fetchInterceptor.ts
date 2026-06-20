@@ -98,7 +98,7 @@ const BUFFER_ROUNDS = 0;
  * JS memory — a hard page refresh clears it automatically, which is the
  * desired behaviour (the user expects fresh data on F5).
  */
-const RESPONSE_CACHE_MAX = 5;
+const RESPONSE_CACHE_MAX = 0;
 interface CachedResponse {
     body: string;
     trimmed: boolean;
