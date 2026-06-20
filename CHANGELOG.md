@@ -154,6 +154,7 @@
 
 #### Stable
 
+- capture scroll anchor on click ([545d9cf](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/545d9cf7f36f6c020fe3f0aad810e8cf0afd75f5)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - make chunk scroll restore bounded ([38d2975](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/38d2975ca6d4faca37bce5aac723ac8c060b6f61)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - recover stale chunk loading state ([9f8b5fa](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/9f8b5fa97f888aab8bd5ca028c631ae3970b123c)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - suppress bottom pin after anchor restore (#32) ([8483108](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/84831085c095b20bd4dd51e48bbcc37ca416768f)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
