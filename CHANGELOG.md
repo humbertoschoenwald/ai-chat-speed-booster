@@ -154,6 +154,7 @@
 
 #### Stable
 
+- stabilize load more scroll ([1c63da4](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/1c63da4e49d4e45022855cdfa1a95c32da9d2d59)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - remove chunk reload path ([09224af](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/09224af73da8a7661449e2ebf94c91f58d35ca27)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - reveal loaded DOM before chunk reload ([2a63a66](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/2a63a66651032954369cad25f2c38410bbfc1e38)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - keep ephemeral chunk window across batches ([79b5a16](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/79b5a1681ea4f6f14a1936eb813b48ff4a7d32f5)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
