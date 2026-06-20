@@ -86,10 +86,10 @@ const PREFIX = "[ACSB Fetch]";
  */
 const TRIMMED_ATTR = "data-acsb-trimmed";
 /**
- * How many stable batch reveals worth of extra messages to keep in the response.
- * Fast loading never exposes a reload bypass from the content UI.
+ * Stable fast loading keeps only the configured initial window in the response.
+ * Manual older batches operate on DOM that is already present, not extra API buffer.
  */
-const BUFFER_ROUNDS = 10;
+const BUFFER_ROUNDS = 0;
 
 /**
  * In-memory LRU cache for the last N trimmed conversation responses.
