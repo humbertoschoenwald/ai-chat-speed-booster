@@ -40,6 +40,7 @@ export class LoadMoreButton {
     private activeHandler: LoadMoreHandler;
     private hiddenCount = 0;
     private loadMoreBatchSize = 3;
+    private downloading = false;
     private siteConfig: SiteConfig;
 
     constructor(onLoadMore: LoadMoreHandler, siteConfig: SiteConfig) {
@@ -53,9 +54,11 @@ export class LoadMoreButton {
         firstVisibleElement: HTMLElement | null,
         hiddenCount: number,
         loadMoreBatchSize: number,
+        downloading = false,
     ): void {
         this.hiddenCount = hiddenCount;
         this.loadMoreBatchSize = loadMoreBatchSize;
+        this.downloading = downloading;
         this.activeHandler = this.onLoadMore;
 
         if (!this.container) {
@@ -170,6 +173,10 @@ export class LoadMoreButton {
             `.${CSS_PREFIX}-load-more-label`,
         );
         if (label) {
+            if (this.downloading) {
+                label.textContent = "Downloading…";
+                return;
+            }
             const hidden = this.hiddenCount;
             const perClick = Math.min(this.loadMoreBatchSize, hidden);
             label.textContent = `Load ${perClick} older (${hidden} hidden)`;
@@ -179,6 +186,7 @@ export class LoadMoreButton {
     private readonly handleClick = (e: MouseEvent): void => {
         e.preventDefault();
         e.stopPropagation();
+        if (this.downloading) return;
         this.activeHandler();
     };
 }

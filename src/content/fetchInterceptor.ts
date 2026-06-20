@@ -85,6 +85,7 @@ const PREFIX = "[ACSB Fetch]";
  * ISOLATED world synchronously.
  */
 const TRIMMED_ATTR = "data-acsb-trimmed";
+const BYPASS_TRIM_UNTIL_KEY = "acsb_fetch_bypass_until";
 /**
  * Stable fast loading keeps only the configured initial window in the response.
  * Manual older batches operate on DOM that is already present, not extra API buffer.
@@ -98,7 +99,7 @@ const BUFFER_ROUNDS = 0;
  * JS memory — a hard page refresh clears it automatically, which is the
  * desired behaviour (the user expects fresh data on F5).
  */
-const RESPONSE_CACHE_MAX = 0;
+const RESPONSE_CACHE_MAX = 5;
 interface CachedResponse {
     body: string;
     trimmed: boolean;
@@ -193,6 +194,7 @@ function cacheGet(key: string): CachedResponse | undefined {
 
         // Clear stale trim telemetry before this response decides whether it trimmed.
         document.documentElement.removeAttribute(TRIMMED_ATTR);
+        if (shouldBypassTrim()) return cacheUntrimmedResponse(url, await originalFetch.call(this, input, init));
 
         // The fetch limit is expressed in logical messages, then projected to
         // provider API nodes with the site-owned message unit metadata.
@@ -242,15 +244,7 @@ function cacheGet(key: string): CachedResponse | undefined {
                 if (__DEV__) console.debug(PREFIX, "no trimming needed");
                 // Cache the untrimmed response too (small chats that
                 // don't need trimming also benefit from instant reload).
-                cachePut(url, {
-                    body: text,
-                    trimmed: false,
-                    status: response.status,
-                    statusText: response.statusText,
-                    headers: [...new Headers(response.headers)],
-                    url: response.url,
-                });
-                return response;
+                return cacheUntrimmedResponse(url, response, text);
             }
 
             // Signal to the content script that messages were removed.
@@ -293,6 +287,33 @@ function cacheGet(key: string): CachedResponse | undefined {
             visibleMessageLimit: 3,
             loadMoreBatchSize: 3,
         };
+    }
+
+    function shouldBypassTrim(): boolean {
+        try {
+            const until = Number(localStorage.getItem(BYPASS_TRIM_UNTIL_KEY) ?? "0");
+            if (!Number.isFinite(until) || until <= Date.now()) {
+                localStorage.removeItem(BYPASS_TRIM_UNTIL_KEY);
+                return false;
+            }
+            return true;
+        } catch {
+            return false;
+        }
+    }
+
+    async function cacheUntrimmedResponse(url: string, response: Response, body?: string): Promise<Response> {
+        if (!response.ok) return response;
+        const text = body ?? await response.clone().text();
+        cachePut(url, {
+            body: text,
+            trimmed: false,
+            status: response.status,
+            statusText: response.statusText,
+            headers: [...new Headers(response.headers)],
+            url: response.url,
+        });
+        return response;
     }
 
     function buildResponse(original: Response, body: string): Response {

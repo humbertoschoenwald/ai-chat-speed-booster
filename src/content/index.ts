@@ -47,6 +47,10 @@ let contentLifecycleState: ContentLifecycleState = "initializing";
 let contentLastUiRefreshAt: number | null = null;
 let contentLastRecoverableErrorClass: string | null = null;
 const FETCH_TRIMMED_ATTR = "data-acsb-trimmed" as const;
+const FETCH_BYPASS_UNTIL_KEY = "acsb_fetch_bypass_until" as const;
+const STABLE_FULL_HYDRATION_WINDOW_MS = 15000;
+let stableFullHydrationScheduled = false;
+let stableFullHydrationPending = false;
 
 type EditorLatencyGuardPort = {
     start(): void;
@@ -501,15 +505,25 @@ function refreshUI(): void {
             }
         }
 
-        if (document.documentElement.hasAttribute(FETCH_TRIMMED_ATTR)) {
+        const fetchWasTrimmed = document.documentElement.hasAttribute(FETCH_TRIMMED_ATTR);
+        if (fetchWasTrimmed) {
+            stableFullHydrationPending = true;
+            scheduleStableFullHydration();
             document.documentElement.removeAttribute(FETCH_TRIMMED_ATTR);
         }
 
         if (status.hiddenMessages > 0 && config.enabled) {
+            stableFullHydrationPending = false;
             const firstVisible = findFirstVisibleMessage();
             const container = firstVisible?.parentElement ?? findMessageContainer();
             if (container) {
                 loadMoreButton.show(container, firstVisible, status.hiddenMessages, config.loadMoreBatchSize);
+            }
+        } else if (stableFullHydrationPending && config.enabled) {
+            const firstVisible = findFirstVisibleMessage();
+            const container = firstVisible?.parentElement ?? findMessageContainer();
+            if (container) {
+                loadMoreButton.show(container, firstVisible, 0, config.loadMoreBatchSize, true);
             }
         } else {
             loadMoreButton.hide();
@@ -540,6 +554,20 @@ function scheduleDeliveryTimeoutRefresh(reason: string | null): void {
 
 function cancelDeliveryTimeoutRefresh(): void {
     reloadCoordinator.cancelDeliveryTimeoutRefresh();
+}
+
+function scheduleStableFullHydration(): void {
+    if (stableFullHydrationScheduled || config.performanceMode !== "legacy") return;
+    stableFullHydrationScheduled = true;
+    try {
+        localStorage.setItem(
+            FETCH_BYPASS_UNTIL_KEY,
+            String(Date.now() + STABLE_FULL_HYDRATION_WINDOW_MS),
+        );
+    } catch {
+        // localStorage can be unavailable; the user can still refresh manually.
+    }
+    setTimeout(() => window.location.reload(), 650);
 }
 
 function findFirstVisibleMessage(): HTMLElement | null {

@@ -134,7 +134,17 @@ test("Stable fetch policy keeps the initial render bounded", () => {
 
     expect(bridgeSource).toContain('fetchInterceptEnabled: performanceMode === "native" ? false : true');
     expect(policySource).toContain("fetchInterceptEnabled: true");
-    expect(fetchSource).toContain("const RESPONSE_CACHE_MAX = 0");
+    expect(fetchSource).toContain("const RESPONSE_CACHE_MAX = 5");
+    expect(fetchSource).toContain("acsb_fetch_bypass_until");
+});
+
+test("Stable trimmed first paint hydrates the full conversation automatically", () => {
+    const contentSource = readFileSync(path.resolve("src/content/index.ts"), "utf8");
+    const uiSource = readFileSync(path.resolve("src/content/UIComponents.ts"), "utf8");
+
+    expect(contentSource).toContain("scheduleStableFullHydration");
+    expect(contentSource).toContain("window.location.reload()");
+    expect(uiSource).toContain("Downloading…");
 });
 
 test("auto-load observer never forces the scroll position away from the top", () => {
