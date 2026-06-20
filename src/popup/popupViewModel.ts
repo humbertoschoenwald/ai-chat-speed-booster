@@ -38,7 +38,7 @@ export function renderPopupStatusText(config: ExtensionConfig, status: Extension
             return `Recovering content script · ${countText}`;
         case "degraded":
             return hasEmptyCounts
-                ? "Loading content script"
+                ? "No ChatGPT messages detected"
                 : `Degraded content script · ${countText}`;
         case "stopped":
             return `Content script stopped · ${countText}`;

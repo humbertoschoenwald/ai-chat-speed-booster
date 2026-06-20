@@ -35,6 +35,26 @@ function fakeTurn(id: string): HTMLElement {
     } as unknown as HTMLElement;
 }
 
+test("message query cache does not pin an empty first scan", () => {
+    const firstTurn = fakeTurn("ready");
+    let queryCount = 0;
+    const originalDocument = globalThis.document;
+    Object.defineProperty(globalThis, "document", {
+        configurable: true,
+        value: { querySelectorAll: () => queryCount++ === 0 ? [] : [firstTurn] },
+    });
+
+    try {
+        const cache = new MessageQueryCache();
+        const selectors = { messageTurn: "article", scrollContainer: "main" };
+        expect(cache.queryTurns(selectors, "/c/loading")).toEqual([]);
+        expect(cache.queryTurns(selectors, "/c/loading")).toEqual([firstTurn]);
+        expect(cache.snapshot().cachedTurnCount).toBe(1);
+    } finally {
+        Object.defineProperty(globalThis, "document", { configurable: true, value: originalDocument });
+    }
+});
+
 test("message query cache invalidates by route", () => {
     const cache = new MessageQueryCache();
     expect(cache.snapshot().generation).toBe(0);

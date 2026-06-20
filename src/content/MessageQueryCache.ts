@@ -15,12 +15,14 @@ export class MessageQueryCache {
     queryTurns(selectors: SiteSelectors, routeKey = location.href): HTMLElement[] {
         if (this.routeKey !== routeKey) this.invalidate(routeKey);
         if (!this.turns) {
-            this.turns = dedupeNestedMessageTurns(
+            const turns = dedupeNestedMessageTurns(
                 filterMessageTurns(
                     Array.from(document.querySelectorAll<HTMLElement>(selectors.messageTurn)),
                     selectors,
                 ),
             );
+            if (turns.length === 0) return [];
+            this.turns = turns;
         }
         return [...this.turns];
     }
