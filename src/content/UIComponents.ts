@@ -136,7 +136,7 @@ export class LoadMoreButton {
             margin: "0",
             borderRadius: "999px",
             background: "transparent",
-            pointerEvents: "auto",
+            pointerEvents: "none",
         } satisfies Partial<CSSStyleDeclaration>);
     }
 
@@ -177,7 +177,7 @@ export class LoadMoreButton {
             margin: this.siteConfig.ui?.loadMoreMargin ?? "4px 0",
             borderRadius: "12px",
             background: "transparent",
-            pointerEvents: "auto",
+            pointerEvents: "none",
         } satisfies Partial<CSSStyleDeclaration>);
     }
 
@@ -222,6 +222,7 @@ export class LoadMoreButton {
             boxShadow: "0 4px 16px rgba(0,0,0,0.12)",
             transition:
                 "background 0.15s ease, transform 0.1s ease, color 0.1s ease, border-color 0.15s ease",
+            pointerEvents: "auto",
         } satisfies Partial<CSSStyleDeclaration>);
 
         button.addEventListener("mouseenter", () => {

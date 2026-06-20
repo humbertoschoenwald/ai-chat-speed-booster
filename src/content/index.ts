@@ -50,8 +50,10 @@ const FETCH_TRIMMED_ATTR = "data-acsb-trimmed" as const;
 const FETCH_LOADED_VISIBLE_KEY = "acsb_fetch_loaded_visible" as const;
 const FETCH_TOTAL_VISIBLE_KEY = "acsb_fetch_total_visible" as const;
 const FETCH_DOWNLOADING_KEY = "acsb_fetch_downloading" as const;
+const FETCH_DOWNLOADING_STARTED_KEY = "acsb_fetch_downloading_started" as const;
 const FETCH_HAS_MORE_KEY = "acsb_fetch_has_more" as const;
 const STABLE_SCROLL_ANCHOR_KEY = "acsb_stable_scroll_anchor" as const;
+const STABLE_CHUNK_DOWNLOAD_STALE_MS = 15000;
 const MAX_BATCH_LOGICAL_MESSAGES = 100;
 let stableChunkDownloadPending = false;
 let stableAppendRebalanceTimer: ReturnType<typeof setTimeout> | null = null;
@@ -209,6 +211,7 @@ function scheduleInitialScan(): void {
             refreshUI();
             const suppressInitialBottomPin = hasStableChunkScrollAnchor();
             restoreStableChunkScrollAnchor();
+            scheduleStableDownloadingRecovery();
             logger.info(`initial scan: ${existing.length} messages`);
             // Moved the log here so it runs after actually finding messages.
             setTimeout(() => {
@@ -589,6 +592,7 @@ function loadNextStableChunk(): boolean {
     try {
         localStorage.setItem(FETCH_LOADED_VISIBLE_KEY, String(nextLoaded));
         localStorage.setItem(FETCH_DOWNLOADING_KEY, "true");
+        localStorage.setItem(FETCH_DOWNLOADING_STARTED_KEY, String(Date.now()));
     } catch {
         // localStorage can be unavailable; fall back to the normal DOM reveal path.
         return false;
@@ -612,9 +616,23 @@ function readStableHasMoreHistory(): boolean {
     }
 }
 
+function scheduleStableDownloadingRecovery(): void {
+    if (!readStableChunkDownloading()) return;
+    setTimeout(() => {
+        if (readStableChunkDownloading()) return;
+        refreshUI();
+    }, STABLE_CHUNK_DOWNLOAD_STALE_MS + 250);
+}
+
 function readStableChunkDownloading(): boolean {
     try {
-        return localStorage.getItem(FETCH_DOWNLOADING_KEY) === "true";
+        if (localStorage.getItem(FETCH_DOWNLOADING_KEY) !== "true") return false;
+        const startedAt = Number(localStorage.getItem(FETCH_DOWNLOADING_STARTED_KEY) ?? "0");
+        if (!Number.isFinite(startedAt) || Date.now() - startedAt > STABLE_CHUNK_DOWNLOAD_STALE_MS) {
+            clearStableChunkDownloadPending();
+            return false;
+        }
+        return true;
     } catch {
         return false;
     }
@@ -624,6 +642,7 @@ function clearStableChunkDownloadPending(): void {
     stableChunkDownloadPending = false;
     try {
         localStorage.removeItem(FETCH_DOWNLOADING_KEY);
+        localStorage.removeItem(FETCH_DOWNLOADING_STARTED_KEY);
     } catch {
         // ignore unavailable localStorage
     }
@@ -635,6 +654,7 @@ function clearStableVirtualHistoryState(): void {
         localStorage.removeItem(FETCH_LOADED_VISIBLE_KEY);
         localStorage.removeItem(FETCH_TOTAL_VISIBLE_KEY);
         localStorage.removeItem(FETCH_DOWNLOADING_KEY);
+        localStorage.removeItem(FETCH_DOWNLOADING_STARTED_KEY);
         localStorage.removeItem(FETCH_HAS_MORE_KEY);
     } catch {
         // ignore unavailable localStorage
