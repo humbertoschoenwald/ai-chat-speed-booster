@@ -54,6 +54,8 @@ const FETCH_DOWNLOADING_STARTED_KEY = "acsb_fetch_downloading_started" as const;
 const FETCH_HAS_MORE_KEY = "acsb_fetch_has_more" as const;
 const STABLE_SCROLL_ANCHOR_KEY = "acsb_stable_scroll_anchor" as const;
 const STABLE_CHUNK_DOWNLOAD_STALE_MS = 15000;
+const STABLE_SCROLL_RESTORE_MAX_MS = 350;
+const STABLE_SCROLL_RESTORE_RETRY_MS = 75;
 const MAX_BATCH_LOGICAL_MESSAGES = 100;
 let stableChunkDownloadPending = false;
 let stableAppendRebalanceTimer: ReturnType<typeof setTimeout> | null = null;
@@ -588,7 +590,7 @@ function loadNextStableChunk(): boolean {
     const remaining = total === null ? batchElements : total - loaded;
     const nextLoaded = total === null || remaining > batchElements ? loaded + batchElements : total;
     stableChunkDownloadPending = true;
-    storeStableChunkScrollAnchor();
+    storeStableChunkScrollAnchor(nextLoaded);
     try {
         localStorage.setItem(FETCH_LOADED_VISIBLE_KEY, String(nextLoaded));
         localStorage.setItem(FETCH_DOWNLOADING_KEY, "true");
@@ -686,9 +688,16 @@ interface StableScrollAnchor {
     readonly id: string | null;
     readonly fallbackText: string;
     readonly viewportTop: number;
+    readonly requestedLoadedVisible: number;
+    readonly createdAt: number;
 }
 
-function storeStableChunkScrollAnchor(): void {
+function storeStableChunkScrollAnchor(requestedLoadedVisible: number): void {
+    try {
+        localStorage.removeItem(STABLE_SCROLL_ANCHOR_KEY);
+    } catch {
+        // ignore unavailable localStorage
+    }
     const element = findFirstVisibleMessage();
     if (!element) return;
     const layoutElement = element.closest<HTMLElement>("[data-turn-id-container]") ?? element;
@@ -699,6 +708,8 @@ function storeStableChunkScrollAnchor(): void {
             ?? element.getAttribute("data-testid"),
         fallbackText: (element.textContent ?? "").replace(/\s+/g, " ").slice(0, 160),
         viewportTop: element.getBoundingClientRect().top,
+        requestedLoadedVisible,
+        createdAt: Date.now(),
     };
     try {
         localStorage.setItem(STABLE_SCROLL_ANCHOR_KEY, JSON.stringify(anchor));
@@ -730,21 +741,44 @@ function restoreStableChunkScrollAnchor(): void {
     } catch {
         return;
     }
-    let attempts = 0;
+    const startedAt = performance.now();
+    let cancelled = false;
+    const cancelRestore = (): void => {
+        cancelled = true;
+        cleanup();
+    };
+    const cleanup = (): void => {
+        window.removeEventListener("wheel", cancelRestore, true);
+        window.removeEventListener("touchstart", cancelRestore, true);
+        window.removeEventListener("pointerdown", cancelRestore, true);
+        window.removeEventListener("keydown", cancelRestore, true);
+    };
+    window.addEventListener("wheel", cancelRestore, { capture: true, passive: true });
+    window.addEventListener("touchstart", cancelRestore, { capture: true, passive: true });
+    window.addEventListener("pointerdown", cancelRestore, true);
+    window.addEventListener("keydown", cancelRestore, true);
+
     const restore = (): void => {
+        if (cancelled) return;
         const target = findStableScrollAnchorElement(anchor);
-        if (!target && attempts++ < 8) {
-            setTimeout(restore, 100);
+        if (!target) {
+            if (performance.now() - startedAt < STABLE_SCROLL_RESTORE_MAX_MS) {
+                setTimeout(restore, STABLE_SCROLL_RESTORE_RETRY_MS);
+            } else {
+                cleanup();
+            }
             return;
         }
-        if (!target) return;
         const delta = target.getBoundingClientRect().top - anchor.viewportTop;
-        const scrollEl = domObserver.findScrollContainer();
-        if (scrollEl) {
-            scrollEl.scrollTop += delta;
-        } else {
-            window.scrollBy(0, delta);
+        if (Math.abs(delta) > 1) {
+            const scrollEl = domObserver.findScrollContainer();
+            if (scrollEl) {
+                scrollEl.scrollTop += delta;
+            } else {
+                window.scrollBy(0, delta);
+            }
         }
+        cleanup();
     };
     requestAnimationFrame(restore);
 }
