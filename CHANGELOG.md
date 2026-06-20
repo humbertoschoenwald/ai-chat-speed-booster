@@ -76,6 +76,7 @@
 
 #### Content
 
+- keep ChatGPT conversations pinned to bottom (#32) ([f6ff7e3](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/f6ff7e312f860d16c83049031c8217f2deeb1e4f)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - start ChatGPT conversations at bottom (#32) ([714276e](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/714276eaff594a98b15a154ee6fc69a67d94218c)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - isolate composer mutations ([e5e784c](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/e5e784cded816d9d29c450a3995d285a56d09de3)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - cache message queries ([e3ab1e1](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/e3ab1e1b45a1d227e83c25f3d42a2ac23a0e2856)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
