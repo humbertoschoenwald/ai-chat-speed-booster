@@ -123,6 +123,7 @@
 
 #### Popup
 
+- clarify stable native selector ([aae94c8](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/aae94c8f179fcc9343937ec9166344e4c47731a6)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - hide native mode outside chatgpt ([b085716](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/b085716fbb2fe434814cbd3f0a22539aff04960c)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - repair status regressions ([6a2408e](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/6a2408ed0649b41ad6a16223e450d3dcb78bd6d0)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - preserve Stable controls when switching Native ([faec269](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/faec26986e5431f280797165678b1ae804595ff4)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
@@ -146,6 +147,7 @@
 
 #### Stable
 
+- restore manual batch hiding boundaries ([9f80e30](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/9f80e3016ef6155a4619baa2aa1a87bb2cb21550)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - recover empty scans ([36d0f7a](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/36d0f7ab6e56116f25acc55d6bd6576c1041dc59)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - restore logical batch loading ([caed90a](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/caed90a4a82e58b5e4d76f77b76e70c936b7af8c)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - repair turn counts ([af803a1](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/af803a14e60e14e0a199766c3c7bc664458e0f46)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
