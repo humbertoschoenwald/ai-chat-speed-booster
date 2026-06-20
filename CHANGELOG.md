@@ -154,6 +154,7 @@
 
 #### Stable
 
+- anchor overlay and restore scroll ([bd8d88d](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/bd8d88d0db7da66228855f1a26fd26165bb80de6)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - preserve virtual history on small responses ([942bc4e](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/942bc4e24b338c54faa6fbf9acbd9ca808d6c320)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - restore chunk state from cache ([969b34e](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/969b34e2e8aa3a523d06f28d53208548b3427fd5)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - surface virtual hidden history ([eea5fe5](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/eea5fe55aa3d0e2a7e9bbafec8af42465231b37d)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
