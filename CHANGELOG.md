@@ -50,6 +50,11 @@
 
 ### Fixes
 
+#### Architecture
+
+- isolate native popup state ([e4ab3b8](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/e4ab3b82d31975f8581de84177f371a23dc7bd51)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
+- remove stable reload bypass ([0a06277](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/0a06277885e2e15d27fb48910ea5158355a8a98e)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
+
 #### Chatgpt
 
 - reset response cache on full load ([87fe86e](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/87fe86e3bf96a0921a2cd25b5f753d58606eb2bd)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
@@ -69,6 +74,12 @@
 
 - preserve loaded chrome extension build ([2dc73e5](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/2dc73e572c1eb81a0e94769140ff2d74898b1ccb)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 
+#### Content
+
+- isolate composer mutations ([e5e784c](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/e5e784cded816d9d29c450a3995d285a56d09de3)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
+- cache message queries ([e3ab1e1](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/e3ab1e1b45a1d227e83c25f3d42a2ac23a0e2856)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
+- reduce observer churn ([ca13789](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/ca1378965cfe22a6246d42e573db9caef6f0a5f1)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
+
 #### Counter
 
 - accept global failure elements (#30) ([2e65b27](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/2e65b27df689bf3eada1dd7a51f6741fed8a359c)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
@@ -80,6 +91,10 @@
 #### Diagnostics
 
 - bound native diagnostic details ([f45307d](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/f45307dc4d384cf960ce9fa5ba1b4b1b870df914)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
+
+#### Extension
+
+- decouple native mode and repair chatgpt regressions ([254a0d0](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/254a0d06cac843c89a7681de4e881747023cd907)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 
 #### Fast Mode
 
@@ -98,10 +113,17 @@
 
 #### Native
 
+- prioritize visible turns ([ab490c4](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/ab490c4d9791d2511ea9b7223555204c2c1c473c)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
+- reuse snapshot text hashes ([70d0b1f](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/70d0b1f6a3c6ce72aa416b1dd9fba622875fb7d5)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
+- track dirty turns ([2774c20](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/2774c20a75e215946e6c08b64ddb3d0800510cf3)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
+- restore summarized cards on input ([a9e074e](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/a9e074ea76ec78bc634aaaf7199b0289d5809dbb)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
+- guard active card states ([f4deeea](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/f4deeea476269c2035fa3ab79af448708135df53)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
+- add completed card summaries ([37aad18](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/37aad184766abedca51852fa7eed758e96c9f244)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - disable conflicting virtualization subfeature (#24) ([bab8cbc](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/bab8cbcbb8dc5d4e5fab169aa13d40dc55b30dfe)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 
 #### Popup
 
+- hide native mode outside chatgpt ([b085716](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/b085716fbb2fe434814cbd3f0a22539aff04960c)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - repair status regressions ([6a2408e](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/6a2408ed0649b41ad6a16223e450d3dcb78bd6d0)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - preserve Stable controls when switching Native ([faec269](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/faec26986e5431f280797165678b1ae804595ff4)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - restore mode-specific native controls ([5d7681e](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/5d7681ef78ef1366ed06c362109dc17c5bd32bab)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
@@ -124,6 +146,10 @@
 
 #### Stable
 
+- recover empty scans ([36d0f7a](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/36d0f7ab6e56116f25acc55d6bd6576c1041dc59)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
+- restore logical batch loading ([caed90a](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/caed90a4a82e58b5e4d76f77b76e70c936b7af8c)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
+- repair turn counts ([af803a1](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/af803a14e60e14e0a199766c3c7bc664458e0f46)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
+- correct ChatGPT turn counts ([fcdbe98](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/fcdbe987d7e9743726fd68d1dcafb37fee01a157)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - bound managed hidden turn sizing ([16edb9d](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/16edb9d74d20aff4502ab867fa52aed288b80251)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 
 #### Status
@@ -176,6 +202,7 @@
 
 #### Native
 
+- keep layout cache snapshots constant time ([94b7b0d](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/94b7b0d777539a0f584ad0de26845de33a894297)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - add ChatGPT quiet snapshots and token diagnostics ([59aab79](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/59aab79ea672a75c7b6993e07b34153802966ffd)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - add execution plan gate ([95b4918](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/95b49184563293509de81215fcd0f8f7d595a775)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - add chatgpt tuning profile ([9f07209](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/9f07209db35fa4c31c9c64e746ce37bcf26d2f44)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
@@ -251,6 +278,10 @@
 
 - add compatibility validation track ([aad54a2](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/aad54a22ee443c4e132c18002d2f55f683f3d782)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 
+#### Tests
+
+- add test typecheck config ([795a51d](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/795a51d094f6e2e61168d5f47c181a771e3e9b09)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
+
 #### Validate
 
 - speed up full extension checks ([4ae404f](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/4ae404fcb6ef49d6210b0f136678f76634a4f14e)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
@@ -297,6 +328,10 @@
 
 - split contributor guidance from README ([347e5a6](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/347e5a6247bf41d3290f27b7f1f7804ff86c735d)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 
+#### Docs
+
+- clarify browser install paths ([90fd3be](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/90fd3beb63e86dfad3d2ad2a1d2c37b2adf87c08)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
+
 #### Native
 
 - define no-hide invariant ([7b800f3](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/7b800f3af9e495856b790abab249ad22bb031952)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
@@ -310,6 +345,12 @@
 #### Chatgpt
 
 - centralize native renderer lifecycle ([fef27fe](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/fef27fefb19c91821a286a2192c6d61728764ff2)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
+
+#### Content
+
+- centralize lifecycle timers ([4ae8316](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/4ae831652151c947f3a34bd59db5431d197405df)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
+- isolate bootstrap heartbeat lease ([94d7b52](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/94d7b52e10c9549bd701b5e85ad16b45e9907e65)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
+- move status payload shaping to presenter ([ff1bc0b](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/ff1bc0b2bb35d22ab03e16b8537b677fb66f5bb1)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 
 #### Native
 
