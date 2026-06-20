@@ -152,6 +152,7 @@
 
 #### Stable
 
+- surface virtual hidden history ([eea5fe5](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/eea5fe55aa3d0e2a7e9bbafec8af42465231b37d)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - load older history in bounded chunks ([237508a](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/237508a6cec2a4baa7c78dbb62903f7efd91082f)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - auto hydrate after first trim ([f1fa09a](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/f1fa09ae0fa944916271c055dd04c38330fa526a)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - hydrate full chat after initial trim ([ffda412](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/ffda4128e880a01bc6ec2e19527db82f31d305e6)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
