@@ -85,15 +85,10 @@ const PREFIX = "[ACSB Fetch]";
  * ISOLATED world synchronously.
  */
 const TRIMMED_ATTR = "data-acsb-trimmed";
-const BYPASS_TRIM_UNTIL_KEY = "acsb_fetch_bypass_until";
-const HYDRATION_PENDING_KEY = "acsb_fetch_hydration_pending";
-const FULL_HYDRATION_WINDOW_MS = 15000;
-let fullHydrationReloadScheduled = false;
-/**
- * Stable fast loading keeps only the configured initial window in the response.
- * Manual older batches operate on DOM that is already present, not extra API buffer.
- */
-const BUFFER_ROUNDS = 0;
+const LOADED_VISIBLE_KEY = "acsb_fetch_loaded_visible";
+const TOTAL_VISIBLE_KEY = "acsb_fetch_total_visible";
+const DOWNLOADING_KEY = "acsb_fetch_downloading";
+
 
 /**
  * In-memory LRU cache for the last N trimmed conversation responses.
@@ -197,12 +192,10 @@ function cacheGet(key: string): CachedResponse | undefined {
 
         // Clear stale trim telemetry before this response decides whether it trimmed.
         document.documentElement.removeAttribute(TRIMMED_ATTR);
-        if (shouldBypassTrim()) return cacheUntrimmedResponse(url, await originalFetch.call(this, input, init));
 
         // The fetch limit is expressed in logical messages, then projected to
         // provider API nodes with the site-owned message unit metadata.
-        const fetchLimit = (settings.visibleMessageLimit
-            + (settings.loadMoreBatchSize * BUFFER_ROUNDS)) * elementsPerLogicalMessage(site);
+        const fetchLimit = readFetchLimit(settings, site);
 
         if (__DEV__) console.debug(PREFIX, "intercepting", method, url,
             `(fetchLimit=${fetchLimit})`);
@@ -213,6 +206,8 @@ function cacheGet(key: string): CachedResponse | undefined {
             if (__DEV__) console.debug(PREFIX, "serving from cache", url);
             if (cached.trimmed) {
                 document.documentElement.setAttribute(TRIMMED_ATTR, "true");
+            } else {
+                clearChunkState();
             }
             const headers = new Headers(cached.headers);
             const cachedRes = new Response(cached.body, {
@@ -252,7 +247,6 @@ function cacheGet(key: string): CachedResponse | undefined {
 
             // Signal to the content script that messages were removed.
             document.documentElement.setAttribute(TRIMMED_ATTR, "true");
-            scheduleFullHydrationReload();
 
             const trimmedBody = JSON.stringify(trimmed);
 
@@ -293,38 +287,52 @@ function cacheGet(key: string): CachedResponse | undefined {
         };
     }
 
-    function scheduleFullHydrationReload(): void {
-        if (fullHydrationReloadScheduled) return;
-        fullHydrationReloadScheduled = true;
-        try {
-            localStorage.setItem(HYDRATION_PENDING_KEY, "true");
-            localStorage.setItem(BYPASS_TRIM_UNTIL_KEY, String(Date.now() + FULL_HYDRATION_WINDOW_MS));
-        } catch {
-            // localStorage can be unavailable; keep the trimmed first paint.
-        }
-        setTimeout(() => window.location.reload(), 650);
+
+    function readFetchLimit(settings: BridgeSettings, entry: SiteEntry): number {
+        const unitSize = elementsPerLogicalMessage(entry);
+        const initialLimit = Math.max(1, Math.floor(settings.visibleMessageLimit)) * unitSize;
+        const storedLimit = readNumber(LOADED_VISIBLE_KEY);
+        return Math.max(initialLimit, storedLimit ?? initialLimit);
     }
 
-    function shouldBypassTrim(): boolean {
+    function readNumber(key: string): number | null {
         try {
-            const until = Number(localStorage.getItem(BYPASS_TRIM_UNTIL_KEY) ?? "0");
-            if (!Number.isFinite(until) || until <= Date.now()) {
-                localStorage.removeItem(BYPASS_TRIM_UNTIL_KEY);
-                return false;
-            }
-            return true;
+            const value = Number(localStorage.getItem(key) ?? "");
+            return Number.isFinite(value) && value > 0 ? Math.floor(value) : null;
         } catch {
-            return false;
+            return null;
         }
+    }
+
+    function recordChunkState(totalVisible: number, loadedVisible: number): void {
+        try {
+            localStorage.setItem(TOTAL_VISIBLE_KEY, String(totalVisible));
+            localStorage.setItem(LOADED_VISIBLE_KEY, String(loadedVisible));
+            localStorage.removeItem(DOWNLOADING_KEY);
+            document.documentElement.setAttribute("data-acsb-virtual-total", String(totalVisible));
+            document.documentElement.setAttribute("data-acsb-virtual-loaded", String(loadedVisible));
+        } catch {
+            // localStorage can be unavailable; DOM attributes still cover this paint.
+            document.documentElement.setAttribute("data-acsb-virtual-total", String(totalVisible));
+            document.documentElement.setAttribute("data-acsb-virtual-loaded", String(loadedVisible));
+        }
+    }
+
+    function clearChunkState(): void {
+        try {
+            localStorage.removeItem(TOTAL_VISIBLE_KEY);
+            localStorage.removeItem(LOADED_VISIBLE_KEY);
+            localStorage.removeItem(DOWNLOADING_KEY);
+        } catch {
+            // localStorage can be unavailable; cache still works in memory.
+        }
+        document.documentElement.removeAttribute("data-acsb-virtual-total");
+        document.documentElement.removeAttribute("data-acsb-virtual-loaded");
     }
 
     async function cacheUntrimmedResponse(url: string, response: Response, body?: string): Promise<Response> {
         if (!response.ok) return response;
-        try {
-            localStorage.removeItem(HYDRATION_PENDING_KEY);
-        } catch {
-            // localStorage can be unavailable; cache still works in memory.
-        }
+        clearChunkState();
         const text = body ?? await response.clone().text();
         cachePut(url, {
             body: text,
@@ -492,6 +500,7 @@ function cacheGet(key: string): CachedResponse | undefined {
         if (tc.rootKey)
             result[tc.rootKey] = keptChain[0] ?? currentNodeId;
 
+        recordChunkState(totalVisible, limit);
         return result;
     }
 
@@ -549,6 +558,7 @@ function cacheGet(key: string): CachedResponse | undefined {
 
         const result = { ...data };
         result[ac.messagesKey] = newMessages;
+        recordChunkState(visibleIndices.length, limit);
         return result;
     }
 })();

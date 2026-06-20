@@ -34,7 +34,7 @@ export const FAST_MODE_RESET_KEY = "acsb_fast_mode_reset_v1" as const;
 
 export const CONFIG_LIMITS = Object.freeze({
     visibleMessageLimit: { min: 1, max: 200 },
-    loadMoreBatchSize: { min: 1, max: 50 },
+    loadMoreBatchSize: { min: 1, max: 100 },
     weeklyRequestLimit: { min: 0, max: 99999 },
 });
 

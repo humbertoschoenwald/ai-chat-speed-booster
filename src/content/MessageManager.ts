@@ -81,12 +81,16 @@ export class MessageManager {
         logger.debug(`initialised with ${this.messages.length} messages`);
     }
 
-    addMessages(elements: HTMLElement[]): void {
+    addMessages(elements: HTMLElement[], deferVisibilityRebalance = false): void {
         for (const el of elements) {
             if (this.elementMap.has(el)) continue;
             this.trackElement(el);
         }
         this.sortMessagesByDomOrder();
+        if (!deferVisibilityRebalance) this.recalculateVisibility();
+    }
+
+    rebalanceVisibility(): void {
         this.recalculateVisibility();
     }
 

@@ -47,11 +47,12 @@ let contentLifecycleState: ContentLifecycleState = "initializing";
 let contentLastUiRefreshAt: number | null = null;
 let contentLastRecoverableErrorClass: string | null = null;
 const FETCH_TRIMMED_ATTR = "data-acsb-trimmed" as const;
-const FETCH_BYPASS_UNTIL_KEY = "acsb_fetch_bypass_until" as const;
-const FETCH_HYDRATION_PENDING_KEY = "acsb_fetch_hydration_pending" as const;
-const STABLE_FULL_HYDRATION_WINDOW_MS = 15000;
-let stableFullHydrationScheduled = false;
-let stableFullHydrationPending = false;
+const FETCH_LOADED_VISIBLE_KEY = "acsb_fetch_loaded_visible" as const;
+const FETCH_TOTAL_VISIBLE_KEY = "acsb_fetch_total_visible" as const;
+const FETCH_DOWNLOADING_KEY = "acsb_fetch_downloading" as const;
+const MAX_BATCH_LOGICAL_MESSAGES = 100;
+let stableChunkDownloadPending = false;
+let stableAppendRebalanceTimer: ReturnType<typeof setTimeout> | null = null;
 
 type EditorLatencyGuardPort = {
     start(): void;
@@ -249,7 +250,9 @@ function scheduleInitialScan(): void {
 function handleMessagesAdded(elements: HTMLElement[]): void {
     nativeModeController?.protectBackgroundWork("messages-added", 1_000);
     chatGptRuntime?.invalidateTurnVisibility();
-    messageManager.addMessages(elements);
+    const deferStableRebalance = config.performanceMode === "legacy" && contentLifecycleState === "active";
+    messageManager.addMessages(elements, deferStableRebalance);
+    if (deferStableRebalance) scheduleStableAppendRebalance();
     refreshUI();
     countNewUserRequests(elements);
 }
@@ -457,6 +460,7 @@ function handleExtensionMessage(message: unknown): ExtensionStatus | undefined {
  * Exhausted stable batches hide the control; they never trigger a page reload.
  */
 function handleLoadMore(): void {
+    if (loadNextStableChunk()) return;
     const previousFirstVisible = findFirstVisibleMessage();
     const previousTop = previousFirstVisible?.getBoundingClientRect().top ?? null;
     const revealed = messageManager.loadMore();
@@ -506,29 +510,21 @@ function refreshUI(): void {
             }
         }
 
-        const fetchWasTrimmed = document.documentElement.hasAttribute(FETCH_TRIMMED_ATTR)
-            || readStableHydrationPending();
-        if (fetchWasTrimmed) {
-            stableFullHydrationPending = true;
-            scheduleStableFullHydration();
+        if (document.documentElement.hasAttribute(FETCH_TRIMMED_ATTR)) {
             document.documentElement.removeAttribute(FETCH_TRIMMED_ATTR);
         }
+        const virtualHiddenMessages = readStableVirtualHiddenMessages();
+        const effectiveHiddenMessages = Math.max(status.hiddenMessages, virtualHiddenMessages);
+        const downloading = stableChunkDownloadPending || readStableChunkDownloading();
 
-        if (status.hiddenMessages > 0 && config.enabled) {
-            stableFullHydrationPending = false;
-            clearStableHydrationPending();
+        if (effectiveHiddenMessages > 0 && config.enabled) {
             const firstVisible = findFirstVisibleMessage();
             const container = firstVisible?.parentElement ?? findMessageContainer();
             if (container) {
-                loadMoreButton.show(container, firstVisible, status.hiddenMessages, config.loadMoreBatchSize);
-            }
-        } else if (stableFullHydrationPending && config.enabled) {
-            const firstVisible = findFirstVisibleMessage();
-            const container = firstVisible?.parentElement ?? findMessageContainer();
-            if (container) {
-                loadMoreButton.show(container, firstVisible, 0, config.loadMoreBatchSize, true);
+                loadMoreButton.show(container, firstVisible, effectiveHiddenMessages, config.loadMoreBatchSize, downloading);
             }
         } else {
+            clearStableChunkDownloadPending();
             loadMoreButton.hide();
         }
 
@@ -559,34 +555,71 @@ function cancelDeliveryTimeoutRefresh(): void {
     reloadCoordinator.cancelDeliveryTimeoutRefresh();
 }
 
-function scheduleStableFullHydration(): void {
-    if (stableFullHydrationScheduled || config.performanceMode !== "legacy") return;
-    stableFullHydrationScheduled = true;
-    try {
-        localStorage.setItem(
-            FETCH_BYPASS_UNTIL_KEY,
-            String(Date.now() + STABLE_FULL_HYDRATION_WINDOW_MS),
-        );
-    } catch {
-        // localStorage can be unavailable; the user can still refresh manually.
-    }
-    setTimeout(() => window.location.reload(), 650);
+function readStableVirtualHiddenMessages(): number {
+    const total = readStableChunkNumber(FETCH_TOTAL_VISIBLE_KEY);
+    const loaded = readStableChunkNumber(FETCH_LOADED_VISIBLE_KEY);
+    if (total === null || loaded === null) return 0;
+    const unitSize = currentSite.messageUnit?.elementsPerMessage ?? 1;
+    return Math.max(0, Math.ceil((total - loaded) / Math.max(1, unitSize)));
 }
 
-function readStableHydrationPending(): boolean {
+function loadNextStableChunk(): boolean {
+    const total = readStableChunkNumber(FETCH_TOTAL_VISIBLE_KEY);
+    const loaded = readStableChunkNumber(FETCH_LOADED_VISIBLE_KEY);
+    if (total === null || loaded === null || loaded >= total) return false;
+    const unitSize = Math.max(1, currentSite.messageUnit?.elementsPerMessage ?? 1);
+    let batchMessages = Math.min(MAX_BATCH_LOGICAL_MESSAGES, Math.max(1, Math.floor(config.loadMoreBatchSize)));
+    if (batchMessages % 2 !== 0) batchMessages = Math.min(MAX_BATCH_LOGICAL_MESSAGES, batchMessages + 1);
+    const batchElements = batchMessages * unitSize;
+    const remaining = total - loaded;
+    const nextLoaded = remaining <= batchElements ? total : loaded + batchElements;
+    stableChunkDownloadPending = true;
     try {
-        return localStorage.getItem(FETCH_HYDRATION_PENDING_KEY) === "true";
+        localStorage.setItem(FETCH_LOADED_VISIBLE_KEY, String(nextLoaded));
+        localStorage.setItem(FETCH_DOWNLOADING_KEY, "true");
+    } catch {
+        // localStorage can be unavailable; fall back to the normal DOM reveal path.
+        return false;
+    }
+    refreshUI();
+    setTimeout(() => window.location.reload(), 120);
+    return true;
+}
+
+function readStableChunkDownloading(): boolean {
+    try {
+        return localStorage.getItem(FETCH_DOWNLOADING_KEY) === "true";
     } catch {
         return false;
     }
 }
 
-function clearStableHydrationPending(): void {
+function clearStableChunkDownloadPending(): void {
+    stableChunkDownloadPending = false;
     try {
-        localStorage.removeItem(FETCH_HYDRATION_PENDING_KEY);
+        localStorage.removeItem(FETCH_DOWNLOADING_KEY);
     } catch {
         // ignore unavailable localStorage
     }
+}
+
+function readStableChunkNumber(key: string): number | null {
+    try {
+        const attr = key === FETCH_TOTAL_VISIBLE_KEY ? "data-acsb-virtual-total" : "data-acsb-virtual-loaded";
+        const value = Number(localStorage.getItem(key) ?? document.documentElement.getAttribute(attr) ?? "");
+        return Number.isFinite(value) && value > 0 ? Math.floor(value) : null;
+    } catch {
+        return null;
+    }
+}
+
+function scheduleStableAppendRebalance(): void {
+    if (stableAppendRebalanceTimer) clearTimeout(stableAppendRebalanceTimer);
+    stableAppendRebalanceTimer = setTimeout(() => {
+        stableAppendRebalanceTimer = null;
+        messageManager.rebalanceVisibility();
+        refreshUI();
+    }, 1800);
 }
 
 function findFirstVisibleMessage(): HTMLElement | null {
@@ -626,6 +659,8 @@ window.addEventListener("beforeunload", () => {
     if (!bootstrapLease.ownsBootstrap()) return;
     contentLifecycleState = "stopped";
     timers.clearAll();
+    if (stableAppendRebalanceTimer) clearTimeout(stableAppendRebalanceTimer);
+    stableAppendRebalanceTimer = null;
     reloadCoordinator.dispose();
     window.removeEventListener("pageshow", handlePageResume);
     window.removeEventListener("focus", handleWindowFocus);

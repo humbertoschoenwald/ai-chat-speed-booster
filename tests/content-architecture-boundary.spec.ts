@@ -135,16 +135,17 @@ test("Stable fetch policy keeps the initial render bounded", () => {
     expect(bridgeSource).toContain('fetchInterceptEnabled: performanceMode === "native" ? false : true');
     expect(policySource).toContain("fetchInterceptEnabled: true");
     expect(fetchSource).toContain("const RESPONSE_CACHE_MAX = 5");
-    expect(fetchSource).toContain("acsb_fetch_bypass_until");
-    expect(fetchSource).toContain("acsb_fetch_hydration_pending");
+    expect(fetchSource).toContain("acsb_fetch_loaded_visible");
+    expect(fetchSource).toContain("acsb_fetch_total_visible");
 });
 
-test("Stable trimmed first paint hydrates the full conversation automatically", () => {
+test("Stable trimmed history loads older messages in bounded chunks", () => {
     const contentSource = readFileSync(path.resolve("src/content/index.ts"), "utf8");
     const uiSource = readFileSync(path.resolve("src/content/UIComponents.ts"), "utf8");
 
-    expect(contentSource).toContain("scheduleStableFullHydration");
-    expect(contentSource).toContain("window.location.reload()");
+    expect(contentSource).toContain("MAX_BATCH_LOGICAL_MESSAGES = 100");
+    expect(contentSource).toContain("loadNextStableChunk");
+    expect(contentSource).toContain("remaining <= batchElements ? total : loaded + batchElements");
     expect(uiSource).toContain("Downloading…");
 });
 
