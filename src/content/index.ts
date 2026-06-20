@@ -156,7 +156,7 @@ function scheduleInitialScan(): void {
             // infinite-scroller element).  ChatGPT and Claude manage their own
             // scroll position and will fight a forced scroll, causing layout
             // issues or even triggering a full re-render.
-            if (currentSite.isDynamic) {
+            if (currentSite.id === "chatgpt" || currentSite.isDynamic) {
                 requestAnimationFrame(() => {
                     const scrollEl = domObserver.findScrollContainer();
                     if (scrollEl) {

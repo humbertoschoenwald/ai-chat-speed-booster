@@ -9,7 +9,7 @@
             "*://chatgpt.com/*"
         ],
         "selectors": {
-            "messageTurn": "[data-turn-id-container], section[data-testid^=\"conversation-turn-\"]",
+            "messageTurn": "section[data-testid^=\"conversation-turn-\"]",
             "scrollContainer": "div[data-scroll-root]",
             "scrollContainerAlt": "main",
             "userMessageSelector": "[data-message-author-role=\"user\"]",

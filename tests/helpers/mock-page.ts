@@ -42,7 +42,7 @@ function parseMessageSelector(selector: string): ParsedAttr {
 export function getMessageTestAttr(site: SiteConfig): { attr: string; prefix: string } {
     switch (site.id) {
         case "chatgpt":
-            return { attr: "data-turn-id-container", prefix: "msg-" };
+            return { attr: "data-testid", prefix: "conversation-turn-" };
         case "claude":
             return { attr: "data-test-render-count", prefix: "" };
         case "gemini":

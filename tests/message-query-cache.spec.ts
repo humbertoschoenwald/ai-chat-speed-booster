@@ -17,7 +17,7 @@ test("message query cache deduplicates nested ChatGPT turn wrappers", () => {
     try {
         const cache = new MessageQueryCache();
         const turns = cache.queryTurns({
-            messageTurn: '[data-turn-id-container], section[data-testid^="conversation-turn-"]',
+            messageTurn: 'section[data-testid^="conversation-turn-"]',
             scrollContainer: "main",
         }, "/c/fixture");
 
