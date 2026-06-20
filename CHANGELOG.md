@@ -310,6 +310,10 @@
 
 - add compatibility validation track ([aad54a2](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/aad54a22ee443c4e132c18002d2f55f683f3d782)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 
+#### Stable
+
+- lock ChatGPT reviewed behavior ([bd17831](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/bd17831d443a167a42f31c16811e2d4e8654e510)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
+
 #### Tests
 
 - add test typecheck config ([795a51d](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/795a51d094f6e2e61168d5f47c181a771e3e9b09)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
