@@ -123,6 +123,7 @@
 
 #### Popup
 
+- remove stable window control ([58527d6](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/58527d663a7e71972a1cf52cae7bf164343de2b2)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - clarify stable native selector ([aae94c8](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/aae94c8f179fcc9343937ec9166344e4c47731a6)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - hide native mode outside chatgpt ([b085716](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/b085716fbb2fe434814cbd3f0a22539aff04960c)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - repair status regressions ([6a2408e](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/6a2408ed0649b41ad6a16223e450d3dcb78bd6d0)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
