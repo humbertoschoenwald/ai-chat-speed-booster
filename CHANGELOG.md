@@ -154,6 +154,7 @@
 
 #### Stable
 
+- remove chunk reload path ([09224af](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/09224af73da8a7661449e2ebf94c91f58d35ca27)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - reveal loaded DOM before chunk reload ([2a63a66](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/2a63a66651032954369cad25f2c38410bbfc1e38)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - keep ephemeral chunk window across batches ([79b5a16](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/79b5a1681ea4f6f14a1936eb813b48ff4a7d32f5)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - remove persistent cache state ([7a1e306](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/7a1e3065591871a9736ead0e11a494be344170d9)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
