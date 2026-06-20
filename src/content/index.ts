@@ -469,7 +469,9 @@ function handleExtensionMessage(message: unknown): ExtensionStatus | undefined {
  * Exhausted stable batches hide the control; they never trigger a page reload.
  */
 function handleLoadMore(): void {
-    if (loadNextStableChunk()) return;
+    clearStableChunkScrollAnchor();
+    const clickedAnchor = captureStableChunkScrollAnchor();
+    if (loadNextStableChunk(clickedAnchor)) return;
     const previousFirstVisible = findFirstVisibleMessage();
     const previousTop = previousFirstVisible?.getBoundingClientRect().top ?? null;
     const revealed = messageManager.loadMore();
@@ -578,7 +580,7 @@ function readStableVirtualHiddenMessages(): number {
     return readStableHasMoreHistory() ? normaliseStableBatchSize() : 0;
 }
 
-function loadNextStableChunk(): boolean {
+function loadNextStableChunk(clickedAnchor: StableScrollAnchor | null): boolean {
     if (config.performanceMode !== "legacy") return false;
     const total = readStableChunkNumber(FETCH_TOTAL_VISIBLE_KEY);
     const unitSize = Math.max(1, currentSite.messageUnit?.elementsPerMessage ?? 1);
@@ -589,8 +591,9 @@ function loadNextStableChunk(): boolean {
     const batchElements = batchMessages * unitSize;
     const remaining = total === null ? batchElements : total - loaded;
     const nextLoaded = total === null || remaining > batchElements ? loaded + batchElements : total;
+    if (!clickedAnchor) return false;
     stableChunkDownloadPending = true;
-    storeStableChunkScrollAnchor(nextLoaded);
+    storeStableChunkScrollAnchor(clickedAnchor, nextLoaded);
     try {
         localStorage.setItem(FETCH_LOADED_VISIBLE_KEY, String(nextLoaded));
         localStorage.setItem(FETCH_DOWNLOADING_KEY, "true");
@@ -692,35 +695,46 @@ interface StableScrollAnchor {
     readonly createdAt: number;
 }
 
-function storeStableChunkScrollAnchor(requestedLoadedVisible: number): void {
-    try {
-        localStorage.removeItem(STABLE_SCROLL_ANCHOR_KEY);
-    } catch {
-        // ignore unavailable localStorage
-    }
+function captureStableChunkScrollAnchor(): StableScrollAnchor | null {
     const element = findFirstVisibleMessage();
-    if (!element) return;
+    if (!element) return null;
     const layoutElement = element.closest<HTMLElement>("[data-turn-id-container]") ?? element;
-    const anchor: StableScrollAnchor = {
+    return {
         id: layoutElement.getAttribute("data-turn-id")
             ?? layoutElement.getAttribute("data-testid")
             ?? element.getAttribute("data-turn-id")
             ?? element.getAttribute("data-testid"),
         fallbackText: (element.textContent ?? "").replace(/\s+/g, " ").slice(0, 160),
         viewportTop: element.getBoundingClientRect().top,
+        requestedLoadedVisible: 0,
+        createdAt: Date.now(),
+    };
+}
+
+function storeStableChunkScrollAnchor(clickedAnchor: StableScrollAnchor, requestedLoadedVisible: number): void {
+    const anchor: StableScrollAnchor = {
+        ...clickedAnchor,
         requestedLoadedVisible,
         createdAt: Date.now(),
     };
     try {
-        localStorage.setItem(STABLE_SCROLL_ANCHOR_KEY, JSON.stringify(anchor));
+        sessionStorage.setItem(STABLE_SCROLL_ANCHOR_KEY, JSON.stringify(anchor));
     } catch {
-        // ignore unavailable localStorage
+        // ignore unavailable sessionStorage
+    }
+}
+
+function clearStableChunkScrollAnchor(): void {
+    try {
+        sessionStorage.removeItem(STABLE_SCROLL_ANCHOR_KEY);
+    } catch {
+        // ignore unavailable sessionStorage
     }
 }
 
 function hasStableChunkScrollAnchor(): boolean {
     try {
-        return localStorage.getItem(STABLE_SCROLL_ANCHOR_KEY) !== null;
+        return sessionStorage.getItem(STABLE_SCROLL_ANCHOR_KEY) !== null;
     } catch {
         return false;
     }
@@ -729,8 +743,8 @@ function hasStableChunkScrollAnchor(): boolean {
 function restoreStableChunkScrollAnchor(): void {
     let raw: string | null = null;
     try {
-        raw = localStorage.getItem(STABLE_SCROLL_ANCHOR_KEY);
-        if (raw) localStorage.removeItem(STABLE_SCROLL_ANCHOR_KEY);
+        raw = sessionStorage.getItem(STABLE_SCROLL_ANCHOR_KEY);
+        if (raw) sessionStorage.removeItem(STABLE_SCROLL_ANCHOR_KEY);
     } catch {
         return;
     }

@@ -170,7 +170,10 @@ test("Stable chunk scroll restore suppresses ChatGPT bottom pinning", () => {
     expect(contentSource).toContain("STABLE_CHUNK_DOWNLOAD_STALE_MS");
     expect(contentSource).toContain("scheduleStableDownloadingRecovery");
     expect(contentSource).toContain("STABLE_SCROLL_RESTORE_MAX_MS = 350");
-    expect(contentSource).toContain("storeStableChunkScrollAnchor(nextLoaded)");
+    expect(contentSource).toContain("clearStableChunkScrollAnchor()");
+    expect(contentSource).toContain("captureStableChunkScrollAnchor()");
+    expect(contentSource).toContain("storeStableChunkScrollAnchor(clickedAnchor, nextLoaded)");
+    expect(contentSource).toContain("sessionStorage.setItem(STABLE_SCROLL_ANCHOR_KEY");
     expect(contentSource).toContain("window.addEventListener(\"wheel\", cancelRestore");
 });
 
