@@ -114,20 +114,25 @@ for (const site of SITES) {
         });
 
         if (site.id === "chatgpt") {
-            test("Load More anchors directly before the first visible turn", async ({ page }) => {
+            test("Load More renders as a fixed ChatGPT overlay", async ({ page }) => {
                 await loadMockPage(page);
 
                 const placement = await page.evaluate(() => {
-                    const wrapper = document.querySelector(".acsb-load-more-wrapper");
-                    const firstVisible = Array.from(document.querySelectorAll("section[data-testid^='conversation-turn-']"))
-                        .find((element) => !element.closest(".acsb-hidden"));
+                    const wrapper = document.querySelector<HTMLElement>(".acsb-load-more-wrapper");
                     return {
-                        sameParent: wrapper?.parentElement === firstVisible?.parentElement,
-                        wrapperBeforeVisible: wrapper?.nextElementSibling === firstVisible,
+                        parentIsBody: wrapper?.parentElement === document.body,
+                        position: wrapper ? getComputedStyle(wrapper).position : null,
+                        top: wrapper?.style.top,
+                        right: wrapper?.style.right,
                     };
                 });
 
-                expect(placement).toEqual({ sameParent: true, wrapperBeforeVisible: true });
+                expect(placement).toEqual({
+                    parentIsBody: true,
+                    position: "fixed",
+                    top: "52px",
+                    right: "116px",
+                });
             });
 
             test("hidden ChatGPT turns collapse their outer layout wrappers", async ({ page }) => {

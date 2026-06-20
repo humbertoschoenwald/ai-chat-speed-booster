@@ -157,6 +157,7 @@ test("Stable virtual history is isolated from Native Mode", () => {
 
     expect(contentSource).toContain('const stableVirtualHistoryEnabled = config.performanceMode === "legacy"');
     expect(contentSource).toContain("stableVirtualHistoryEnabled ? readStableVirtualHiddenMessages() : 0");
+    expect(contentSource).toContain('effectiveHiddenMessages > 0 && config.enabled && config.performanceMode === "legacy"');
     expect(contentSource).toContain("clearStableVirtualHistoryState");
 });
 

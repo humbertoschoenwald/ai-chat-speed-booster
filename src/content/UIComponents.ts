@@ -67,6 +67,13 @@ export class LoadMoreButton {
 
         this.updateLabel();
 
+        if (this.usesFixedOverlay()) {
+            this.applyFixedOverlayPlacement();
+            document.body.appendChild(this.container);
+            return;
+        }
+
+        this.applyInlinePlacement();
         if (
             firstVisibleElement &&
             firstVisibleElement.parentElement === anchorParent
@@ -89,6 +96,48 @@ export class LoadMoreButton {
     destroy(): void {
         this.hide();
         this.container = null;
+    }
+
+    private usesFixedOverlay(): boolean {
+        return this.siteConfig.id === "chatgpt";
+    }
+
+    private applyFixedOverlayPlacement(): void {
+        if (!this.container) return;
+        Object.assign(this.container.style, {
+            position: "fixed",
+            top: "52px",
+            right: "116px",
+            zIndex: "2147483646",
+            display: "flex",
+            alignSelf: "auto",
+            justifyContent: "center",
+            alignItems: "center",
+            padding: "0",
+            margin: "0",
+            borderRadius: "999px",
+            background: "transparent",
+            pointerEvents: "auto",
+        } satisfies Partial<CSSStyleDeclaration>);
+    }
+
+    private applyInlinePlacement(): void {
+        if (!this.container) return;
+        Object.assign(this.container.style, {
+            position: "static",
+            top: "auto",
+            right: "auto",
+            zIndex: "auto",
+            display: "flex",
+            alignSelf: "stretch",
+            justifyContent: "center",
+            alignItems: "center",
+            padding: "10px 12px",
+            margin: this.siteConfig.ui?.loadMoreMargin ?? "4px 0",
+            borderRadius: "12px",
+            background: "transparent",
+            pointerEvents: "auto",
+        } satisfies Partial<CSSStyleDeclaration>);
     }
 
     private createElement(): HTMLElement {

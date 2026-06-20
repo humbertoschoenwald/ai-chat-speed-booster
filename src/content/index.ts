@@ -522,7 +522,7 @@ function refreshUI(): void {
         const downloading = stableVirtualHistoryEnabled
             && (stableChunkDownloadPending || readStableChunkDownloading());
 
-        if (effectiveHiddenMessages > 0 && config.enabled) {
+        if (effectiveHiddenMessages > 0 && config.enabled && config.performanceMode === "legacy") {
             const firstVisible = findFirstVisibleMessage();
             const container = firstVisible?.parentElement ?? findMessageContainer();
             if (container) {
