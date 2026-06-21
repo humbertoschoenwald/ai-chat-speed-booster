@@ -416,6 +416,10 @@
 - add changelog updater ([86bddc9](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/86bddc9644ef4773fce35e00581621044aac84fd)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - improve client readiness ([041ac47](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/041ac47e3d569de3d6e0f172df7a44c3feceb62c)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 
+#### Sites
+
+- mark nonfunctional stable targets ([4ae90f5](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/4ae90f55b6e3dcd5db3d3aea1aa0151794882b01)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
+
 ### Other
 
 - Update version numbers for Chrome and Firefox links ([4eeb4e1](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/4eeb4e15b7042a225dbffe38225d331abd2b6f01)) by **[Noah Thiering (@Noah4ever)](https://github.com/Noah4ever)**
