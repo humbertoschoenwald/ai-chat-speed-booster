@@ -45,7 +45,8 @@ const requestCountReset = document.getElementById("request-count-reset") as HTML
 const toggleDeliveryTimeoutRefresh = document.getElementById("toggle-delivery-timeout-refresh") as HTMLInputElement;
 const modeStableButton = document.getElementById("mode-stable") as HTMLButtonElement;
 const modeNativeButton = document.getElementById("mode-native") as HTMLButtonElement;
-const modeButtons = [modeStableButton, modeNativeButton] as const;
+const modeExtremeButton = document.getElementById("mode-extreme") as HTMLButtonElement;
+const modeButtons = [modeStableButton, modeNativeButton, modeExtremeButton] as const;
 const nativeModeSetting = document.querySelector(".setting--mode") as HTMLElement;
 const performanceModeHint = document.getElementById("performance-mode-hint") as HTMLElement;
 const nativeDiagnosticsBody = document.getElementById("native-diagnostics-body") as HTMLElement;
@@ -138,7 +139,7 @@ async function init(): Promise<void> {
 
 function renderPerformanceMode(mode: PerformanceMode, status?: ExtensionStatus): void {
     const nativeSupported = shouldShowNativeModeControl(currentSiteId);
-    const effectiveMode: PerformanceMode = nativeSupported ? (status?.performanceMode ?? mode) : "legacy";
+    const effectiveMode: PerformanceMode = mode === "extreme" ? "extreme" : nativeSupported ? (status?.performanceMode ?? mode) : "legacy";
 
     nativeModeSetting.hidden = false;
     modeButtons.forEach((button) => {
@@ -154,10 +155,10 @@ function renderPerformanceMode(mode: PerformanceMode, status?: ExtensionStatus):
         panel.hidden = effectiveMode !== "native";
     });
     legacyControls.forEach((control) => {
-        control.hidden = effectiveMode === "native";
+        control.hidden = effectiveMode === "native" || effectiveMode === "extreme";
     });
     legacyControlInputs.forEach((input) => {
-        input.disabled = effectiveMode === "native";
+        input.disabled = effectiveMode === "native" || effectiveMode === "extreme";
     });
     // Stable hiding is always enforced by runtime policy.
     modeNativeButton.disabled = true;

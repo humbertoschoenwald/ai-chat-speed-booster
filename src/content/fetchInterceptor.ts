@@ -28,6 +28,7 @@ declare const __DEV__: boolean;
 interface BridgeSettings {
     enabled: boolean;
     fetchInterceptEnabled: boolean;
+    performanceMode?: "legacy" | "native" | "extreme";
     visibleMessageLimit: number;
     loadMoreBatchSize: number;
 }
@@ -217,6 +218,7 @@ const DOWNLOADING_KEY = "acsb_fetch_downloading";
             enabled: true,
             fetchInterceptEnabled: true,
             visibleMessageLimit: 3,
+            performanceMode: "legacy",
             loadMoreBatchSize: 3,
         };
     }
@@ -224,6 +226,7 @@ const DOWNLOADING_KEY = "acsb_fetch_downloading";
 
     function readFetchLimit(settings: BridgeSettings, entry: SiteEntry): number {
         const unitSize = elementsPerLogicalMessage(entry);
+        if (settings.performanceMode === "extreme") return unitSize;
         const initialLimit = Math.max(1, Math.floor(settings.visibleMessageLimit)) * unitSize;
         const requestedLimit = readSessionNumber(LOADED_VISIBLE_KEY);
         return Math.max(initialLimit, requestedLimit ?? initialLimit);

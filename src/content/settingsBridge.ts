@@ -13,7 +13,7 @@ const BRIDGE_KEY = "acsb_bridge_config";
 interface BridgePayload {
     schemaVersion: 1;
     enabled: boolean;
-    performanceMode: "legacy" | "native";
+    performanceMode: "legacy" | "native" | "extreme";
     fetchInterceptEnabled: boolean;
     visibleMessageLimit: number;
     loadMoreBatchSize: number;
@@ -25,18 +25,23 @@ function nativeModeAllowedHere(): boolean {
 
 function writeBridge(raw: Record<string, unknown> | undefined): void {
     const requestedNative = raw?.performanceMode === "native";
-    const performanceMode = requestedNative && nativeModeAllowedHere() ? "native" : "legacy";
+    const requestedExtreme = raw?.performanceMode === "extreme";
+    const performanceMode = requestedExtreme
+        ? "extreme"
+        : requestedNative && nativeModeAllowedHere() ? "native" : "legacy";
     const payload: BridgePayload = {
         schemaVersion: 1,
         enabled: typeof raw?.enabled === "boolean" ? raw.enabled : true,
         performanceMode,
-        fetchInterceptEnabled: false,
-        visibleMessageLimit:
-            typeof raw?.visibleMessageLimit === "number"
+        fetchInterceptEnabled: performanceMode === "extreme",
+        visibleMessageLimit: performanceMode === "extreme"
+            ? 1
+            : typeof raw?.visibleMessageLimit === "number"
                 ? raw.visibleMessageLimit
                 : 3,
-        loadMoreBatchSize:
-            typeof raw?.loadMoreBatchSize === "number"
+        loadMoreBatchSize: performanceMode === "extreme"
+            ? 0
+            : typeof raw?.loadMoreBatchSize === "number"
                 ? raw.loadMoreBatchSize
                 : 3,
     };

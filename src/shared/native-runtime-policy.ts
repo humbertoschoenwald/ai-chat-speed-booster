@@ -25,6 +25,7 @@ export function getEffectivePerformanceMode(
     configuredMode: PerformanceMode,
     siteId: string | undefined,
 ): PerformanceMode {
+    if (configuredMode === "extreme") return "extreme";
     return configuredMode === "native" && isNativeModeAllowedForSite(siteId)
         ? "native"
         : "legacy";
@@ -37,6 +38,18 @@ export function deriveRuntimeConfigForSite(config: ExtensionConfig, siteId: stri
             ...config,
             performanceMode,
             fetchInterceptEnabled: false,
+            autoLoad: false,
+            hideOldMessages: true,
+        };
+    }
+
+    if (performanceMode === "extreme") {
+        return {
+            ...config,
+            performanceMode,
+            visibleMessageLimit: 1,
+            loadMoreBatchSize: 1,
+            fetchInterceptEnabled: true,
             autoLoad: false,
             hideOldMessages: true,
         };

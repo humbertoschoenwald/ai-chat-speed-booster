@@ -11,6 +11,9 @@ export function renderPerformanceModeHint(
     status?: ExtensionStatus,
 ): string {
     const effectiveMode = status?.performanceMode ?? requestedMode;
+    if (effectiveMode === "extreme") {
+        return "Extreme Performance · API trims to the latest message";
+    }
     if (requestedMode === "native" && effectiveMode !== "native") {
         return "Use Native Mode on compatible sites · Stable active here";
     }

@@ -151,7 +151,7 @@ test("Stable fetch policy leaves ChatGPT rendering in control", () => {
     const policySource = readFileSync(path.resolve("src/shared/native-runtime-policy.ts"), "utf8");
     const fetchSource = readFileSync(path.resolve("src/content/fetchInterceptor.ts"), "utf8");
 
-    expect(bridgeSource).toContain("fetchInterceptEnabled: false");
+    expect(bridgeSource).toContain('fetchInterceptEnabled: performanceMode === "extreme"');
     expect(policySource).toContain("fetchInterceptEnabled: false");
     expect(fetchSource).toContain("Stable deliberately does not cache conversation responses");
     expect(fetchSource).not.toContain("RESPONSE_CACHE_MAX");
@@ -177,9 +177,10 @@ test("ChatGPT Stable Mode reviewed behavior is locked", () => {
     expect(chatgpt?.messageIdAttribute).toBe("data-turn-id");
     expect(chatgpt?.ui?.loadMorePlacement).toBe("left-of-share");
 
-    expect(bridgeSource).toContain("fetchInterceptEnabled: false");
+    expect(bridgeSource).toContain('fetchInterceptEnabled: performanceMode === "extreme"');
     expect(policySource).toContain("fetchInterceptEnabled: false");
-    expect(policySource).not.toContain("fetchInterceptEnabled: true");
+    expect(policySource).toContain('performanceMode === "extreme"');
+    expect(policySource).toContain("visibleMessageLimit: 1");
     expect(fetchSource).not.toContain("responseCache");
     expect(fetchSource).not.toContain("restoreCachedChunkState");
     for (const runtimeSource of [contentSource, managerSource, bridgeSource, policySource, fetchSource]) {

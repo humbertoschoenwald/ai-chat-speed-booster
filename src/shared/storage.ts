@@ -7,8 +7,9 @@ function clamp(value: number, min: number, max: number): number {
     return Math.min(Math.max(Math.round(value), min), max);
 }
 
-function sanitisePerformanceMode(value: unknown): "legacy" | "native" {
-    return value === "native" ? "native" : "legacy";
+function sanitisePerformanceMode(value: unknown): "legacy" | "native" | "extreme" {
+    if (value === "native" || value === "extreme") return value;
+    return "legacy";
 }
 
 type ModeProfile = Pick<ExtensionConfig,
@@ -22,7 +23,7 @@ type ModeProfile = Pick<ExtensionConfig,
     "autoRefreshDeliveryTimeout"
 >;
 
-type ModeProfiles = Partial<Record<"legacy" | "native", Partial<ModeProfile>>>;
+type ModeProfiles = Partial<Record<"legacy" | "native" | "extreme", Partial<ModeProfile>>>;
 
 function extractModeProfile(config: ExtensionConfig): ModeProfile {
     return {

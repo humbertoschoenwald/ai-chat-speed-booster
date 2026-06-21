@@ -4,7 +4,7 @@ export type StatusPosition = "top-left" | "top-right" | "bottom-left" | "bottom-
 
 export type Theme = "light" | "dark";
 
-export type PerformanceMode = "legacy" | "native";
+export type PerformanceMode = "legacy" | "native" | "extreme";
 
 export type ContentLifecycleState = "initializing" | "active" | "recovering" | "degraded" | "unsupported" | "stopped";
 export type MutationBatchClass = "small" | "heavy" | "extreme";
