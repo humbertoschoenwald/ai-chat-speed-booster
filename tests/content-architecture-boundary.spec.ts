@@ -7,6 +7,8 @@ type TestSiteConfig = {
     review?: {
         stableModeLastReviewedAt: string | null;
         nativeModeLastReviewedAt: string | null;
+        stableModeStatus: "not-functional" | null;
+        nativeModeStatus: "not-functional" | null;
     };
     selectors?: { messageTurn?: string; scrollContainer?: string };
     messageUnit?: { elementsPerMessage?: number };
@@ -165,6 +167,8 @@ test("ChatGPT Stable Mode reviewed behavior is locked", () => {
 
     expect(chatgpt?.review?.stableModeLastReviewedAt).toBe(CHATGPT_STABLE_MODE_LAST_REVIEWED_AT);
     expect(chatgpt?.review?.nativeModeLastReviewedAt).toBeNull();
+    expect(chatgpt?.review?.stableModeStatus).toBeNull();
+    expect(chatgpt?.review?.nativeModeStatus).toBeNull();
     expect(chatgpt?.selectors?.messageTurn).toBe('section[data-testid^="conversation-turn-"]');
     expect(chatgpt?.selectors?.scrollContainer).toBe("div[data-scroll-root]");
     expect(chatgpt?.messageUnit?.elementsPerMessage).toBe(2);
@@ -178,6 +182,8 @@ test("ChatGPT Stable Mode reviewed behavior is locked", () => {
     for (const runtimeSource of [contentSource, managerSource, bridgeSource, policySource, fetchSource]) {
         expect(runtimeSource).not.toContain("stableModeLastReviewedAt");
         expect(runtimeSource).not.toContain("nativeModeLastReviewedAt");
+        expect(runtimeSource).not.toContain("stableModeStatus");
+        expect(runtimeSource).not.toContain("nativeModeStatus");
     }
 
     expect(contentSource).toContain("const effectiveHiddenMessages = status.hiddenMessages");
@@ -188,9 +194,14 @@ test("ChatGPT Stable Mode reviewed behavior is locked", () => {
     expect(contentSource).not.toContain("readStableVirtualHiddenMessages");
     expect(contentSource).not.toContain("window.location.reload(), 120");
 
+    const notFunctionalStableSiteIds = new Set(["perplexity", "search-ai-mode"]);
     for (const site of SITES_CONFIG.filter((site) => site.id !== "chatgpt")) {
         expect(site.review?.stableModeLastReviewedAt).toBeNull();
         expect(site.review?.nativeModeLastReviewedAt).toBeNull();
+        expect(site.review?.stableModeStatus).toBe(
+            notFunctionalStableSiteIds.has(site.id) ? "not-functional" : null,
+        );
+        expect(site.review?.nativeModeStatus).toBeNull();
     }
 
     expect(managerSource).toContain("display:none!important");

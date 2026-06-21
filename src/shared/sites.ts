@@ -18,9 +18,13 @@ export interface SiteUI {
     readonly loadMoreMargin?: string;
 }
 
+export type SiteModeReviewStatus = "not-functional";
+
 export interface SiteReviewMetadata {
     readonly stableModeLastReviewedAt: string | null;
     readonly nativeModeLastReviewedAt: string | null;
+    readonly stableModeStatus: SiteModeReviewStatus | null;
+    readonly nativeModeStatus: SiteModeReviewStatus | null;
 }
 
 export interface MessageUnitConfig {

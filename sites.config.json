@@ -4,7 +4,9 @@
         "name": "ChatGPT",
         "review": {
             "stableModeLastReviewedAt": "2026-06-20T17:40:00-05:00",
-            "nativeModeLastReviewedAt": null
+            "nativeModeLastReviewedAt": null,
+            "stableModeStatus": null,
+            "nativeModeStatus": null
         },
         "hostnames": [
             "chatgpt.com"
@@ -58,7 +60,9 @@
         "name": "Claude",
         "review": {
             "stableModeLastReviewedAt": null,
-            "nativeModeLastReviewedAt": null
+            "nativeModeLastReviewedAt": null,
+            "stableModeStatus": null,
+            "nativeModeStatus": null
         },
         "hostnames": [
             "claude.ai"
@@ -105,7 +109,9 @@
         "name": "Gemini",
         "review": {
             "stableModeLastReviewedAt": null,
-            "nativeModeLastReviewedAt": null
+            "nativeModeLastReviewedAt": null,
+            "stableModeStatus": null,
+            "nativeModeStatus": null
         },
         "hostnames": [
             "gemini.google.com"
@@ -136,7 +142,9 @@
         "name": "DeepSeek",
         "review": {
             "stableModeLastReviewedAt": null,
-            "nativeModeLastReviewedAt": null
+            "nativeModeLastReviewedAt": null,
+            "stableModeStatus": null,
+            "nativeModeStatus": null
         },
         "hostnames": [
             "chat.deepseek.com"
@@ -165,7 +173,9 @@
         "name": "Grok",
         "review": {
             "stableModeLastReviewedAt": null,
-            "nativeModeLastReviewedAt": null
+            "nativeModeLastReviewedAt": null,
+            "stableModeStatus": null,
+            "nativeModeStatus": null
         },
         "hostnames": [
             "grok.com"
@@ -195,7 +205,9 @@
         "name": "Perplexity",
         "review": {
             "stableModeLastReviewedAt": null,
-            "nativeModeLastReviewedAt": null
+            "nativeModeLastReviewedAt": null,
+            "stableModeStatus": "not-functional",
+            "nativeModeStatus": null
         },
         "hostnames": [
             "www.perplexity.ai",
@@ -225,7 +237,9 @@
         "name": "Search AI Mode",
         "review": {
             "stableModeLastReviewedAt": null,
-            "nativeModeLastReviewedAt": null
+            "nativeModeLastReviewedAt": null,
+            "stableModeStatus": "not-functional",
+            "nativeModeStatus": null
         },
         "hostnames": [
             "www.g\u006f\u006fgle.com"
