@@ -1,5 +1,6 @@
 import { test, expect } from "@playwright/test";
 import { readFileSync } from "node:fs";
+import { readCachedCollapsedToolCallLabel } from "../src/content/native/chatgpt/ChatGptToolCallLabelCache";
 import { isStaticSummaryCandidate } from "../src/content/native/chatgpt/ChatGptToolCallSummaryController";
 import type { ToolCallGroupRecord } from "../src/content/native/ToolCallGroupController";
 import { classifyChatGptToolCallState, hasNestedToolCallButtons } from "../src/content/native/chatgpt/ChatGptToolCallStateGuard";
@@ -17,6 +18,23 @@ test("active tool calls are not static summary candidates", () => {
 test("open or user-owned tool-like nodes are not static summary candidates", () => {
     expect(isStaticSummaryCandidate(group("completed", element({ text: "Read file" })))).toBe(false);
     expect(isStaticSummaryCandidate(group("completed", element({ state: "closed", userOwned: true, text: "Read file" })))).toBe(false);
+});
+
+test("completed collapsed tool labels are cached without expanded details", () => {
+    const host = element({ state: "closed", text: "Expanded hidden details", label: "Called tool" });
+
+    expect(readCachedCollapsedToolCallLabel(host)).toBe("Called tool");
+    expect(readCachedCollapsedToolCallLabel(host)).toBe("Called tool");
+    expect(host.textReadCount()).toBe(0);
+});
+
+test("tool label cache bypasses expanded state and invalidates state changes", () => {
+    const host = element({ state: "closed", text: "Closed fallback", label: "Called tool" });
+
+    expect(readCachedCollapsedToolCallLabel(host)).toBe("Called tool");
+    host.setState("open");
+    expect(readCachedCollapsedToolCallLabel(host)).toBe("Called tool");
+    expect(isStaticSummaryCandidate(group("completed", host))).toBe(false);
 });
 
 test("nested ChatGPT tool call buttons stay host-owned", () => {
@@ -45,17 +63,41 @@ function group(state: ToolCallGroupRecord["state"], element: HTMLElement): ToolC
     return { id: "g1", ownerTurnKey: "t1", element, state, estimatedNodeCost: 1 };
 }
 
-function element(options: { readonly state?: string; readonly text?: string; readonly active?: boolean; readonly userOwned?: boolean; readonly nestedButtons?: boolean }): HTMLElement {
+function element(options: { readonly state?: string; readonly text?: string; readonly label?: string; readonly active?: boolean; readonly userOwned?: boolean; readonly nestedButtons?: boolean }): HTMLElement {
+    let state = options.state;
+    let textReads = 0;
+    const labelNode = {
+        getAttribute: (name: string) => name === "aria-label" ? options.label ?? null : null,
+        get innerText() {
+            textReads += 1;
+            return options.label ?? "";
+        },
+        get textContent() {
+            textReads += 1;
+            return options.label ?? "";
+        },
+    } as unknown as HTMLElement;
     const innerButton = {} as HTMLElement;
     const outerButton = {
         contains: (candidate: HTMLElement) => candidate === innerButton,
     } as HTMLElement;
     return {
-        innerText: options.text ?? "",
-        textContent: options.text ?? "",
-        getAttribute: (name: string) => name === "data-state" ? options.state ?? null : null,
+        get innerText() {
+            textReads += 1;
+            return options.text ?? "";
+        },
+        get textContent() {
+            textReads += 1;
+            return options.text ?? "";
+        },
+        textReadCount: () => textReads,
+        setState: (next: string) => {
+            state = next;
+        },
+        getAttribute: (name: string) => name === "data-state" ? state ?? null : null,
         querySelector: (selector: string) => {
-            if (selector.includes("data-state") && options.state === "closed") return {};
+            if (selector.includes("aria-label") && options.label) return labelNode;
+            if (selector.includes("data-state") && state) return { getAttribute: () => state };
             if (selector.includes("aria-busy") && options.active) return {};
             return null;
         },

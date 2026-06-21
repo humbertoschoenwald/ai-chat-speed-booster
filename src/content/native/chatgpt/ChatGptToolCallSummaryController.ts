@@ -1,4 +1,5 @@
 import type { ToolCallGroupRecord } from "../ToolCallGroupController";
+import { readCachedCollapsedToolCallLabel } from "./ChatGptToolCallLabelCache";
 import { canApplyStaticToolCallSummary } from "./ChatGptToolCallStateGuard";
 
 const HOST_ATTR = "data-acsb-tool-call-summary-host";
@@ -83,7 +84,7 @@ export function isStaticSummaryCandidate(group: ToolCallGroupRecord): boolean {
     if (host.closest("[data-message-author-role='user']")) return false;
     if (!canApplyStaticToolCallSummary(host)) return false;
     if (host.matches(ACTIVE_SELECTOR) || host.querySelector(ACTIVE_SELECTOR)) return false;
-    const text = (host.innerText || host.textContent || "").replace(/\s+/g, " ").trim().toLowerCase();
+    const text = readCachedCollapsedToolCallLabel(host).toLowerCase();
     if (!text) return false;
     if (text.includes("calling tool") || text.includes("working on it")) return false;
     return host.getAttribute("data-state") === "closed" || host.querySelector("[data-state='closed']") !== null;

@@ -24,11 +24,11 @@ export function classifyChatGptToolCallState(element: HTMLElement): ChatGptToolC
     if (matchesOrContains(element, ERROR_SELECTOR)) return "error";
     if (matchesOrContains(element, LOADING_SELECTOR)) return "loading";
 
-    const text = readNormalizedText(element).toLowerCase();
-    if (text.includes("calling tool") || text.includes("working on it")) return "active";
     if (element.getAttribute("aria-expanded") === "true") return "completed-expanded";
     if (element.getAttribute("data-state") === "open") return "completed-expanded";
     if (element.getAttribute("data-state") === "closed") return "completed-collapsed";
+    const text = readNormalizedText(element).toLowerCase();
+    if (text.includes("calling tool") || text.includes("working on it")) return "active";
     if (element.querySelector("[data-state='open']")) return "completed-expanded";
     if (element.querySelector("[data-state='closed']")) return "completed-collapsed";
 
