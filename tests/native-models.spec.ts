@@ -12,12 +12,28 @@ import { ChatGptCodeBlockContainmentController } from "../src/content/native/cha
 import { resolveChatGptConversationScope } from "../src/content/native/chatgpt/ChatGptConversationScope";
 import { createChatGptInteractiveNodeBudgetSnapshot } from "../src/content/native/chatgpt/ChatGptInteractiveNodeBudget";
 import { createChatGptToolCardDensityProfile } from "../src/content/native/chatgpt/ChatGptToolCardDensityProfile";
+import { readChatGptScrollRootState } from "../src/content/native/chatgpt/ChatGptScrollRootState";
 import { parseCssMetric, readChatGptThreadCssMetrics } from "../src/content/native/chatgpt/ChatGptThreadCssMetrics";
 import { VirtualizationConflictDetector } from "../src/content/native/VirtualizationConflictDetector";
 import { dedupeChatGptTurnElements, readChatGptLastKnownHeight, readChatGptTurnId } from "../src/content/native/chatgpt/ChatGptSelectors";
 import type { ScrollGeometryDelta } from "../src/content/native/ScrollGeometry";
 
 test.describe("native model guards", () => {
+    test("reads ChatGPT scroll root attributes conservatively", () => {
+        const root = fakeScrollRoot({ streamActive: "true", fromTop: "240", fromEnd: "false" });
+
+        expect(readChatGptScrollRootState(root)).toEqual({
+            rootPresent: true,
+            streamActive: true,
+            scrollFromTop: 240,
+            scrolledFromEnd: false,
+            shouldDeferOldTurnWork: true,
+        });
+        expect(readChatGptScrollRootState(null).shouldDeferOldTurnWork).toBe(true);
+        expect(root.writeCount).toBe(0);
+    });
+
+
     test("contains only old static ChatGPT code blocks", () => {
         const controller = new ChatGptCodeBlockContainmentController();
         const oldStatic = fakeCodeTurn([fakeCodeBlock()]);
@@ -527,4 +543,23 @@ function fakeCodeTurn(blocks: ReturnType<typeof fakeCodeBlock>[]) {
         lastMeasuredAt: null,
         blocks,
     };
+}
+
+
+function fakeScrollRoot(options: { readonly streamActive?: string; readonly fromTop?: string; readonly fromEnd?: string }) {
+    const attrs = new Map<string, string | undefined>([
+        ["data-stream-active", options.streamActive],
+        ["data-scroll-from-top", options.fromTop],
+        ["data-scrolled-from-end", options.fromEnd],
+    ]);
+    return {
+        writeCount: 0,
+        getAttribute: (name: string) => attrs.get(name) ?? null,
+        setAttribute() {
+            this.writeCount += 1;
+        },
+        removeAttribute() {
+            this.writeCount += 1;
+        },
+    } as unknown as HTMLElement & { writeCount: number };
 }

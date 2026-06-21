@@ -29,6 +29,10 @@ import {
     createChatGptInteractiveNodeBudgetSnapshot,
     type ChatGptInteractiveNodeBudgetSnapshot,
 } from "./ChatGptInteractiveNodeBudget";
+import {
+    readChatGptScrollRootState,
+    type ChatGptScrollRootState,
+} from "./ChatGptScrollRootState";
 import { ChatGptTextSnapshotRenderer } from "./ChatGptTextSnapshotRenderer";
 import {
     readChatGptThreadCssMetrics,
@@ -75,6 +79,7 @@ export interface ChatGptContentRuntimeStatus {
     readonly nativeToolCardDensityProfile: ChatGptToolCardDensityProfile | null;
     readonly nativeThreadCssMetrics: ChatGptThreadCssMetrics | null;
     readonly nativeCodeBlockContainment: ChatGptCodeBlockContainmentSnapshot | null;
+    readonly nativeScrollRootState: ChatGptScrollRootState | null;
     readonly nativeRevealLoopCount: number;
     readonly nativeScrollOscillationCount: number;
     readonly nativeVirtualizationDisabled: boolean;
@@ -98,6 +103,7 @@ export class ChatGptContentRuntime {
     private nativeToolCardDensityProfile: ChatGptToolCardDensityProfile | null = null;
     private nativeThreadCssMetrics: ChatGptThreadCssMetrics | null = null;
     private nativeCodeBlockContainment: ChatGptCodeBlockContainmentSnapshot | null = null;
+    private nativeScrollRootState: ChatGptScrollRootState | null = null;
     private nativeSnapshotHosts = 0;
     private nativeSnapshotCacheBytes = 0;
     private nativeSnapshotSyncCooldownUntilMs = 0;
@@ -138,6 +144,7 @@ export class ChatGptContentRuntime {
         this.nativeToolCardDensityProfile = null;
         this.nativeThreadCssMetrics = null;
         this.nativeCodeBlockContainment = null;
+        this.nativeScrollRootState = null;
         this.nativeSnapshotHosts = 0;
         this.nativeSnapshotCacheBytes = 0;
     }
@@ -178,6 +185,7 @@ export class ChatGptContentRuntime {
             nativeToolCardDensityProfile: this.nativeToolCardDensityProfile,
             nativeThreadCssMetrics: this.nativeThreadCssMetrics,
             nativeCodeBlockContainment: this.nativeCodeBlockContainment,
+            nativeScrollRootState: this.nativeScrollRootState,
             nativeRevealLoopCount: nativeConflictSnapshot.revealLoopCount,
             nativeScrollOscillationCount: nativeConflictSnapshot.scrollOscillationCount,
             nativeVirtualizationDisabled: nativeConflictSnapshot.shouldDisableNativeVirtualization,
@@ -221,13 +229,6 @@ export class ChatGptContentRuntime {
         this.codeBlockContainment.start(this.ports.document);
     }
 
-    private readConversationScope(): ParentNode {
-        return resolveChatGptConversationScope(
-            this.ports.document,
-            this.ports.findScrollContainer(),
-        );
-    }
-
     private syncNativeSnapshots(controller: NativeModeController | null): void {
         const config = this.config;
         const renderer = this.chatGptTextSnapshotRenderer;
@@ -257,7 +258,9 @@ export class ChatGptContentRuntime {
             }
 
             const turns = dedupeChatGptTurnElements(this.ports.queryTurns());
-            const conversationScope = this.readConversationScope();
+            const scrollContainer = this.ports.findScrollContainer();
+            this.nativeScrollRootState = readChatGptScrollRootState(scrollContainer);
+            const conversationScope = resolveChatGptConversationScope(this.ports.document, scrollContainer);
             this.nativeThreadCssMetrics = conversationScope instanceof Element
                 ? readChatGptThreadCssMetrics(conversationScope, this.ports.window)
                 : null;
@@ -281,10 +284,12 @@ export class ChatGptContentRuntime {
                 this.nativeToolCallGroups.snapshot(),
                 config.visibleMessageLimit,
             );
-            this.nativeCodeBlockContainment = this.codeBlockContainment.sync(
-                records,
-                this.nativeRenderBudget.liveWindowSize + 2,
-            );
+            this.nativeCodeBlockContainment = this.nativeScrollRootState.shouldDeferOldTurnWork
+                ? null
+                : this.codeBlockContainment.sync(
+                    records,
+                    this.nativeRenderBudget.liveWindowSize + 2,
+                );
 
             renderer.restoreAll(this.ports.document);
             const result = this.chatGptTurnContentVisibilityController?.sync(turns, {
@@ -318,6 +323,7 @@ export class ChatGptContentRuntime {
         this.nativeToolCardDensityProfile = null;
         this.nativeThreadCssMetrics = null;
         this.nativeCodeBlockContainment = null;
+        this.nativeScrollRootState = null;
         this.nativeSnapshotHosts = 0;
         this.nativeSnapshotCacheBytes = 0;
     }

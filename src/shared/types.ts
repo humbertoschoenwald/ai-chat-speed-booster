@@ -155,6 +155,11 @@ export interface ExtensionStatus {
     readonly nativeModeCodeBlockCount?: number;
     readonly nativeModeContainedCodeBlockCount?: number;
     readonly nativeModeSkippedEditableCodeBlockCount?: number;
+    readonly nativeModeScrollRootPresent?: boolean;
+    readonly nativeModeStreamActive?: boolean;
+    readonly nativeModeScrollRootFromTop?: number | null;
+    readonly nativeModeScrolledFromEnd?: boolean | null;
+    readonly nativeModeShouldDeferOldTurnWork?: boolean;
     readonly nativeModeLiveWindowSize?: number;
     readonly nativeModeRevealLoopCount?: number;
     readonly nativeModeScrollOscillationCount?: number;
