@@ -11,7 +11,7 @@ type TestSiteConfig = {
         nativeModeStatus: "not-functional" | null;
     };
     selectors?: { messageTurn?: string; scrollContainer?: string };
-    ui?: { loadMorePlacement?: string; loadMoreTheme?: string };
+    ui?: { loadMorePlacement?: string; loadMoreRevealAnchorMs?: number; loadMoreTheme?: string };
     messageUnit?: { elementsPerMessage?: number };
     messageIdAttribute?: string;
 };
@@ -231,6 +231,7 @@ test("Stable Load More overlay uses reviewed site placement metadata", () => {
     expect(source).toContain('this.siteConfig.ui?.loadMoreTheme === "gemini"');
     expect(chatgpt?.ui?.loadMorePlacement).toBe("left-of-share");
     expect(gemini?.ui?.loadMoreTheme).toBe("gemini");
+    expect(gemini?.ui?.loadMoreRevealAnchorMs).toBe(2400);
 });
 
 test("Stable Load More reveals downloaded DOM without chunk reload", () => {
@@ -238,7 +239,9 @@ test("Stable Load More reveals downloaded DOM without chunk reload", () => {
 
     expect(contentSource).toContain("messageManager.loadMore()");
     expect(contentSource).toContain("preserveViewportAnchor(previousFirstVisible, previousTop)");
-    expect(contentSource).toContain("STABLE_DOM_REVEAL_ANCHOR_MAX_MS = 420");
+    expect(contentSource).toContain("DEFAULT_STABLE_DOM_REVEAL_ANCHOR_MAX_MS = 420");
+    expect(contentSource).toContain("readStableRevealAnchorMaxMs()");
+    expect(contentSource).toContain("currentSite.ui?.loadMoreRevealAnchorMs");
     expect(contentSource).toContain("requestAnimationFrame(restore)");
     expect(contentSource).not.toContain("loadNextStableChunk");
     expect(contentSource).not.toContain("setTimeout(() => window.location.reload(), 120)");

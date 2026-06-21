@@ -52,7 +52,7 @@ const FETCH_TOTAL_VISIBLE_KEY = "acsb_fetch_total_visible" as const;
 const FETCH_DOWNLOADING_KEY = "acsb_fetch_downloading" as const;
 const FETCH_DOWNLOADING_STARTED_KEY = "acsb_fetch_downloading_started" as const;
 const STABLE_SCROLL_ANCHOR_KEY = "acsb_stable_scroll_anchor" as const;
-const STABLE_DOM_REVEAL_ANCHOR_MAX_MS = 420;
+const DEFAULT_STABLE_DOM_REVEAL_ANCHOR_MAX_MS = 420;
 let stableAppendRebalanceTimer: ReturnType<typeof setTimeout> | null = null;
 
 type EditorLatencyGuardPort = {
@@ -603,6 +603,7 @@ function findFirstVisibleMessage(): HTMLElement | null {
 
 function preserveViewportAnchor(anchor: HTMLElement, previousTop: number): void {
     const startedAt = performance.now();
+    const maxMs = readStableRevealAnchorMaxMs();
     const restore = (): void => {
         if (!anchor.isConnected) return;
         const currentTop = anchor.getBoundingClientRect().top;
@@ -615,11 +616,18 @@ function preserveViewportAnchor(anchor: HTMLElement, previousTop: number): void 
                 window.scrollBy(0, delta);
             }
         }
-        if (performance.now() - startedAt < STABLE_DOM_REVEAL_ANCHOR_MAX_MS) {
+        if (performance.now() - startedAt < maxMs) {
             requestAnimationFrame(restore);
         }
     };
     requestAnimationFrame(restore);
+}
+
+function readStableRevealAnchorMaxMs(): number {
+    const configured = currentSite.ui?.loadMoreRevealAnchorMs;
+    return typeof configured === "number" && Number.isFinite(configured) && configured > 0
+        ? Math.floor(configured)
+        : DEFAULT_STABLE_DOM_REVEAL_ANCHOR_MAX_MS;
 }
 
 function findMessageContainer(): HTMLElement | null {

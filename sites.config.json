@@ -136,6 +136,7 @@
         },
         "ui": {
             "loadMoreMargin": "4px 0",
+            "loadMoreRevealAnchorMs": 2400,
             "loadMoreTheme": "gemini"
         }
     },

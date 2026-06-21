@@ -23,6 +23,7 @@ export interface SiteUI {
     readonly loadMoreAnchorSelector?: string;
     readonly loadMoreTopPx?: number;
     readonly loadMoreRightPx?: number;
+    readonly loadMoreRevealAnchorMs?: number;
     readonly loadMoreTheme?: LoadMoreTheme;
 }
 
