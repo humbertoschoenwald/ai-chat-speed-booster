@@ -9,7 +9,9 @@ test.describe("ChatGPT native tuning profile", () => {
 
         expect(chatgpt.tuningProfile?.id).toBe("chatgpt-native-v1");
         expect(claude.tuningProfile).toBeUndefined();
-        expect(CHATGPT_NATIVE_TUNING_PROFILE.selectors.turnRoot).toContain("conversation-turn");
+        expect(CHATGPT_NATIVE_TUNING_PROFILE.selectors.turnRoot).toContain("section[data-testid^='conversation-turn-']");
+        expect(CHATGPT_NATIVE_TUNING_PROFILE.selectors.turnRoot).toContain("data-turn-id-container");
+        expect(CHATGPT_NATIVE_TUNING_PROFILE.selectors.turnRoot).toContain("article[data-testid^='conversation-turn-']");
         expect(CHATGPT_NATIVE_TUNING_PROFILE.budgets.mutationBudgetMs).toBeLessThanOrEqual(8);
     });
 

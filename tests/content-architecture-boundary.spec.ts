@@ -289,6 +289,10 @@ test("ChatGPT Native selectors use the shared selector authority", () => {
     const snapshotSource = readFileSync(path.resolve("src/content/native/chatgpt/ChatGptTextSnapshotRenderer.ts"), "utf8");
     const containmentSource = readFileSync(path.resolve("src/content/native/chatgpt/ChatGptTurnContainmentController.ts"), "utf8");
 
+    expect(selectorsSource).toContain("CHATGPT_SECTION_TURN_SELECTOR");
+    expect(selectorsSource).toContain("section[data-testid^='conversation-turn-']");
+    expect(selectorsSource).toContain("data-turn-id-container");
+    expect(selectorsSource).toContain("article[data-testid^='conversation-turn-']");
     expect(selectorsSource).toContain("CHATGPT_TURN_SELECTOR");
     expect(selectorsSource).toContain("CHATGPT_ERROR_SELECTOR");
     expect(selectorsSource).toContain("CHATGPT_TOOL_SELECTOR");

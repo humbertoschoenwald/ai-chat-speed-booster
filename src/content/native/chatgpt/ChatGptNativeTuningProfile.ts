@@ -11,7 +11,7 @@ export const CHATGPT_NATIVE_TUNING_PROFILE: NativeTuningProfile = {
         maxFrozenTurns: 200,
     },
     selectors: {
-        turnRoot: "article[data-testid^='conversation-turn-']",
+        turnRoot: "section[data-testid^='conversation-turn-'],[data-turn-id-container],article[data-testid^='conversation-turn-']",
         composerRoot: "[contenteditable='true'], textarea",
         streamingControls: [
             "button[aria-label*='Stop']",
