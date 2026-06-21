@@ -26,6 +26,7 @@
 
 #### Native
 
+- profile tool card density ([b7d20ee](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/b7d20eeadf1a10b234ec6af9c57880aae7e92181)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - report interactive node budgets ([dbee696](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/dbee696a39cc10ac7ab14040428938d4b9334a0e)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - add feature flag kill switches ([6bad767](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/6bad76755b6d4a8a23614e30af1197eee11b7e92)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - add explicit work scheduler lanes ([86e8cd4](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/86e8cd4a19c23b757823174bcf80cd8c7c7b3f75)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
