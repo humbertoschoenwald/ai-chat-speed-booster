@@ -4,6 +4,7 @@ import { EditorInputOptimizer } from "../src/content/native/EditorInputOptimizer
 import { InputChunkPlanner } from "../src/content/native/InputChunkPlanner";
 import { MultiTabCoordinator } from "../src/content/native/MultiTabCoordinator";
 import { NativeDiagnostics } from "../src/content/native/NativeDiagnostics";
+import { NativeDiagnosticsSampler } from "../src/content/native/NativeDiagnosticsSampler";
 import { createNativeAutoDisableRecord, resolveNativeFeatureFlags } from "../src/content/native/NativeFeatureFlags";
 import { NativeWorkScheduler } from "../src/content/native/NativeWorkScheduler";
 import { StaleGenerationRecovery } from "../src/content/native/StaleGenerationRecovery";
@@ -11,6 +12,20 @@ import { VirtualizationConflictDetector } from "../src/content/native/Virtualiza
 import type { ScrollGeometryDelta } from "../src/content/native/ScrollGeometry";
 
 test.describe("native model guards", () => {
+    test("samples Native Mode diagnostics with TTL and force refresh", () => {
+        let reads = 0;
+        const sampler = new NativeDiagnosticsSampler(100, () => ({ value: ++reads }));
+
+        expect(sampler.read({ now: 1 })).toEqual({ value: 1 });
+        expect(sampler.read({ now: 50 })).toEqual({ value: 1 });
+        expect(sampler.read({ now: 101 })).toEqual({ value: 2 });
+        expect(sampler.read({ force: true, now: 102 })).toEqual({ value: 3 });
+        expect(sampler.snapshot()).toEqual({ value: { value: 3 }, sampledAt: 102 });
+        sampler.clear();
+        expect(sampler.snapshot()).toEqual({ value: null, sampledAt: null });
+    });
+
+
     test("resolves Native Mode feature flags and auto-disable diagnostics", () => {
         const autoDisabled = createNativeAutoDisableRecord("long-task-throttle", "cooldown spike", 70_000);
         const resolution = resolveNativeFeatureFlags([

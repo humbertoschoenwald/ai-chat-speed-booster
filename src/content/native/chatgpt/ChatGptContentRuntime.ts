@@ -5,6 +5,7 @@
  * ADR: docs/adr/architecture/native-mode/site-adapter-engine-boundary.md.
  */
 import type { ExtensionConfig, ExtensionStatus } from "../../../shared/types";
+import { NativeDiagnosticsSampler } from "../NativeDiagnosticsSampler";
 import { createRenderUnitBudgetSnapshot, type RenderUnitBudgetSnapshot } from "../RenderUnitBudget";
 import type { NativeModeController } from "../NativeModeController";
 import { ToolCallGroupController } from "../ToolCallGroupController";
@@ -31,6 +32,7 @@ import {
 import { logger } from "../../../shared/logger";
 
 const NATIVE_SNAPSHOT_SYNC_FAILURE_COOLDOWN_MS = 1_500;
+const NATIVE_PAGE_INSPECTION_SAMPLE_TTL_MS = 1_000;
 
 export interface ChatGptContentRuntimePorts {
     readonly document: Document;
@@ -61,6 +63,7 @@ export class ChatGptContentRuntime {
     private readonly nativeVirtualizationConflicts = new VirtualizationConflictDetector();
     private readonly nativeTurnRegistry = new TurnRegistry();
     private readonly nativeToolCallGroups = new ToolCallGroupController();
+    private readonly pageInspectionSampler: NativeDiagnosticsSampler<ChatGptPageInspection>;
     private readonly toolCallSummaries = new ChatGptToolCallSummaryController();
     private readonly visibleTurnPriorities = new ChatGptVisibleTurnPriorityController();
     private readonly ports: ChatGptContentRuntimePorts;
@@ -76,6 +79,10 @@ export class ChatGptContentRuntime {
 
     constructor(ports: ChatGptContentRuntimePorts) {
         this.ports = ports;
+        this.pageInspectionSampler = new NativeDiagnosticsSampler(
+            NATIVE_PAGE_INSPECTION_SAMPLE_TTL_MS,
+            () => this.computePageInspection(),
+        );
     }
 
     updateConfig(config: ExtensionConfig): void {
@@ -98,12 +105,17 @@ export class ChatGptContentRuntime {
         this.restoreNativeArtifacts();
         this.nativeTurnRegistry.reset();
         this.nativeToolCallGroups.reset();
+        this.pageInspectionSampler.clear();
         this.nativeRenderBudget = null;
         this.nativeSnapshotHosts = 0;
         this.nativeSnapshotCacheBytes = 0;
     }
 
     inspectPage(): ChatGptPageInspection {
+        return this.pageInspectionSampler.read();
+    }
+
+    private computePageInspection(): ChatGptPageInspection {
         return {
             deliveryTimeout: detectChatGptDeliveryTimeout(this.ports.document),
             maxLengthReadonly: detectChatGptMaxLengthReadonly(this.ports.document),
