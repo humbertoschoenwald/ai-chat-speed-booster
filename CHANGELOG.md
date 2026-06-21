@@ -313,6 +313,7 @@
 
 #### Native
 
+- cover max length readonly status ([5026143](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/5026143ce0a01ba98f19c2de389cc89aa00c3c1f)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - lock CSS cleanup ownership ([caa0c53](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/caa0c532b38230ddf0a4d515956cf21d801c7519)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - cover chat change reset ([4202380](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/42023807b3be120a2c6f264b1e4b93da1bd74ffe)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - lock historical turn containment guards ([075b875](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/075b87539be4fad19b5076f57e73d8ec710e0b73)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
