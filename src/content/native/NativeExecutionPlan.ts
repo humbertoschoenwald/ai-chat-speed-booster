@@ -1,5 +1,6 @@
 import type { ExtensionConfig } from "../../shared/types";
 import type { NativeSiteAdapter } from "./NativeSiteAdapter";
+import { resolveNativeFeatureFlags, type NativeAutoDisableRecord } from "./NativeFeatureFlags";
 
 export interface NativeExecutionPlanSnapshot {
     readonly siteId: string;
@@ -7,6 +8,7 @@ export interface NativeExecutionPlanSnapshot {
     readonly reason: string;
     readonly activeFeatures: readonly string[];
     readonly blockedFeatures: readonly string[];
+    readonly autoDisabledFeatures: readonly NativeAutoDisableRecord[];
     readonly mutationBudgetMs: number | null;
     readonly inputQuietWindowMs: number | null;
     readonly scrollOverscanPx: number | null;
@@ -29,12 +31,14 @@ export function createNativeExecutionPlan(
     }
 
     const profile = adapter.tuningProfile;
+    const flagResolution = resolveNativeFeatureFlags(profile?.enabledFeatures ?? capabilityFeatures(adapter));
     return {
         siteId: adapter.siteId,
         canStart: true,
         reason: "native adapter enabled",
-        activeFeatures: profile?.enabledFeatures ?? capabilityFeatures(adapter),
-        blockedFeatures: profile?.blockedFeatures ?? [],
+        activeFeatures: flagResolution.activeFeatures,
+        blockedFeatures: [...profile?.blockedFeatures ?? [], ...flagResolution.disabledFeatures],
+        autoDisabledFeatures: flagResolution.autoDisabledFeatures,
         mutationBudgetMs: profile?.budgets.mutationBudgetMs ?? null,
         inputQuietWindowMs: profile?.budgets.inputQuietWindowMs ?? null,
         scrollOverscanPx: profile?.budgets.scrollOverscanPx ?? null,
@@ -48,6 +52,7 @@ function block(adapter: NativeSiteAdapter, reason: string): NativeExecutionPlanS
         reason,
         activeFeatures: [],
         blockedFeatures: [reason],
+        autoDisabledFeatures: [],
         mutationBudgetMs: null,
         inputQuietWindowMs: null,
         scrollOverscanPx: null,

@@ -26,6 +26,11 @@ export const CHATGPT_NATIVE_TUNING_PROFILE: NativeTuningProfile = {
         "selector-guard",
         "editor-input-protection",
         "sanitized-diagnostics",
+        "historical-turn-containment",
+        "old-turn-hover-quiet",
+        "static-tool-icon-paint",
+        "long-task-throttle",
+        "work-scheduler-lanes",
     ],
     blockedFeatures: [
         "live-turn-freeze",

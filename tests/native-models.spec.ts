@@ -4,12 +4,30 @@ import { EditorInputOptimizer } from "../src/content/native/EditorInputOptimizer
 import { InputChunkPlanner } from "../src/content/native/InputChunkPlanner";
 import { MultiTabCoordinator } from "../src/content/native/MultiTabCoordinator";
 import { NativeDiagnostics } from "../src/content/native/NativeDiagnostics";
+import { createNativeAutoDisableRecord, resolveNativeFeatureFlags } from "../src/content/native/NativeFeatureFlags";
 import { NativeWorkScheduler } from "../src/content/native/NativeWorkScheduler";
 import { StaleGenerationRecovery } from "../src/content/native/StaleGenerationRecovery";
 import { VirtualizationConflictDetector } from "../src/content/native/VirtualizationConflictDetector";
 import type { ScrollGeometryDelta } from "../src/content/native/ScrollGeometry";
 
 test.describe("native model guards", () => {
+    test("resolves Native Mode feature flags and auto-disable diagnostics", () => {
+        const autoDisabled = createNativeAutoDisableRecord("long-task-throttle", "cooldown spike", 70_000);
+        const resolution = resolveNativeFeatureFlags([
+            "selector-guard",
+            "long-task-throttle",
+            "unknown-feature",
+        ], [autoDisabled]);
+
+        expect(resolution.activeFeatures).toEqual(["selector-guard"]);
+        expect(resolution.disabledFeatures).toEqual([
+            "long-task-throttle: cooldown spike",
+            "unknown-feature: unknown native feature",
+        ]);
+        expect(resolution.autoDisabledFeatures).toEqual([autoDisabled]);
+    });
+
+
     test("orders Native Mode work lanes and pauses lower-priority work", () => {
         const scheduler = new NativeWorkScheduler();
         const ran: string[] = [];

@@ -105,6 +105,7 @@ export interface ExtensionStatus {
     readonly nativeModePlanReason?: string;
     readonly nativeModePlanActiveFeatures?: readonly string[];
     readonly nativeModePlanBlockedFeatures?: readonly string[];
+    readonly nativeModePlanAutoDisabledFeatures?: readonly string[];
     readonly nativeModeMutationBudgetMs?: number | null;
     readonly nativeModeInputQuietWindowMs?: number | null;
     readonly nativeModeScrollOverscanPx?: number | null;

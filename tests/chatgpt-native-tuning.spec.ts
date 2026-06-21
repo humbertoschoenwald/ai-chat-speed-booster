@@ -18,6 +18,11 @@ test.describe("ChatGPT native tuning profile", () => {
             "selector-guard",
             "editor-input-protection",
             "sanitized-diagnostics",
+            "historical-turn-containment",
+            "old-turn-hover-quiet",
+            "static-tool-icon-paint",
+            "long-task-throttle",
+            "work-scheduler-lanes",
         ]);
         expect(CHATGPT_NATIVE_TUNING_PROFILE.blockedFeatures).toContain("live-turn-freeze");
         expect(CHATGPT_NATIVE_TUNING_PROFILE.blockedFeatures).toContain("automatic-stop-recovery");

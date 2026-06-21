@@ -48,6 +48,9 @@ export function createExtensionStatus(input: ContentStatusPresenterInput): Exten
         nativeModePlanReason: native?.executionPlan?.reason,
         nativeModePlanActiveFeatures: native?.executionPlan?.activeFeatures,
         nativeModePlanBlockedFeatures: native?.executionPlan?.blockedFeatures,
+        nativeModePlanAutoDisabledFeatures: native?.executionPlan?.autoDisabledFeatures?.map(
+            (record) => `${record.feature}:${record.reason}:${record.disabledAt}`,
+        ),
         nativeModeMutationBudgetMs: native?.executionPlan?.mutationBudgetMs,
         nativeModeInputQuietWindowMs: native?.executionPlan?.inputQuietWindowMs,
         nativeModeScrollOverscanPx: native?.executionPlan?.scrollOverscanPx,

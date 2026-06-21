@@ -25,6 +25,11 @@ test.describe("native execution plan", () => {
             "selector-guard",
             "editor-input-protection",
             "sanitized-diagnostics",
+            "historical-turn-containment",
+            "old-turn-hover-quiet",
+            "static-tool-icon-paint",
+            "long-task-throttle",
+            "work-scheduler-lanes",
         ]);
         expect(plan.blockedFeatures).toContain("live-turn-freeze");
         expect(plan.mutationBudgetMs).toBe(8);
