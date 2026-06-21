@@ -406,6 +406,7 @@
 
 #### Native
 
+- centralize ChatGPT selectors ([2296956](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/2296956c327c038dad4c36cab20905fc7a55e2ea)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - batch containment updates ([81d8179](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/81d81793905fb43fb732f9e68209e5798b7985b6)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - split provider adapter records ([2ce356f](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/2ce356f15deb091504494f7420492b9e1a576029)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 
