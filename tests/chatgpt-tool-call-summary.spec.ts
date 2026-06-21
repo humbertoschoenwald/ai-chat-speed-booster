@@ -24,6 +24,16 @@ test("ChatGPT guard identifies active text", () => {
     expect(readFileSync("src/content/native/chatgpt/ChatGptToolCallSummaryController.ts", "utf8")).toContain("RESTORE_SPIKE_LIMIT");
 });
 
+test("static tool summaries reduce icon paint without replacing original nodes", () => {
+    const source = readFileSync("src/content/native/chatgpt/ChatGptToolCallSummaryController.ts", "utf8");
+
+    expect(source).toContain("[${HOST_ATTR}='true'] svg");
+    expect(source).toContain("transition-duration:0s!important");
+    expect(source).toContain("filter:none!important");
+    expect(source).toContain("will-change:auto!important");
+    expect(source).not.toContain("querySelectorAll<SVGElement>");
+});
+
 function group(state: ToolCallGroupRecord["state"], element: HTMLElement): ToolCallGroupRecord {
     return { id: "g1", ownerTurnKey: "t1", element, state, estimatedNodeCost: 1 };
 }

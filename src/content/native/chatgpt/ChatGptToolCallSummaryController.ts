@@ -113,6 +113,8 @@ function injectStyle(root: Document): void {
     style.textContent =
         `[${HOST_ATTR}='true']{content-visibility:auto!important;contain:content!important;` +
         `contain-intrinsic-size:48px 220px!important}` +
+        `[${HOST_ATTR}='true'] svg{transition-duration:0s!important;filter:none!important;` +
+        `will-change:auto!important}` +
         `[${SUMMARY_ATTR}='true']{font:12px/1.4 system-ui,sans-serif;opacity:.72;` +
         `padding:2px 0 6px 0;pointer-events:none}`;
     (root.head ?? root.documentElement).appendChild(style);
