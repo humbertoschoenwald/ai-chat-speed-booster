@@ -8,6 +8,7 @@ import { NativeDiagnosticsSampler } from "../src/content/native/NativeDiagnostic
 import { createNativeAutoDisableRecord, resolveNativeFeatureFlags } from "../src/content/native/NativeFeatureFlags";
 import { NativeWorkScheduler } from "../src/content/native/NativeWorkScheduler";
 import { StaleGenerationRecovery } from "../src/content/native/StaleGenerationRecovery";
+import { ChatGptCodeBlockContainmentController } from "../src/content/native/chatgpt/ChatGptCodeBlockContainmentController";
 import { resolveChatGptConversationScope } from "../src/content/native/chatgpt/ChatGptConversationScope";
 import { createChatGptInteractiveNodeBudgetSnapshot } from "../src/content/native/chatgpt/ChatGptInteractiveNodeBudget";
 import { createChatGptToolCardDensityProfile } from "../src/content/native/chatgpt/ChatGptToolCardDensityProfile";
@@ -17,6 +18,24 @@ import { dedupeChatGptTurnElements, readChatGptLastKnownHeight, readChatGptTurnI
 import type { ScrollGeometryDelta } from "../src/content/native/ScrollGeometry";
 
 test.describe("native model guards", () => {
+    test("contains only old static ChatGPT code blocks", () => {
+        const controller = new ChatGptCodeBlockContainmentController();
+        const oldStatic = fakeCodeTurn([fakeCodeBlock()]);
+        const nearStatic = fakeCodeTurn([fakeCodeBlock()]);
+        const editable = fakeCodeTurn([fakeCodeBlock({ editable: true })]);
+        const snapshot = controller.sync([oldStatic, editable, nearStatic], 1);
+
+        expect(snapshot).toEqual({
+            codeBlockCount: 3,
+            containedCodeBlockCount: 1,
+            skippedEditableCount: 1,
+        });
+        expect(oldStatic.blocks[0].contained).toBe(true);
+        expect(editable.blocks[0].contained).toBe(false);
+        expect(nearStatic.blocks[0].contained).toBe(false);
+    });
+
+
     test("reads ChatGPT thread CSS variables as readonly metrics", () => {
         const styleValues = new Map([
             ["--thread-response-height", "720px"],
@@ -476,5 +495,36 @@ function toolGroup(state: "completed" | "running" | "failed" | "user-expanded") 
         element: {} as HTMLElement,
         state,
         estimatedNodeCost: 1,
+    };
+}
+
+
+function fakeCodeBlock(options: { readonly editable?: boolean } = {}) {
+    return {
+        contained: false,
+        setAttribute(name: string, value: string) {
+            if (name === "data-acsb-native-contained-code-block" && value === "true") this.contained = true;
+        },
+        removeAttribute(name: string) {
+            if (name === "data-acsb-native-contained-code-block") this.contained = false;
+        },
+        matches: (selector: string) => options.editable === true && selector.includes("contenteditable"),
+        closest: (selector: string) => options.editable === true && selector.includes("contenteditable") ? {} : null,
+        querySelector: () => null,
+    };
+}
+
+function fakeCodeTurn(blocks: ReturnType<typeof fakeCodeBlock>[]) {
+    return {
+        key: `code-turn-${Math.random()}`,
+        element: {
+            querySelectorAll: (selector: string) => selector.includes("pre") ? blocks : [],
+        } as unknown as HTMLElement,
+        role: "assistant",
+        hydrationState: "hydrated",
+        measuredHeight: null,
+        pinReasons: new Set(),
+        lastMeasuredAt: null,
+        blocks,
     };
 }

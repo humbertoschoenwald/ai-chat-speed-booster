@@ -12,6 +12,10 @@ import { ToolCallGroupController } from "../ToolCallGroupController";
 import { TurnRegistry } from "../TurnRegistry";
 import { VirtualizationConflictDetector } from "../VirtualizationConflictDetector";
 import {
+    ChatGptCodeBlockContainmentController,
+    type ChatGptCodeBlockContainmentSnapshot,
+} from "./ChatGptCodeBlockContainmentController";
+import {
     detectChatGptDeliveryTimeout,
     type ChatGptDeliveryTimeoutSnapshot,
 } from "./ChatGptDeliveryTimeoutDetector";
@@ -70,6 +74,7 @@ export interface ChatGptContentRuntimeStatus {
     readonly nativeInteractiveNodeBudget: ChatGptInteractiveNodeBudgetSnapshot | null;
     readonly nativeToolCardDensityProfile: ChatGptToolCardDensityProfile | null;
     readonly nativeThreadCssMetrics: ChatGptThreadCssMetrics | null;
+    readonly nativeCodeBlockContainment: ChatGptCodeBlockContainmentSnapshot | null;
     readonly nativeRevealLoopCount: number;
     readonly nativeScrollOscillationCount: number;
     readonly nativeVirtualizationDisabled: boolean;
@@ -80,6 +85,7 @@ export class ChatGptContentRuntime {
     private readonly nativeVirtualizationConflicts = new VirtualizationConflictDetector();
     private readonly nativeTurnRegistry = new TurnRegistry();
     private readonly nativeToolCallGroups = new ToolCallGroupController();
+    private readonly codeBlockContainment = new ChatGptCodeBlockContainmentController();
     private readonly pageInspectionSampler: NativeDiagnosticsSampler<ChatGptPageInspection>;
     private readonly toolCallSummaries = new ChatGptToolCallSummaryController();
     private readonly visibleTurnPriorities = new ChatGptVisibleTurnPriorityController();
@@ -91,6 +97,7 @@ export class ChatGptContentRuntime {
     private nativeInteractiveNodeBudget: ChatGptInteractiveNodeBudgetSnapshot | null = null;
     private nativeToolCardDensityProfile: ChatGptToolCardDensityProfile | null = null;
     private nativeThreadCssMetrics: ChatGptThreadCssMetrics | null = null;
+    private nativeCodeBlockContainment: ChatGptCodeBlockContainmentSnapshot | null = null;
     private nativeSnapshotHosts = 0;
     private nativeSnapshotCacheBytes = 0;
     private nativeSnapshotSyncCooldownUntilMs = 0;
@@ -130,6 +137,7 @@ export class ChatGptContentRuntime {
         this.nativeInteractiveNodeBudget = null;
         this.nativeToolCardDensityProfile = null;
         this.nativeThreadCssMetrics = null;
+        this.nativeCodeBlockContainment = null;
         this.nativeSnapshotHosts = 0;
         this.nativeSnapshotCacheBytes = 0;
     }
@@ -169,6 +177,7 @@ export class ChatGptContentRuntime {
             nativeInteractiveNodeBudget: this.nativeInteractiveNodeBudget,
             nativeToolCardDensityProfile: this.nativeToolCardDensityProfile,
             nativeThreadCssMetrics: this.nativeThreadCssMetrics,
+            nativeCodeBlockContainment: this.nativeCodeBlockContainment,
             nativeRevealLoopCount: nativeConflictSnapshot.revealLoopCount,
             nativeScrollOscillationCount: nativeConflictSnapshot.scrollOscillationCount,
             nativeVirtualizationDisabled: nativeConflictSnapshot.shouldDisableNativeVirtualization,
@@ -187,6 +196,7 @@ export class ChatGptContentRuntime {
         this.chatGptTurnContentVisibilityController?.stop(this.ports.document);
         this.chatGptTurnContentVisibilityController = null;
         this.toolCallSummaries.stop(this.ports.document);
+        this.codeBlockContainment.stop(this.ports.document);
     }
 
     private ensureNativeState(): void {
@@ -197,6 +207,7 @@ export class ChatGptContentRuntime {
             this.chatGptTurnContentVisibilityController?.stop(this.ports.document);
             this.chatGptTurnContentVisibilityController = null;
             this.toolCallSummaries.stop(this.ports.document);
+            this.codeBlockContainment.stop(this.ports.document);
             this.scrubStableNativeArtifacts();
             return;
         }
@@ -207,6 +218,7 @@ export class ChatGptContentRuntime {
         this.chatGptTextSnapshotRenderer.start(this.ports.document);
         this.chatGptTurnContentVisibilityController.start(this.ports.document);
         this.toolCallSummaries.start(this.ports.document);
+        this.codeBlockContainment.start(this.ports.document);
     }
 
     private readConversationScope(): ParentNode {
@@ -269,6 +281,10 @@ export class ChatGptContentRuntime {
                 this.nativeToolCallGroups.snapshot(),
                 config.visibleMessageLimit,
             );
+            this.nativeCodeBlockContainment = this.codeBlockContainment.sync(
+                records,
+                this.nativeRenderBudget.liveWindowSize + 2,
+            );
 
             renderer.restoreAll(this.ports.document);
             const result = this.chatGptTurnContentVisibilityController?.sync(turns, {
@@ -301,6 +317,7 @@ export class ChatGptContentRuntime {
         this.nativeInteractiveNodeBudget = null;
         this.nativeToolCardDensityProfile = null;
         this.nativeThreadCssMetrics = null;
+        this.nativeCodeBlockContainment = null;
         this.nativeSnapshotHosts = 0;
         this.nativeSnapshotCacheBytes = 0;
     }

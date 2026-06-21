@@ -152,6 +152,9 @@ export interface ExtensionStatus {
     readonly nativeModeThreadContentMaxWidthPx?: number | null;
     readonly nativeModeThreadScrollToBottomBannerOffsetPx?: number | null;
     readonly nativeModeThreadShowContextPct?: number | null;
+    readonly nativeModeCodeBlockCount?: number;
+    readonly nativeModeContainedCodeBlockCount?: number;
+    readonly nativeModeSkippedEditableCodeBlockCount?: number;
     readonly nativeModeLiveWindowSize?: number;
     readonly nativeModeRevealLoopCount?: number;
     readonly nativeModeScrollOscillationCount?: number;
