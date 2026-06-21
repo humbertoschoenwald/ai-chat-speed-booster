@@ -124,6 +124,7 @@
 
 #### Native
 
+- use turn height hints ([5d08e9c](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/5d08e9c0aae4d9dcb2a4262ccfe27be7a08b6862)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - dedupe ChatGPT turn containers ([1fe3e64](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/1fe3e64cdd986e2ccebddc12424a2665fc3fc71b)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - prefer section turn selectors ([a8f9ba4](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/a8f9ba4202a10474477ec00886db5068fa63a1e1)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - sample page diagnostics ([0f7d59f](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/0f7d59f3edd740bc4d8a3ece8d799383c6fcd406)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
