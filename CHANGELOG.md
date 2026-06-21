@@ -103,6 +103,10 @@
 
 - suppress misleading message counts ([71479ae](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/71479aef4e6e60beb5c8046af2870b94d778a79d)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 
+#### Gemini
+
+- extend reveal anchor window ([dbfa6d2](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/dbfa6d24be54e2c42b5b727831c6639d62534109)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
+
 #### Lifecycle
 
 - handle invalidated extension contexts ([41e4075](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/41e4075524654226b34cf9c3890853b120fe6008)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
