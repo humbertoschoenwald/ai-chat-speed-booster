@@ -310,6 +310,7 @@
 
 #### Native
 
+- lock historical turn containment guards ([075b875](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/075b87539be4fad19b5076f57e73d8ec710e0b73)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - count third scroll oscillation sample (#24) ([7769e92](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/7769e9272e8f826e09a3127928f310437db51047)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - cover cache model boundaries ([28b31e5](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/28b31e5296e7b49e2543a276e9cd4ecfd463eae9)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - cover native guard models ([8c06aee](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/8c06aee4466bb7e8b169f8b33f854bfaff621010)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
