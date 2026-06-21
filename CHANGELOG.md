@@ -124,6 +124,7 @@
 
 #### Native
 
+- sample page diagnostics ([0f7d59f](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/0f7d59f3edd740bc4d8a3ece8d799383c6fcd406)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - reduce static tool icon paint ([9ac5517](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/9ac5517b764536d8fba8bb00de6c9cafeb92eb39)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - quiet old turn hover work ([6fa77e8](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/6fa77e810a19f3ba1fed17111f9c89304e4279f0)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - throttle after long tasks ([3fef42a](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/3fef42a251da6aa05222e0f7a1c834a2fae34893)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
