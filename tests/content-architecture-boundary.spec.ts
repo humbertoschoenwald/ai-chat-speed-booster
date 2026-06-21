@@ -11,6 +11,7 @@ type TestSiteConfig = {
         nativeModeStatus: "not-functional" | null;
     };
     selectors?: { messageTurn?: string; scrollContainer?: string };
+    ui?: { loadMorePlacement?: string; loadMoreTheme?: string };
     messageUnit?: { elementsPerMessage?: number };
     messageIdAttribute?: string;
 };
@@ -173,6 +174,7 @@ test("ChatGPT Stable Mode reviewed behavior is locked", () => {
     expect(chatgpt?.selectors?.scrollContainer).toBe("div[data-scroll-root]");
     expect(chatgpt?.messageUnit?.elementsPerMessage).toBe(2);
     expect(chatgpt?.messageIdAttribute).toBe("data-turn-id");
+    expect(chatgpt?.ui?.loadMorePlacement).toBe("left-of-share");
 
     expect(bridgeSource).toContain("fetchInterceptEnabled: false");
     expect(policySource).toContain("fetchInterceptEnabled: false");
@@ -217,6 +219,18 @@ test("Stable managed turns hide the outer ChatGPT layout wrapper", () => {
     expect(source).toContain("content-visibility:visible!important");
     expect(source).toContain("candidate.getAttribute(\"data-turn-id-container\") === turnId");
     expect(source).toContain("layoutElement = candidate");
+});
+
+test("Stable Load More overlay uses reviewed site placement metadata", () => {
+    const source = readFileSync(path.resolve("src/content/UIComponents.ts"), "utf8");
+    const chatgpt = SITES_CONFIG.find((site) => site.id === "chatgpt");
+    const gemini = SITES_CONFIG.find((site) => site.id === "gemini");
+
+    expect(source).toContain('return this.siteConfig.ui?.loadMorePlacement !== "inline"');
+    expect(source).toContain('const placement = this.siteConfig.ui?.loadMorePlacement ?? "top-right"');
+    expect(source).toContain('this.siteConfig.ui?.loadMoreTheme === "gemini"');
+    expect(chatgpt?.ui?.loadMorePlacement).toBe("left-of-share");
+    expect(gemini?.ui?.loadMoreTheme).toBe("gemini");
 });
 
 test("Stable Load More reveals downloaded DOM without chunk reload", () => {

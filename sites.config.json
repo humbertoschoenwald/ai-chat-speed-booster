@@ -30,7 +30,8 @@
             "bottom": "div[data-scroll-root]"
         },
         "ui": {
-            "loadMoreMargin": "4px 15px 4px 0px"
+            "loadMoreMargin": "4px 15px 4px 0px",
+            "loadMorePlacement": "left-of-share"
         },
         "fetchIntercept": {
             "urlMatch": "/backend-api/conversation/",
@@ -134,7 +135,8 @@
             "bottom": "div.content-container"
         },
         "ui": {
-            "loadMoreMargin": "4px 0"
+            "loadMoreMargin": "4px 0",
+            "loadMoreTheme": "gemini"
         }
     },
     {

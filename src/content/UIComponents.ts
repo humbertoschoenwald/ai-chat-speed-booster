@@ -107,12 +107,13 @@ export class LoadMoreButton {
     }
 
     private usesFixedOverlay(): boolean {
-        return this.siteConfig.id === "chatgpt";
+        return this.siteConfig.ui?.loadMorePlacement !== "inline";
     }
 
     private applyFixedOverlayPlacement(): void {
         if (!this.container) return;
-        const shareAnchor = this.findShareAnchor();
+        const placement = this.siteConfig.ui?.loadMorePlacement ?? "top-right";
+        const shareAnchor = placement === "left-of-share" ? this.findShareAnchor() : null;
         const wrapperWidth = this.container.offsetWidth || 190;
         const wrapperHeight = this.container.offsetHeight || 36;
         const anchorRect = shareAnchor?.getBoundingClientRect();
@@ -202,6 +203,7 @@ export class LoadMoreButton {
         button.className = `${CSS_PREFIX}-load-more-btn`;
         button.type = "button";
         button.setAttribute("aria-label", "Load older messages");
+        const geminiTheme = this.siteConfig.ui?.loadMoreTheme === "gemini";
         Object.assign(button.style, {
             all: "unset",
             cursor: "pointer",
@@ -216,9 +218,15 @@ export class LoadMoreButton {
             fontWeight: "600",
             fontFamily:
                 '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif',
-            color: "var(--text-primary, var(--text-foreground, #f4f4f5))",
-            background: "var(--main-surface-secondary, rgba(127,127,127,0.16))",
-            border: "1px solid var(--border-light, rgba(127,127,127,0.22))",
+            color: geminiTheme
+                ? "var(--gem-sys-color--on-surface, #e3e3e3)"
+                : "var(--text-primary, var(--text-foreground, #f4f4f5))",
+            background: geminiTheme
+                ? "var(--gem-sys-color--surface-container-high, rgba(48,49,54,0.94))"
+                : "var(--main-surface-secondary, rgba(127,127,127,0.16))",
+            border: geminiTheme
+                ? "1px solid transparent"
+                : "1px solid var(--border-light, rgba(127,127,127,0.22))",
             boxShadow: "0 4px 16px rgba(0,0,0,0.12)",
             transition:
                 "background 0.15s ease, transform 0.1s ease, color 0.1s ease, border-color 0.15s ease",
@@ -226,11 +234,15 @@ export class LoadMoreButton {
         } satisfies Partial<CSSStyleDeclaration>);
 
         button.addEventListener("mouseenter", () => {
-            button.style.background = "var(--main-surface-tertiary, rgba(127,127,127,0.22))";
+            button.style.background = geminiTheme
+                ? "var(--gem-sys-color--surface-container-highest, rgba(60,64,67,0.98))"
+                : "var(--main-surface-tertiary, rgba(127,127,127,0.22))";
             button.style.borderColor = "var(--border-medium, rgba(127,127,127,0.32))";
         });
         button.addEventListener("mouseleave", () => {
-            button.style.background = "var(--main-surface-secondary, rgba(127,127,127,0.16))";
+            button.style.background = geminiTheme
+                ? "var(--gem-sys-color--surface-container-high, rgba(48,49,54,0.94))"
+                : "var(--main-surface-secondary, rgba(127,127,127,0.16))";
             button.style.borderColor = "var(--border-light, rgba(127,127,127,0.22))";
         });
         button.addEventListener("mousedown", () => {

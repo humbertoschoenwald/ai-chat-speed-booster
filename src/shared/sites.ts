@@ -14,8 +14,16 @@ export interface StatusAnchors {
     readonly bottom?: string;
 }
 
+export type LoadMorePlacement = "inline" | "top-right" | "left-of-share";
+export type LoadMoreTheme = "default" | "gemini";
+
 export interface SiteUI {
     readonly loadMoreMargin?: string;
+    readonly loadMorePlacement?: LoadMorePlacement;
+    readonly loadMoreAnchorSelector?: string;
+    readonly loadMoreTopPx?: number;
+    readonly loadMoreRightPx?: number;
+    readonly loadMoreTheme?: LoadMoreTheme;
 }
 
 export type SiteModeReviewStatus = "not-functional";
