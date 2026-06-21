@@ -284,6 +284,14 @@ test("extension source does not carry Schoenwald large-file markers", () => {
     expect(matches).toEqual([]);
 });
 
+test("ChatGPT conversation changes reset Native Mode scoped state", () => {
+    const source = readFileSync(path.resolve("src/content/index.ts"), "utf8");
+
+    expect(source).toContain("chatGptRuntime?.resetNativeTracking()");
+    expect(source).toContain("requestLifecycleTracker?.reset()");
+    expect(source).toContain("messageManager.destroy(false)");
+});
+
 test("Native historical turn containment keeps safe predicates", () => {
     const source = readFileSync(path.resolve("src/content/native/chatgpt/ChatGptTurnContainmentController.ts"), "utf8");
 
