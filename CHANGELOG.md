@@ -26,6 +26,7 @@
 
 #### Native
 
+- read thread CSS metrics ([ffdd81d](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/ffdd81d2fd913574e7cc786c49fc20266b9bb2e6)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - profile tool card density ([b7d20ee](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/b7d20eeadf1a10b234ec6af9c57880aae7e92181)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - report interactive node budgets ([dbee696](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/dbee696a39cc10ac7ab14040428938d4b9334a0e)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - add feature flag kill switches ([6bad767](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/6bad76755b6d4a8a23614e30af1197eee11b7e92)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
