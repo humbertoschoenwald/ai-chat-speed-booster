@@ -12,7 +12,8 @@ const MAX_LENGTH_TEXT_PATTERNS = [
 ];
 
 export function detectChatGptMaxLengthReadonly(root: ParentNode = document): ChatGptMaxLengthReadonlySnapshot {
-    const text = (root instanceof Document ? root.body?.innerText : root.textContent) ?? "";
+    const isDocument = typeof Document !== "undefined" && root instanceof Document;
+    const text = (isDocument ? root.body?.innerText : root.textContent) ?? "";
     const reason = MAX_LENGTH_TEXT_PATTERNS.find((pattern) => pattern.test(text))?.source ?? null;
     if (!reason) {
         return { detected: false, reason: null };
