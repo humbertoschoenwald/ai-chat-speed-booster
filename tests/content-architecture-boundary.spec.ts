@@ -284,6 +284,22 @@ test("extension source does not carry Schoenwald large-file markers", () => {
     expect(matches).toEqual([]);
 });
 
+test("Native Mode CSS artifacts stay owned by native runtime cleanup", () => {
+    const runtimeSource = readFileSync(path.resolve("src/content/native/chatgpt/ChatGptContentRuntime.ts"), "utf8");
+    const snapshotSource = readFileSync(path.resolve("src/content/native/chatgpt/ChatGptTextSnapshotRenderer.ts"), "utf8");
+    const containmentSource = readFileSync(path.resolve("src/content/native/chatgpt/ChatGptTurnContainmentController.ts"), "utf8");
+    const toolSummarySource = readFileSync(path.resolve("src/content/native/chatgpt/ChatGptToolCallSummaryController.ts"), "utf8");
+
+    expect(runtimeSource).toContain('this.config?.performanceMode !== "native"');
+    expect(runtimeSource).toContain("this.scrubStableNativeArtifacts()");
+    expect(snapshotSource).toContain("acsb-native-text-snapshot-style");
+    expect(containmentSource).toContain("acsb-native-turn-content-visibility-style");
+    expect(toolSummarySource).toContain("acsb-tool-call-summary-style");
+    expect(snapshotSource).toContain("root.getElementById(STYLE_ID)?.remove()");
+    expect(containmentSource).toContain("getElementById(STYLE_ID)?.remove()");
+    expect(toolSummarySource).toContain("getElementById(STYLE_ID)?.remove()");
+});
+
 test("ChatGPT conversation changes reset Native Mode scoped state", () => {
     const source = readFileSync(path.resolve("src/content/index.ts"), "utf8");
 
