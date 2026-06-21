@@ -26,6 +26,7 @@
 
 #### Native
 
+- read scroll root state ([c38ab21](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/c38ab21f36928ed1d01a1e0c7ba4eaa8066a119d)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - contain old code blocks ([227f009](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/227f0095c27e3f643ac6065128d1a50c87cbe999)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - read thread CSS metrics ([ffdd81d](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/ffdd81d2fd913574e7cc786c49fc20266b9bb2e6)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - profile tool card density ([b7d20ee](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/b7d20eeadf1a10b234ec6af9c57880aae7e92181)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
