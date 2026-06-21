@@ -105,6 +105,7 @@
 
 #### Gemini
 
+- treat stable DOM as host managed ([9c27d79](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/9c27d79eca64a2042b1a5a847e94e91b67b270af)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - extend reveal anchor window ([dbfa6d2](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/dbfa6d24be54e2c42b5b727831c6639d62534109)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 
 #### Lifecycle
