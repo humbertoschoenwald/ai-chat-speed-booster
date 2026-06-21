@@ -4,11 +4,40 @@ import { EditorInputOptimizer } from "../src/content/native/EditorInputOptimizer
 import { InputChunkPlanner } from "../src/content/native/InputChunkPlanner";
 import { MultiTabCoordinator } from "../src/content/native/MultiTabCoordinator";
 import { NativeDiagnostics } from "../src/content/native/NativeDiagnostics";
+import { NativeWorkScheduler } from "../src/content/native/NativeWorkScheduler";
 import { StaleGenerationRecovery } from "../src/content/native/StaleGenerationRecovery";
 import { VirtualizationConflictDetector } from "../src/content/native/VirtualizationConflictDetector";
 import type { ScrollGeometryDelta } from "../src/content/native/ScrollGeometry";
 
 test.describe("native model guards", () => {
+    test("orders Native Mode work lanes and pauses lower-priority work", () => {
+        const scheduler = new NativeWorkScheduler();
+        const ran: string[] = [];
+
+        scheduler.schedule("idle", "idle-prewarm", () => ran.push("idle-prewarm"), 1);
+        scheduler.schedule("visible-turn", "visible-sync", () => ran.push("visible-sync"), 2);
+        scheduler.schedule("input", "input-guard", () => ran.push("input-guard"), 3);
+        scheduler.schedule("tool-call", "tool-labels", () => ran.push("tool-labels"), 4);
+        scheduler.cancel("tool-labels");
+
+        const protectedDrain = scheduler.drain({ inputProtected: true, now: 10 });
+        expect(protectedDrain).toEqual({
+            ran: ["input-guard"],
+            deferred: ["visible-sync", "idle-prewarm"],
+        });
+        expect(ran).toEqual(["input-guard"]);
+        expect(scheduler.snapshot()).toMatchObject({
+            queued: 2,
+            lastRunAt: 10,
+            lastDeferredAt: 10,
+        });
+
+        const normalDrain = scheduler.drain({ inputProtected: false, now: 20 });
+        expect(normalDrain).toEqual({ ran: ["visible-sync", "idle-prewarm"], deferred: [] });
+        expect(ran).toEqual(["input-guard", "visible-sync", "idle-prewarm"]);
+        expect(scheduler.snapshot()).toMatchObject({ queued: 0, lastRunAt: 20 });
+    });
+
     test("keeps small input native and blocks chunking during composition", () => {
         const planner = new InputChunkPlanner(100, 25);
 
