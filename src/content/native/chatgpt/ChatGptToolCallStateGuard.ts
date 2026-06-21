@@ -40,7 +40,16 @@ export function isUnsafeChatGptToolCallState(state: ChatGptToolCallState): boole
 }
 
 export function canApplyStaticToolCallSummary(element: HTMLElement): boolean {
-    return classifyChatGptToolCallState(element) === "completed-collapsed";
+    return classifyChatGptToolCallState(element) === "completed-collapsed"
+        && !hasNestedToolCallButtons(element);
+}
+
+export function hasNestedToolCallButtons(element: HTMLElement): boolean {
+    const buttons = [
+        ...(element.matches("button") ? [element] : []),
+        ...element.querySelectorAll<HTMLButtonElement>("button"),
+    ];
+    return buttons.some((button) => buttons.some((candidate) => candidate !== button && button.contains(candidate)));
 }
 
 function matchesOrContains(element: HTMLElement, selector: string): boolean {

@@ -2,7 +2,7 @@ import { test, expect } from "@playwright/test";
 import { readFileSync } from "node:fs";
 import { isStaticSummaryCandidate } from "../src/content/native/chatgpt/ChatGptToolCallSummaryController";
 import type { ToolCallGroupRecord } from "../src/content/native/ToolCallGroupController";
-import { classifyChatGptToolCallState } from "../src/content/native/chatgpt/ChatGptToolCallStateGuard";
+import { classifyChatGptToolCallState, hasNestedToolCallButtons } from "../src/content/native/chatgpt/ChatGptToolCallStateGuard";
 
 test("completed closed tool calls are static summary candidates", () => {
     expect(isStaticSummaryCandidate(group("completed", element({ state: "closed", text: "Read file" })))).toBe(true);
@@ -17,6 +17,13 @@ test("active tool calls are not static summary candidates", () => {
 test("open or user-owned tool-like nodes are not static summary candidates", () => {
     expect(isStaticSummaryCandidate(group("completed", element({ text: "Read file" })))).toBe(false);
     expect(isStaticSummaryCandidate(group("completed", element({ state: "closed", userOwned: true, text: "Read file" })))).toBe(false);
+});
+
+test("nested ChatGPT tool call buttons stay host-owned", () => {
+    const host = element({ state: "closed", text: "Read file", nestedButtons: true });
+
+    expect(hasNestedToolCallButtons(host)).toBe(true);
+    expect(isStaticSummaryCandidate(group("completed", host))).toBe(false);
 });
 
 test("ChatGPT guard identifies active text", () => {
@@ -38,7 +45,11 @@ function group(state: ToolCallGroupRecord["state"], element: HTMLElement): ToolC
     return { id: "g1", ownerTurnKey: "t1", element, state, estimatedNodeCost: 1 };
 }
 
-function element(options: { readonly state?: string; readonly text?: string; readonly active?: boolean; readonly userOwned?: boolean }): HTMLElement {
+function element(options: { readonly state?: string; readonly text?: string; readonly active?: boolean; readonly userOwned?: boolean; readonly nestedButtons?: boolean }): HTMLElement {
+    const innerButton = {} as HTMLElement;
+    const outerButton = {
+        contains: (candidate: HTMLElement) => candidate === innerButton,
+    } as HTMLElement;
     return {
         innerText: options.text ?? "",
         textContent: options.text ?? "",
@@ -48,6 +59,9 @@ function element(options: { readonly state?: string; readonly text?: string; rea
             if (selector.includes("aria-busy") && options.active) return {};
             return null;
         },
+        querySelectorAll: (selector: string) => selector === "button" && options.nestedButtons
+            ? [outerButton, innerButton]
+            : [],
         matches: (selector: string) => selector.includes("aria-busy") && options.active === true,
         closest: (selector: string) => selector.includes("data-message-author-role") && options.userOwned === true ? {} : null,
     } as unknown as HTMLElement;
