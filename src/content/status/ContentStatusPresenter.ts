@@ -91,6 +91,8 @@ export function createExtensionStatus(input: ContentStatusPresenterInput): Exten
         nativeModeToolGroupCount: chatGpt?.nativeRenderBudget?.toolGroupCount,
         nativeModeRunningToolCount: chatGpt?.nativeRenderBudget?.runningToolCount,
         nativeModeFailedToolCount: chatGpt?.nativeRenderBudget?.failedToolCount,
+        nativeModeToolCardDensityScore: chatGpt?.nativeToolCardDensityProfile?.score,
+        nativeModeToolCardDensityBehavior: chatGpt?.nativeToolCardDensityProfile?.behavior,
         nativeModeLiveWindowSize: chatGpt?.nativeRenderBudget?.liveWindowSize,
         nativeModeRevealLoopCount: chatGpt?.nativeRevealLoopCount,
         nativeModeScrollOscillationCount: chatGpt?.nativeScrollOscillationCount,

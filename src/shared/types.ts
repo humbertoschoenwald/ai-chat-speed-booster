@@ -146,6 +146,8 @@ export interface ExtensionStatus {
     readonly nativeModeToolGroupCount?: number;
     readonly nativeModeRunningToolCount?: number;
     readonly nativeModeFailedToolCount?: number;
+    readonly nativeModeToolCardDensityScore?: number;
+    readonly nativeModeToolCardDensityBehavior?: string;
     readonly nativeModeLiveWindowSize?: number;
     readonly nativeModeRevealLoopCount?: number;
     readonly nativeModeScrollOscillationCount?: number;

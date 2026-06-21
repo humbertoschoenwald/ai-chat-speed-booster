@@ -10,11 +10,31 @@ import { NativeWorkScheduler } from "../src/content/native/NativeWorkScheduler";
 import { StaleGenerationRecovery } from "../src/content/native/StaleGenerationRecovery";
 import { resolveChatGptConversationScope } from "../src/content/native/chatgpt/ChatGptConversationScope";
 import { createChatGptInteractiveNodeBudgetSnapshot } from "../src/content/native/chatgpt/ChatGptInteractiveNodeBudget";
+import { createChatGptToolCardDensityProfile } from "../src/content/native/chatgpt/ChatGptToolCardDensityProfile";
 import { VirtualizationConflictDetector } from "../src/content/native/VirtualizationConflictDetector";
 import { dedupeChatGptTurnElements, readChatGptLastKnownHeight, readChatGptTurnId } from "../src/content/native/chatgpt/ChatGptSelectors";
 import type { ScrollGeometryDelta } from "../src/content/native/ScrollGeometry";
 
 test.describe("native model guards", () => {
+    test("selects static tool summaries only for dense completed tool-card threads", () => {
+        const denseGroups = Array.from({ length: 42 }, (_, index) => toolGroup(index < 40 ? "completed" : "running"));
+        const sparseGroups = Array.from({ length: 3 }, () => toolGroup("completed"));
+
+        expect(createChatGptToolCardDensityProfile(denseGroups, 8)).toMatchObject({
+            behavior: "static-summary",
+            groupCount: 42,
+            completedCount: 40,
+            activeCount: 2,
+        });
+        expect(createChatGptToolCardDensityProfile(sparseGroups, 8)).toMatchObject({
+            behavior: "baseline",
+            groupCount: 3,
+            completedCount: 3,
+            activeCount: 0,
+        });
+    });
+
+
     test("prefers ChatGPT conversation scope over document-wide scans", () => {
         const documentRoot = fakeScope({ buttons: 10, svgs: 10 });
         const conversationRoot = fakeScope({ buttons: 2, svgs: 1 });
@@ -421,4 +441,15 @@ function fakeScope(options: { readonly buttons: number; readonly svgs: number; r
             return [];
         },
     } as unknown as HTMLElement;
+}
+
+
+function toolGroup(state: "completed" | "running" | "failed" | "user-expanded") {
+    return {
+        id: `tool-${Math.random()}`,
+        ownerTurnKey: "turn-1",
+        element: {} as HTMLElement,
+        state,
+        estimatedNodeCost: 1,
+    };
 }

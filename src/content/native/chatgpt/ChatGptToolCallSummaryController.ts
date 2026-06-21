@@ -41,7 +41,11 @@ export class ChatGptToolCallSummaryController {
         this.restoreDisabled = false;
     }
 
-    sync(groups: readonly ToolCallGroupRecord[]): number {
+    sync(groups: readonly ToolCallGroupRecord[], enabled = true): number {
+        if (!enabled) {
+            this.restoreAll(this.root ?? document);
+            return 0;
+        }
         if (this.restoreDisabled) {
             this.restoreAll(this.root ?? document);
             return 0;
