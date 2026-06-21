@@ -22,6 +22,7 @@
 
 #### Native
 
+- add explicit work scheduler lanes ([86e8cd4](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/86e8cd4a19c23b757823174bcf80cd8c7c7b3f75)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - schedule native scroll work ([a3b139e](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/a3b139ee5b422f35982447d0a7153ea5d4b136d2)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - cache turn containment heights ([1cb9162](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/1cb9162edb17816a7a3f1a5258dfb32b11feeea0)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - add turn containment controller ([3c27cb1](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/3c27cb1ee3ea1c81e5c73282219362144e10e191)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
