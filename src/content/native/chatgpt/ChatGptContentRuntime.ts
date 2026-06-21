@@ -27,6 +27,10 @@ import {
 } from "./ChatGptInteractiveNodeBudget";
 import { ChatGptTextSnapshotRenderer } from "./ChatGptTextSnapshotRenderer";
 import {
+    readChatGptThreadCssMetrics,
+    type ChatGptThreadCssMetrics,
+} from "./ChatGptThreadCssMetrics";
+import {
     createChatGptToolCardDensityProfile,
     type ChatGptToolCardDensityProfile,
 } from "./ChatGptToolCardDensityProfile";
@@ -65,6 +69,7 @@ export interface ChatGptContentRuntimeStatus {
     readonly nativeRenderBudget: RenderUnitBudgetSnapshot | null;
     readonly nativeInteractiveNodeBudget: ChatGptInteractiveNodeBudgetSnapshot | null;
     readonly nativeToolCardDensityProfile: ChatGptToolCardDensityProfile | null;
+    readonly nativeThreadCssMetrics: ChatGptThreadCssMetrics | null;
     readonly nativeRevealLoopCount: number;
     readonly nativeScrollOscillationCount: number;
     readonly nativeVirtualizationDisabled: boolean;
@@ -85,6 +90,7 @@ export class ChatGptContentRuntime {
     private nativeRenderBudget: RenderUnitBudgetSnapshot | null = null;
     private nativeInteractiveNodeBudget: ChatGptInteractiveNodeBudgetSnapshot | null = null;
     private nativeToolCardDensityProfile: ChatGptToolCardDensityProfile | null = null;
+    private nativeThreadCssMetrics: ChatGptThreadCssMetrics | null = null;
     private nativeSnapshotHosts = 0;
     private nativeSnapshotCacheBytes = 0;
     private nativeSnapshotSyncCooldownUntilMs = 0;
@@ -123,6 +129,7 @@ export class ChatGptContentRuntime {
         this.nativeRenderBudget = null;
         this.nativeInteractiveNodeBudget = null;
         this.nativeToolCardDensityProfile = null;
+        this.nativeThreadCssMetrics = null;
         this.nativeSnapshotHosts = 0;
         this.nativeSnapshotCacheBytes = 0;
     }
@@ -161,6 +168,7 @@ export class ChatGptContentRuntime {
             nativeRenderBudget: this.nativeRenderBudget,
             nativeInteractiveNodeBudget: this.nativeInteractiveNodeBudget,
             nativeToolCardDensityProfile: this.nativeToolCardDensityProfile,
+            nativeThreadCssMetrics: this.nativeThreadCssMetrics,
             nativeRevealLoopCount: nativeConflictSnapshot.revealLoopCount,
             nativeScrollOscillationCount: nativeConflictSnapshot.scrollOscillationCount,
             nativeVirtualizationDisabled: nativeConflictSnapshot.shouldDisableNativeVirtualization,
@@ -237,8 +245,12 @@ export class ChatGptContentRuntime {
             }
 
             const turns = dedupeChatGptTurnElements(this.ports.queryTurns());
+            const conversationScope = this.readConversationScope();
+            this.nativeThreadCssMetrics = conversationScope instanceof Element
+                ? readChatGptThreadCssMetrics(conversationScope, this.ports.window)
+                : null;
             this.nativeInteractiveNodeBudget = createChatGptInteractiveNodeBudgetSnapshot(
-                this.readConversationScope(),
+                conversationScope,
                 turns,
             );
             const records = turns.map((turn, index) => this.nativeTurnRegistry.track(turn, index));
@@ -288,6 +300,7 @@ export class ChatGptContentRuntime {
         this.nativeRenderBudget = null;
         this.nativeInteractiveNodeBudget = null;
         this.nativeToolCardDensityProfile = null;
+        this.nativeThreadCssMetrics = null;
         this.nativeSnapshotHosts = 0;
         this.nativeSnapshotCacheBytes = 0;
     }

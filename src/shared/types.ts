@@ -148,6 +148,10 @@ export interface ExtensionStatus {
     readonly nativeModeFailedToolCount?: number;
     readonly nativeModeToolCardDensityScore?: number;
     readonly nativeModeToolCardDensityBehavior?: string;
+    readonly nativeModeThreadResponseHeightPx?: number | null;
+    readonly nativeModeThreadContentMaxWidthPx?: number | null;
+    readonly nativeModeThreadScrollToBottomBannerOffsetPx?: number | null;
+    readonly nativeModeThreadShowContextPct?: number | null;
     readonly nativeModeLiveWindowSize?: number;
     readonly nativeModeRevealLoopCount?: number;
     readonly nativeModeScrollOscillationCount?: number;

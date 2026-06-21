@@ -11,11 +11,36 @@ import { StaleGenerationRecovery } from "../src/content/native/StaleGenerationRe
 import { resolveChatGptConversationScope } from "../src/content/native/chatgpt/ChatGptConversationScope";
 import { createChatGptInteractiveNodeBudgetSnapshot } from "../src/content/native/chatgpt/ChatGptInteractiveNodeBudget";
 import { createChatGptToolCardDensityProfile } from "../src/content/native/chatgpt/ChatGptToolCardDensityProfile";
+import { parseCssMetric, readChatGptThreadCssMetrics } from "../src/content/native/chatgpt/ChatGptThreadCssMetrics";
 import { VirtualizationConflictDetector } from "../src/content/native/VirtualizationConflictDetector";
 import { dedupeChatGptTurnElements, readChatGptLastKnownHeight, readChatGptTurnId } from "../src/content/native/chatgpt/ChatGptSelectors";
 import type { ScrollGeometryDelta } from "../src/content/native/ScrollGeometry";
 
 test.describe("native model guards", () => {
+    test("reads ChatGPT thread CSS variables as readonly metrics", () => {
+        const styleValues = new Map([
+            ["--thread-response-height", "720px"],
+            ["--thread-content-max-width", "48rem"],
+            ["--thread-scroll-to-bottom-banner-offset", "32px"],
+            ["--thread-show-context-pct", "65%"],
+        ]);
+        const win = {
+            getComputedStyle: () => ({
+                getPropertyValue: (name: string) => styleValues.get(name) ?? "",
+            }),
+        } as unknown as Pick<Window, "getComputedStyle">;
+
+        expect(readChatGptThreadCssMetrics({} as Element, win)).toEqual({
+            responseHeightPx: 720,
+            contentMaxWidthPx: 48,
+            scrollToBottomBannerOffsetPx: 32,
+            showContextPct: 65,
+        });
+        expect(parseCssMetric("")).toBeNull();
+        expect(parseCssMetric("not-a-number")).toBeNull();
+    });
+
+
     test("selects static tool summaries only for dense completed tool-card threads", () => {
         const denseGroups = Array.from({ length: 42 }, (_, index) => toolGroup(index < 40 ? "completed" : "running"));
         const sparseGroups = Array.from({ length: 3 }, () => toolGroup("completed"));
