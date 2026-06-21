@@ -8,12 +8,25 @@ import { NativeDiagnosticsSampler } from "../src/content/native/NativeDiagnostic
 import { createNativeAutoDisableRecord, resolveNativeFeatureFlags } from "../src/content/native/NativeFeatureFlags";
 import { NativeWorkScheduler } from "../src/content/native/NativeWorkScheduler";
 import { StaleGenerationRecovery } from "../src/content/native/StaleGenerationRecovery";
+import { resolveChatGptConversationScope } from "../src/content/native/chatgpt/ChatGptConversationScope";
 import { createChatGptInteractiveNodeBudgetSnapshot } from "../src/content/native/chatgpt/ChatGptInteractiveNodeBudget";
 import { VirtualizationConflictDetector } from "../src/content/native/VirtualizationConflictDetector";
 import { dedupeChatGptTurnElements, readChatGptLastKnownHeight, readChatGptTurnId } from "../src/content/native/chatgpt/ChatGptSelectors";
 import type { ScrollGeometryDelta } from "../src/content/native/ScrollGeometry";
 
 test.describe("native model guards", () => {
+    test("prefers ChatGPT conversation scope over document-wide scans", () => {
+        const documentRoot = fakeScope({ buttons: 10, svgs: 10 });
+        const conversationRoot = fakeScope({ buttons: 2, svgs: 1 });
+
+        expect(resolveChatGptConversationScope(documentRoot as unknown as Document, conversationRoot)).toBe(conversationRoot);
+        expect(createChatGptInteractiveNodeBudgetSnapshot(
+            resolveChatGptConversationScope(documentRoot as unknown as Document, conversationRoot),
+            [],
+        ).totalButtons).toBe(2);
+        expect(resolveChatGptConversationScope(documentRoot as unknown as Document, null)).toBe(documentRoot);
+    });
+
     test("reports ChatGPT interactive node budgets by scope", () => {
         const toolGroup = fakeScope({ buttons: 2, svgs: 2 });
         const turnA = fakeScope({ buttons: 3, svgs: 2, toolGroups: [toolGroup] });

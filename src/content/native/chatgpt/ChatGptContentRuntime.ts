@@ -19,6 +19,7 @@ import {
     detectChatGptMaxLengthReadonly,
     type ChatGptMaxLengthReadonlySnapshot,
 } from "./ChatGptMaxLengthReadonlyDetector";
+import { resolveChatGptConversationScope } from "./ChatGptConversationScope";
 import { createChatGptLogicalDisplayStatus } from "./ChatGptLogicalTurnCounter";
 import {
     createChatGptInteractiveNodeBudgetSnapshot,
@@ -192,6 +193,13 @@ export class ChatGptContentRuntime {
         this.toolCallSummaries.start(this.ports.document);
     }
 
+    private readConversationScope(): ParentNode {
+        return resolveChatGptConversationScope(
+            this.ports.document,
+            this.ports.findScrollContainer(),
+        );
+    }
+
     private syncNativeSnapshots(controller: NativeModeController | null): void {
         const config = this.config;
         const renderer = this.chatGptTextSnapshotRenderer;
@@ -222,7 +230,7 @@ export class ChatGptContentRuntime {
 
             const turns = dedupeChatGptTurnElements(this.ports.queryTurns());
             this.nativeInteractiveNodeBudget = createChatGptInteractiveNodeBudgetSnapshot(
-                this.ports.document,
+                this.readConversationScope(),
                 turns,
             );
             const records = turns.map((turn, index) => this.nativeTurnRegistry.track(turn, index));
