@@ -294,6 +294,10 @@ test("Native historical turn containment keeps safe predicates", () => {
     expect(source).toContain("[aria-busy='true']");
     expect(source).toContain(".text-token-text-error");
     expect(source).toContain("[data-testid*='tool']");
+    expect(source).toContain("data-acsb-native-quiet-turn");
+    expect(source).toContain("transition-duration:0s!important");
+    expect(source).toContain("pointerenter");
+    expect(source).toContain("focusin");
 });
 
 function listTextFiles(root: string): string[] {

@@ -8,6 +8,8 @@ export interface ChatGptTurnContentVisibilityResult {
 }
 
 const CONTAINED_ATTR = "data-acsb-native-contained-turn";
+const QUIET_ATTR = "data-acsb-native-quiet-turn";
+const QUIET_RESTORE_BOUND_ATTR = "data-acsb-native-quiet-restore-bound";
 const STYLE_ID = "acsb-native-turn-content-visibility-style";
 
 export class ChatGptTurnContentVisibilityController {
@@ -30,6 +32,7 @@ export class ChatGptTurnContentVisibilityController {
     restoreAll(root: ParentNode = document): void {
         root.querySelectorAll<HTMLElement>(`[${CONTAINED_ATTR}="true"]`).forEach((turn) => {
             turn.removeAttribute(CONTAINED_ATTR);
+            turn.removeAttribute(QUIET_ATTR);
             turn.style.removeProperty("--acsb-contained-turn-height");
         });
     }
@@ -48,11 +51,14 @@ export class ChatGptTurnContentVisibilityController {
         decisions.forEach(({ turn, shouldContain, height }) => {
             if (!shouldContain) {
                 turn.removeAttribute(CONTAINED_ATTR);
+                turn.removeAttribute(QUIET_ATTR);
                 turn.style.removeProperty("--acsb-contained-turn-height");
                 return;
             }
             turn.style.setProperty("--acsb-contained-turn-height", `${height}px`);
             turn.setAttribute(CONTAINED_ATTR, "true");
+            turn.setAttribute(QUIET_ATTR, "true");
+            bindQuietRestore(turn);
             containedTurns += 1;
         });
         return { containedTurns };
@@ -72,8 +78,18 @@ function injectStyle(root: Document): void {
     if (root.getElementById(STYLE_ID)) return;
     const style = root.createElement("style");
     style.id = STYLE_ID;
-    style.textContent = `[${CONTAINED_ATTR}="true"]{content-visibility:auto!important;contain-intrinsic-size:auto var(--acsb-contained-turn-height,320px)!important;}`;
+    style.textContent = `[${CONTAINED_ATTR}="true"]{content-visibility:auto!important;contain-intrinsic-size:auto var(--acsb-contained-turn-height,320px)!important;}[${CONTAINED_ATTR}="true"][${QUIET_ATTR}="true"] *{transition-duration:0s!important;animation-duration:0.001s!important;animation-iteration-count:1!important;}`;
     (root.head ?? root.documentElement).appendChild(style);
+}
+
+function bindQuietRestore(turn: HTMLElement): void {
+    if (turn.getAttribute(QUIET_RESTORE_BOUND_ATTR) === "true") return;
+    const restore = (): void => {
+        turn.removeAttribute(QUIET_ATTR);
+    };
+    turn.addEventListener("pointerenter", restore, { passive: true });
+    turn.addEventListener("focusin", restore);
+    turn.setAttribute(QUIET_RESTORE_BOUND_ATTR, "true");
 }
 
 function computeLiveIndexes(turns: readonly HTMLElement[], liveWindowSize: number, nearestWindow: number): Set<number> {
