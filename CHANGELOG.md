@@ -122,6 +122,7 @@
 
 #### Native
 
+- throttle after long tasks ([3fef42a](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/3fef42a251da6aa05222e0f7a1c834a2fae34893)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - ignore Stable virtual history ([5662e05](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/5662e05d5ae638be85d10262bd478e9db7e8e562)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - prioritize visible turns ([ab490c4](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/ab490c4d9791d2511ea9b7223555204c2c1c473c)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - reuse snapshot text hashes ([70d0b1f](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/70d0b1f6a3c6ce72aa416b1dd9fba622875fb7d5)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
