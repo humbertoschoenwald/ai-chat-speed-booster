@@ -12,12 +12,12 @@ export function renderPerformanceModeHint(
 ): string {
     const effectiveMode = status?.performanceMode ?? requestedMode;
     if (requestedMode === "native" && effectiveMode !== "native") {
-        return "Native unavailable here · Stable active";
+        return "Use Native Mode on compatible sites · Stable active here";
     }
     if (effectiveMode === "native") {
-        return "Native active · ChatGPT only";
+        return "Use Native Mode on compatible sites · active here";
     }
-    return "Stable active · manual older batches";
+    return "Use Native Mode on compatible sites";
 }
 
 export function renderPopupStatusText(config: ExtensionConfig, status: ExtensionStatus): string {

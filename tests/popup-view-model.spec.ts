@@ -76,13 +76,13 @@ test.describe("popup mode view model", () => {
         )).toBe("Degraded content script · Native Mode active · experimental");
     });
 
-    test("mode hint is the SSOT for the Stable versus Native selector", () => {
+    test("mode hint is the SSOT for the Native Mode toggle", () => {
         expect(renderPerformanceModeHint("native", status({ performanceMode: "native" })))
-            .toBe("Native active · ChatGPT only");
+            .toBe("Use Native Mode on compatible sites · active here");
         expect(renderPerformanceModeHint("legacy", status({ performanceMode: "legacy" })))
-            .toBe("Stable active · manual older batches");
+            .toBe("Use Native Mode on compatible sites");
         expect(renderPerformanceModeHint("native", status({ performanceMode: "legacy" })))
-            .toBe("Native unavailable here · Stable active");
+            .toBe("Use Native Mode on compatible sites · Stable active here");
     });
 
     test("Native Mode control is ChatGPT-only", () => {

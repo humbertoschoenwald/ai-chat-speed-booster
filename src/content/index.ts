@@ -154,7 +154,7 @@ async function bootstrap(): Promise<void> {
     config = deriveRuntimeConfigForSite(await loadConfig(), currentSite.id);
     requestLifecycleTracker = new RequestLifecycleTracker(currentSite.id, currentSite.selectors.userMessageSelector);
     await initialiseNativeControllerIfNeeded();
-    messageManager.updateConfig(config);
+    messageManager.updateConfig(readStableMessageManagerConfig());
     if (currentSite.messageIdAttribute) {
         messageManager.setMessageIdAttribute(currentSite.messageIdAttribute);
     }
@@ -337,7 +337,7 @@ function handleConfigUpdated(newConfig: ExtensionConfig): void {
     const modeChanged = previousMode !== config.performanceMode;
     nativeModeController?.updateConfig(config);
     chatGptRuntime?.updateConfig(config);
-    messageManager.updateConfig(config);
+    messageManager.updateConfig(readStableMessageManagerConfig());
     refreshUI();
     if (modeChanged) reloadCoordinator.scheduleModeSwitchReload();
     logger.debug("config updated from external source");
@@ -462,6 +462,11 @@ function handleExtensionMessage(message: unknown): ExtensionStatus | undefined {
  * Reveals older hidden turns and refreshes status positioning after layout settles.
  * Exhausted stable batches hide the control; they never trigger a page reload.
  */
+function readStableMessageManagerConfig(): ExtensionConfig {
+    if (currentSite.stableDomStrategy !== "self-managed") return config;
+    return { ...config, hideOldMessages: false };
+}
+
 function handleLoadMore(): void {
     clearStableChunkScrollAnchor();
     const previousFirstVisible = findFirstVisibleMessage();

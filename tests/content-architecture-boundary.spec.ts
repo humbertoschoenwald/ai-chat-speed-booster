@@ -10,6 +10,7 @@ type TestSiteConfig = {
         stableModeStatus: "not-functional" | null;
         nativeModeStatus: "not-functional" | null;
     };
+    stableDomStrategy?: string;
     selectors?: { messageTurn?: string; scrollContainer?: string };
     ui?: { loadMorePlacement?: string; loadMoreRevealAnchorMs?: number; loadMoreTheme?: string };
     messageUnit?: { elementsPerMessage?: number };
@@ -230,6 +231,7 @@ test("Stable Load More overlay uses reviewed site placement metadata", () => {
     expect(source).toContain('const placement = this.siteConfig.ui?.loadMorePlacement ?? "top-right"');
     expect(source).toContain('this.siteConfig.ui?.loadMoreTheme === "gemini"');
     expect(chatgpt?.ui?.loadMorePlacement).toBe("left-of-share");
+    expect(gemini?.stableDomStrategy).toBe("self-managed");
     expect(gemini?.ui?.loadMoreTheme).toBe("gemini");
     expect(gemini?.ui?.loadMoreRevealAnchorMs).toBe(2400);
 });
@@ -239,6 +241,9 @@ test("Stable Load More reveals downloaded DOM without chunk reload", () => {
 
     expect(contentSource).toContain("messageManager.loadMore()");
     expect(contentSource).toContain("preserveViewportAnchor(previousFirstVisible, previousTop)");
+    expect(contentSource).toContain("readStableMessageManagerConfig()");
+    expect(contentSource).toContain('currentSite.stableDomStrategy !== "self-managed"');
+    expect(contentSource).toContain("hideOldMessages: false");
     expect(contentSource).toContain("DEFAULT_STABLE_DOM_REVEAL_ANCHOR_MAX_MS = 420");
     expect(contentSource).toContain("readStableRevealAnchorMaxMs()");
     expect(contentSource).toContain("currentSite.ui?.loadMoreRevealAnchorMs");

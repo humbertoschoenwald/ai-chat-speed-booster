@@ -16,6 +16,7 @@ export interface StatusAnchors {
 
 export type LoadMorePlacement = "inline" | "top-right" | "left-of-share";
 export type LoadMoreTheme = "default" | "gemini";
+export type StableDomStrategy = "managed" | "self-managed";
 
 export interface SiteUI {
     readonly loadMoreMargin?: string;
@@ -79,6 +80,7 @@ export interface SiteConfig {
     readonly review?: SiteReviewMetadata;
     readonly hostnames: readonly string[];
     readonly isDynamic?: boolean; // Indicates if the site has dynamic content loading that may require special handling (e.g. Gemini)
+    readonly stableDomStrategy?: StableDomStrategy;
     readonly urlPatterns: readonly string[];
     readonly requiredSearchParams?: readonly { readonly name: string; readonly values: readonly string[] }[];
     readonly selectors: SiteSelectors;

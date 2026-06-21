@@ -48,12 +48,12 @@
             <!-- Runtime mode -->
             <div class="setting setting--mode" data-tooltip="Choose exactly one runtime. Stable hides older turns in manual batches. Native optimizes ChatGPT without hiding turns.">
                 <div class="setting__info">
-                    <span class="setting__label">Runtime mode</span>
+                    <span class="setting__label">Native Mode</span>
                     <span class="setting__hint" id="performance-mode-hint">Stable active</span>
                 </div>
                 <div class="mode-switch" role="radiogroup" aria-label="Runtime mode">
-                    <button type="button" class="mode-switch__btn" id="mode-stable" data-mode="legacy" role="radio">Stable</button>
-                    <button type="button" class="mode-switch__btn" id="mode-native" data-mode="native" role="radio">Native</button>
+                    <button type="button" class="mode-switch__btn" id="mode-stable" data-mode="legacy" role="radio">False</button>
+                    <button type="button" class="mode-switch__btn" id="mode-native" data-mode="native" role="radio">True</button>
                 </div>
             </div>
 
@@ -72,6 +72,8 @@
                 <div class="native-panel__title">Native diagnostics</div>
                 <div class="native-panel__body" id="native-diagnostics-body">Waiting for page status…</div>
             </div>
+
+            <p class="stable-settings-note" data-legacy-control>These settings apply to Stable Mode only. Native Mode ignores them when active.</p>
 
             <!-- Visible messages + Batch size -->
             <div class="setting-row" data-legacy-control>

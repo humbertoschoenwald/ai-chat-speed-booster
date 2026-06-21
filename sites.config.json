@@ -118,6 +118,7 @@
             "gemini.google.com"
         ],
         "isDynamic": true,
+        "stableDomStrategy": "self-managed",
         "urlPatterns": [
             "*://gemini.google.com/*"
         ],
