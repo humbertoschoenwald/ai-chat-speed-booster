@@ -8,11 +8,30 @@ import { NativeDiagnosticsSampler } from "../src/content/native/NativeDiagnostic
 import { createNativeAutoDisableRecord, resolveNativeFeatureFlags } from "../src/content/native/NativeFeatureFlags";
 import { NativeWorkScheduler } from "../src/content/native/NativeWorkScheduler";
 import { StaleGenerationRecovery } from "../src/content/native/StaleGenerationRecovery";
+import { createChatGptInteractiveNodeBudgetSnapshot } from "../src/content/native/chatgpt/ChatGptInteractiveNodeBudget";
 import { VirtualizationConflictDetector } from "../src/content/native/VirtualizationConflictDetector";
 import { dedupeChatGptTurnElements, readChatGptLastKnownHeight, readChatGptTurnId } from "../src/content/native/chatgpt/ChatGptSelectors";
 import type { ScrollGeometryDelta } from "../src/content/native/ScrollGeometry";
 
 test.describe("native model guards", () => {
+    test("reports ChatGPT interactive node budgets by scope", () => {
+        const toolGroup = fakeScope({ buttons: 2, svgs: 2 });
+        const turnA = fakeScope({ buttons: 3, svgs: 2, toolGroups: [toolGroup] });
+        const turnB = fakeScope({ buttons: 1, svgs: 1 });
+        const root = fakeScope({ buttons: 7, svgs: 5, composerButtons: 1 });
+
+        expect(createChatGptInteractiveNodeBudgetSnapshot(root, [turnA, turnB])).toEqual({
+            totalButtons: 7,
+            totalSvgs: 5,
+            threadButtons: 4,
+            threadSvgs: 3,
+            toolGroupButtons: 2,
+            toolGroupSvgs: 2,
+            composerButtons: 1,
+            nonThreadButtons: 3,
+        });
+    });
+
     test("deduplicates ChatGPT turn wrappers by canonical turn id", () => {
         const turns = Array.from({ length: 8 }, (_, index) => {
             const id = `turn-${index}`;
@@ -372,5 +391,21 @@ function fakeTurn(options: { readonly id: string; readonly containerId: string; 
         closest: () => null,
         parentElement: null,
         matches: (selector: string) => options.section && selector.includes("section[data-testid^='conversation-turn-']"),
+    } as unknown as HTMLElement;
+}
+
+
+function fakeScope(options: { readonly buttons: number; readonly svgs: number; readonly composerButtons?: number; readonly toolGroups?: readonly HTMLElement[] }): HTMLElement {
+    const buttons = Array.from({ length: options.buttons }, () => ({}) as HTMLElement);
+    const svgs = Array.from({ length: options.svgs }, () => ({}) as HTMLElement);
+    const composerButtons = Array.from({ length: options.composerButtons ?? 0 }, () => ({}) as HTMLElement);
+    return {
+        querySelectorAll: (selector: string) => {
+            if (selector === "button") return buttons;
+            if (selector === "svg") return svgs;
+            if (selector === "form button") return composerButtons;
+            if (selector.includes("tool")) return [...options.toolGroups ?? []];
+            return [];
+        },
     } as unknown as HTMLElement;
 }

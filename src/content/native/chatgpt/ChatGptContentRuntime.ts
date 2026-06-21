@@ -20,6 +20,10 @@ import {
     type ChatGptMaxLengthReadonlySnapshot,
 } from "./ChatGptMaxLengthReadonlyDetector";
 import { createChatGptLogicalDisplayStatus } from "./ChatGptLogicalTurnCounter";
+import {
+    createChatGptInteractiveNodeBudgetSnapshot,
+    type ChatGptInteractiveNodeBudgetSnapshot,
+} from "./ChatGptInteractiveNodeBudget";
 import { ChatGptTextSnapshotRenderer } from "./ChatGptTextSnapshotRenderer";
 import { ChatGptToolCallSummaryController } from "./ChatGptToolCallSummaryController";
 import { ChatGptTurnContentVisibilityController } from "./ChatGptTurnContainmentController";
@@ -54,6 +58,7 @@ export interface ChatGptContentRuntimeStatus {
     readonly nativeSnapshotHosts: number;
     readonly nativeSnapshotCacheBytes: number;
     readonly nativeRenderBudget: RenderUnitBudgetSnapshot | null;
+    readonly nativeInteractiveNodeBudget: ChatGptInteractiveNodeBudgetSnapshot | null;
     readonly nativeRevealLoopCount: number;
     readonly nativeScrollOscillationCount: number;
     readonly nativeVirtualizationDisabled: boolean;
@@ -72,6 +77,7 @@ export class ChatGptContentRuntime {
     private chatGptTurnContentVisibilityController: ChatGptTurnContentVisibilityController | null = null;
     private chatGptResizeListenerAttached = false;
     private nativeRenderBudget: RenderUnitBudgetSnapshot | null = null;
+    private nativeInteractiveNodeBudget: ChatGptInteractiveNodeBudgetSnapshot | null = null;
     private nativeSnapshotHosts = 0;
     private nativeSnapshotCacheBytes = 0;
     private nativeSnapshotSyncCooldownUntilMs = 0;
@@ -108,6 +114,7 @@ export class ChatGptContentRuntime {
         this.nativeToolCallGroups.reset();
         this.pageInspectionSampler.clear();
         this.nativeRenderBudget = null;
+        this.nativeInteractiveNodeBudget = null;
         this.nativeSnapshotHosts = 0;
         this.nativeSnapshotCacheBytes = 0;
     }
@@ -144,6 +151,7 @@ export class ChatGptContentRuntime {
             nativeSnapshotHosts: this.nativeSnapshotHosts,
             nativeSnapshotCacheBytes: this.nativeSnapshotCacheBytes,
             nativeRenderBudget: this.nativeRenderBudget,
+            nativeInteractiveNodeBudget: this.nativeInteractiveNodeBudget,
             nativeRevealLoopCount: nativeConflictSnapshot.revealLoopCount,
             nativeScrollOscillationCount: nativeConflictSnapshot.scrollOscillationCount,
             nativeVirtualizationDisabled: nativeConflictSnapshot.shouldDisableNativeVirtualization,
@@ -213,6 +221,10 @@ export class ChatGptContentRuntime {
             }
 
             const turns = dedupeChatGptTurnElements(this.ports.queryTurns());
+            this.nativeInteractiveNodeBudget = createChatGptInteractiveNodeBudgetSnapshot(
+                this.ports.document,
+                turns,
+            );
             const records = turns.map((turn, index) => this.nativeTurnRegistry.track(turn, index));
             const dirtyRecords = this.nativeTurnRegistry.consumeDirtyRecords(records);
             const toolSourceRecords = dirtyRecords.length > 0 ? dirtyRecords : records;
@@ -254,6 +266,7 @@ export class ChatGptContentRuntime {
         this.nativeTurnRegistry.reset();
         this.nativeToolCallGroups.reset();
         this.nativeRenderBudget = null;
+        this.nativeInteractiveNodeBudget = null;
         this.nativeSnapshotHosts = 0;
         this.nativeSnapshotCacheBytes = 0;
     }
