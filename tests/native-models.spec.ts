@@ -248,3 +248,21 @@ test("IME composition prevents large paste chunking until composition ends", () 
     optimizer.markEvent("compositionend", 32_000);
     expect(optimizer.snapshot().composing).toBe(false);
 });
+
+test("long tasks defer Native Mode background work for a bounded cooldown", () => {
+    const optimizer = new EditorInputOptimizer({ quietWindowMs: 50 });
+
+    optimizer.recordLongTask(20, 40_000);
+    expect(optimizer.snapshot().longTaskCount).toBe(0);
+    expect(optimizer.shouldDeferBackgroundWork(40_040)).toBe(false);
+
+    optimizer.recordLongTask(120, 50_000);
+    expect(optimizer.snapshot()).toMatchObject({
+        longTaskCount: 1,
+        lastEventType: "long-task",
+        lastLongTaskAt: 50_000,
+        lastLongTaskDurationMs: 120,
+    });
+    expect(optimizer.shouldDeferBackgroundWork(50_300)).toBe(true);
+    expect(optimizer.shouldDeferBackgroundWork(50_700)).toBe(false);
+});

@@ -9,6 +9,9 @@ export interface EditorInputSnapshot {
     readonly lastEventType: string | null;
     readonly lastEventAt: number | null;
     readonly protectedUntilMs: number | null;
+    readonly longTaskCount: number;
+    readonly lastLongTaskAt: number | null;
+    readonly lastLongTaskDurationMs: number | null;
     readonly lastPasteLength: number | null;
     readonly lastPasteChunkCount: number | null;
 }
@@ -19,6 +22,9 @@ export interface EditorInputOptimizerOptions {
 }
 
 const DEFAULT_QUIET_WINDOW_MS = 120;
+const LONG_TASK_MIN_DURATION_MS = 50;
+const LONG_TASK_COOLDOWN_FACTOR = 4;
+const LONG_TASK_MAX_COOLDOWN_MS = 2_500;
 const INPUT_EVENTS = [
     "beforeinput",
     "input",
@@ -62,6 +68,10 @@ export class EditorInputOptimizer {
     private lastPasteLength: number | null = null;
     private lastPasteChunkCount: number | null = null;
     private protectedUntilMs = 0;
+    private longTaskCount = 0;
+    private lastLongTaskAt: number | null = null;
+    private lastLongTaskDurationMs: number | null = null;
+    private observerHandle: PerformanceObserver | null = null;
     private deferredTaskCount = 0;
     private eventCount = 0;
     private listening = false;
@@ -81,6 +91,7 @@ export class EditorInputOptimizer {
             root.addEventListener(type, listener, true);
             this.cleanupCallbacks.push(() => root.removeEventListener(type, listener, true));
         }
+        this.startLongTaskObserver();
     }
 
     stop(): void {
@@ -94,6 +105,11 @@ export class EditorInputOptimizer {
         this.lastPasteLength = null;
         this.lastPasteChunkCount = null;
         this.protectedUntilMs = 0;
+        this.longTaskCount = 0;
+        this.lastLongTaskAt = null;
+        this.lastLongTaskDurationMs = null;
+        this.observerHandle?.disconnect();
+        this.observerHandle = null;
         this.eventCount = 0;
     }
 
@@ -112,6 +128,18 @@ export class EditorInputOptimizer {
         this.lastEventType = type;
         this.lastEventAt = now;
         this.protectedUntilMs = Math.max(this.protectedUntilMs, now + Math.max(0, durationMs));
+    }
+
+    recordLongTask(durationMs: number, now = Date.now()): void {
+        if (!Number.isFinite(durationMs) || durationMs < LONG_TASK_MIN_DURATION_MS) return;
+        this.longTaskCount += 1;
+        this.lastLongTaskAt = now;
+        this.lastLongTaskDurationMs = durationMs;
+        const cooldownMs = Math.min(
+            LONG_TASK_MAX_COOLDOWN_MS,
+            Math.ceil(durationMs * LONG_TASK_COOLDOWN_FACTOR),
+        );
+        this.markProtectedActivity("long-task", cooldownMs, now);
     }
 
     recordPasteLength(totalLength: number): void {
@@ -145,9 +173,34 @@ export class EditorInputOptimizer {
             lastEventType: this.lastEventType,
             lastEventAt: this.lastEventAt,
             protectedUntilMs: this.protectedUntilMs > 0 ? this.protectedUntilMs : null,
+            longTaskCount: this.longTaskCount,
+            lastLongTaskAt: this.lastLongTaskAt,
+            lastLongTaskDurationMs: this.lastLongTaskDurationMs,
             lastPasteLength: this.lastPasteLength,
             lastPasteChunkCount: this.lastPasteChunkCount,
         };
+    }
+
+    private startLongTaskObserver(): void {
+        if (this.observerHandle) return;
+        if (typeof PerformanceObserver === "undefined") return;
+        const supported = PerformanceObserver.supportedEntryTypes;
+        if (Array.isArray(supported) && !supported.includes("longtask")) return;
+        try {
+            const observer = new PerformanceObserver((list) => {
+                for (const entry of list.getEntries()) {
+                    this.recordLongTask(entry.duration);
+                }
+            });
+            observer.observe({ entryTypes: ["longtask"] });
+            this.observerHandle = observer;
+            this.cleanupCallbacks.push(() => {
+                observer.disconnect();
+                if (this.observerHandle === observer) this.observerHandle = null;
+            });
+        } catch {
+            this.observerHandle = null;
+        }
     }
 
     private markDomEvent(event: Event): void {
