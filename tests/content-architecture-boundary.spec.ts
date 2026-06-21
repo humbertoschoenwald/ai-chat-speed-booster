@@ -284,6 +284,18 @@ test("extension source does not carry Schoenwald large-file markers", () => {
     expect(matches).toEqual([]);
 });
 
+test("Native historical turn containment keeps safe predicates", () => {
+    const source = readFileSync(path.resolve("src/content/native/chatgpt/ChatGptTurnContainmentController.ts"), "utf8");
+
+    expect(source).toContain("content-visibility:auto!important");
+    expect(source).toContain("contain-intrinsic-size:auto var(--acsb-contained-turn-height,320px)!important");
+    expect(source).toContain("isSafeCompletedTurn(turn)");
+    expect(source).toContain("turn.contains(document.activeElement)");
+    expect(source).toContain("[aria-busy='true']");
+    expect(source).toContain(".text-token-text-error");
+    expect(source).toContain("[data-testid*='tool']");
+});
+
 function listTextFiles(root: string): string[] {
     const stat = statSync(root);
     if (stat.isFile()) return [root];
