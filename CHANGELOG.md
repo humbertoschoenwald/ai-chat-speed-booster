@@ -20,6 +20,10 @@
 - add telemetry marker model ([4386a58](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/4386a5806cebe6e4d6a69c5f54e6fa651ed0279d)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - expose observer batch status ([61da7e6](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/61da7e6f0b12e42367493085c97ab765f45bd997)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 
+#### Extreme
+
+- add API trim mode ([5dac17f](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/5dac17f72e1b7ac1e8f4be9b6eec8a40373a0d17)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
+
 #### Native
 
 - report interactive node budgets ([dbee696](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/dbee696a39cc10ac7ab14040428938d4b9334a0e)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
