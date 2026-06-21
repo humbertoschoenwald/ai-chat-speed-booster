@@ -284,6 +284,22 @@ test("extension source does not carry Schoenwald large-file markers", () => {
     expect(matches).toEqual([]);
 });
 
+test("ChatGPT Native selectors use the shared selector authority", () => {
+    const selectorsSource = readFileSync(path.resolve("src/content/native/chatgpt/ChatGptSelectors.ts"), "utf8");
+    const snapshotSource = readFileSync(path.resolve("src/content/native/chatgpt/ChatGptTextSnapshotRenderer.ts"), "utf8");
+    const containmentSource = readFileSync(path.resolve("src/content/native/chatgpt/ChatGptTurnContainmentController.ts"), "utf8");
+
+    expect(selectorsSource).toContain("CHATGPT_TURN_SELECTOR");
+    expect(selectorsSource).toContain("CHATGPT_ERROR_SELECTOR");
+    expect(selectorsSource).toContain("CHATGPT_TOOL_SELECTOR");
+    expect(snapshotSource).toContain("CHATGPT_TURN_SELECTOR");
+    expect(snapshotSource).toContain("CHATGPT_ERROR_SELECTOR");
+    expect(snapshotSource).toContain("CHATGPT_TOOL_SELECTOR");
+    expect(containmentSource).toContain("CHATGPT_TURN_SELECTOR");
+    expect(containmentSource).toContain("CHATGPT_ERROR_SELECTOR");
+    expect(containmentSource).toContain("CHATGPT_TOOL_SELECTOR");
+});
+
 test("Native Mode CSS artifacts stay owned by native runtime cleanup", () => {
     const runtimeSource = readFileSync(path.resolve("src/content/native/chatgpt/ChatGptContentRuntime.ts"), "utf8");
     const snapshotSource = readFileSync(path.resolve("src/content/native/chatgpt/ChatGptTextSnapshotRenderer.ts"), "utf8");
@@ -316,8 +332,8 @@ test("Native historical turn containment keeps safe predicates", () => {
     expect(source).toContain("isSafeCompletedTurn(turn)");
     expect(source).toContain("turn.contains(document.activeElement)");
     expect(source).toContain("[aria-busy='true']");
-    expect(source).toContain(".text-token-text-error");
-    expect(source).toContain("[data-testid*='tool']");
+    expect(source).toContain("CHATGPT_ERROR_SELECTOR");
+    expect(source).toContain("CHATGPT_TOOL_SELECTOR");
     expect(source).toContain("data-acsb-native-quiet-turn");
     expect(source).toContain("transition-duration:0s!important");
     expect(source).toContain("pointerenter");

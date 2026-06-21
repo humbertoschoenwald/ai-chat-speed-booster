@@ -1,3 +1,9 @@
+import {
+    CHATGPT_ERROR_SELECTOR,
+    CHATGPT_TOOL_SELECTOR,
+    CHATGPT_TURN_SELECTOR,
+} from "./ChatGptSelectors";
+
 export interface ChatGptTurnContentVisibilityOptions {
     readonly liveWindowSize: number;
     readonly nearestWindow: number;
@@ -111,7 +117,7 @@ function getTurnKey(turn: HTMLElement, index: number): string {
 function findViewportTurnIndex(turns: readonly HTMLElement[]): number {
     if (turns.length === 0) return 0;
     const centerElement = document.elementFromPoint(window.innerWidth / 2, window.innerHeight / 2);
-    const currentTurn = centerElement?.closest<HTMLElement>("[data-turn-id],[data-testid^='conversation-turn-']");
+    const currentTurn = centerElement?.closest<HTMLElement>(CHATGPT_TURN_SELECTOR);
     if (currentTurn) {
         const index = turns.findIndex((turn) => turn === currentTurn || turn.contains(currentTurn));
         if (index >= 0) return index;
@@ -125,8 +131,8 @@ function isSafeCompletedTurn(turn: HTMLElement): boolean {
     if (turn.contains(document.activeElement)) return false;
     if (turn.closest("form, [contenteditable='true']")) return false;
     if (turn.querySelector(".loading-shimmer, .animate-spin, [data-is-streaming='true'], [aria-busy='true']")) return false;
-    if (turn.querySelector(".text-token-text-error, [data-testid*='error'], [aria-label*='Regenerate'], [aria-label*='Retry']")) return false;
-    if (turn.querySelector("[data-testid*='tool'], [data-message-author-role='tool']")) return false;
+    if (turn.querySelector(CHATGPT_ERROR_SELECTOR)) return false;
+    if (turn.querySelector(CHATGPT_TOOL_SELECTOR)) return false;
     const lower = text.toLowerCase();
     if (lower.includes("calling tool") || lower.includes("working on it")) return false;
     return true;

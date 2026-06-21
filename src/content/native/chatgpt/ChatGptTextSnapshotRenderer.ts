@@ -4,6 +4,12 @@ import {
     type ChatGptTextSnapshotCacheSnapshot,
     renderChatGptTextSnapshot,
 } from "./ChatGptTextSnapshotCache";
+import {
+    CHATGPT_ERROR_SELECTOR,
+    CHATGPT_STREAMING_SELECTOR,
+    CHATGPT_TOOL_SELECTOR,
+    CHATGPT_TURN_SELECTOR,
+} from "./ChatGptSelectors";
 
 export interface ChatGptTextSnapshotRenderOptions {
     readonly enabled: boolean;
@@ -163,7 +169,7 @@ function findViewportTurnIndex(turns: readonly HTMLElement[]): number {
     if (turns.length === 0) return 0;
     const root = turns[0].ownerDocument;
     const centerElement = root.elementFromPoint(window.innerWidth / 2, window.innerHeight / 2);
-    const currentTurn = centerElement?.closest<HTMLElement>(`[${HOST_ATTR}="true"],[data-turn-id],[data-testid^="conversation-turn-"]`);
+    const currentTurn = centerElement?.closest<HTMLElement>(`[${HOST_ATTR}="true"],${CHATGPT_TURN_SELECTOR}`);
     if (currentTurn) {
         const index = turns.findIndex((turn) => turn === currentTurn || turn.contains(currentTurn));
         if (index >= 0) return index;
@@ -177,8 +183,8 @@ function isSafeSnapshotCandidate(turn: HTMLElement): boolean {
     if (turn.contains(document.activeElement)) return false;
     if (turn.closest("form, [contenteditable='true']")) return false;
     if (turn.querySelector(".loading-shimmer, .animate-spin, [data-is-streaming='true'], [aria-busy='true']")) return false;
-    if (turn.querySelector(".text-token-text-error, [data-testid*='error'], [aria-label*='Regenerate'], [aria-label*='Retry']")) return false;
-    if (turn.querySelector("[data-testid*='tool'], [data-message-author-role='tool']")) return false;
+    if (turn.querySelector(CHATGPT_ERROR_SELECTOR)) return false;
+    if (turn.querySelector(CHATGPT_TOOL_SELECTOR)) return false;
     const lower = text.toLowerCase();
     if (lower.includes("calling tool") || lower.includes("working on it")) return false;
     return true;
@@ -186,5 +192,5 @@ function isSafeSnapshotCandidate(turn: HTMLElement): boolean {
 
 function isPinnedTurn(turn: HTMLElement): boolean {
     return turn.contains(document.activeElement) ||
-        !!turn.querySelector('[aria-label*="Stop"], [data-testid*="stop"], [data-is-streaming="true"], [aria-busy="true"]');
+        !!turn.querySelector(CHATGPT_STREAMING_SELECTOR);
 }
