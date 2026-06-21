@@ -2,6 +2,7 @@ import {
     CHATGPT_ERROR_SELECTOR,
     CHATGPT_TOOL_SELECTOR,
     CHATGPT_TURN_SELECTOR,
+    readChatGptLastKnownHeight,
 } from "./ChatGptSelectors";
 
 export interface ChatGptTurnContentVisibilityOptions {
@@ -74,6 +75,11 @@ export class ChatGptTurnContentVisibilityController {
         const key = getTurnKey(turn, index);
         const cached = this.heightCache.get(key);
         if (cached) return cached;
+        const hinted = readChatGptLastKnownHeight(turn);
+        if (hinted) {
+            this.heightCache.set(key, hinted);
+            return hinted;
+        }
         const measured = Math.max(120, Math.min(2400, Math.round(turn.getBoundingClientRect().height || turn.offsetHeight || 320)));
         this.heightCache.set(key, measured);
         return measured;

@@ -9,7 +9,7 @@ import { createNativeAutoDisableRecord, resolveNativeFeatureFlags } from "../src
 import { NativeWorkScheduler } from "../src/content/native/NativeWorkScheduler";
 import { StaleGenerationRecovery } from "../src/content/native/StaleGenerationRecovery";
 import { VirtualizationConflictDetector } from "../src/content/native/VirtualizationConflictDetector";
-import { dedupeChatGptTurnElements, readChatGptTurnId } from "../src/content/native/chatgpt/ChatGptSelectors";
+import { dedupeChatGptTurnElements, readChatGptLastKnownHeight, readChatGptTurnId } from "../src/content/native/chatgpt/ChatGptSelectors";
 import type { ScrollGeometryDelta } from "../src/content/native/ScrollGeometry";
 
 test.describe("native model guards", () => {
@@ -29,6 +29,13 @@ test.describe("native model guards", () => {
         expect(deduped.map(readChatGptTurnId)).toEqual(Array.from({ length: 8 }, (_, index) => `turn-${index}`));
     });
 
+
+    test("reads ChatGPT last-known height metadata without measuring layout", () => {
+        const turn = fakeTurn({ id: "turn-h", containerId: "turn-h", section: true, heightHintPx: 512 });
+
+        expect(readChatGptLastKnownHeight(turn)).toBe(512);
+        expect(readChatGptLastKnownHeight(fakeTurn({ id: "turn-x", containerId: "turn-x", section: true }))).toBeNull();
+    });
 
     test("samples Native Mode diagnostics with TTL and force refresh", () => {
         let reads = 0;
@@ -348,14 +355,22 @@ test("long tasks defer Native Mode background work for a bounded cooldown", () =
 });
 
 
-function fakeTurn(options: { readonly id: string; readonly containerId: string; readonly section: boolean }): HTMLElement {
+function fakeTurn(options: { readonly id: string; readonly containerId: string; readonly section: boolean; readonly heightHintPx?: number }): HTMLElement {
     return {
+        style: {
+            getPropertyValue: (name: string) => name === "--last-known-height" && options.heightHintPx
+                ? `${options.heightHintPx}px`
+                : "",
+        },
         getAttribute: (name: string) => {
             if (name === "data-turn-id") return options.section ? options.id : null;
             if (name === "data-turn-id-container") return options.containerId;
             if (name === "data-testid") return options.section ? `conversation-turn-${options.id}` : null;
+            if (name === "style" && options.heightHintPx) return `--last-known-height: ${options.heightHintPx}px`;
             return null;
         },
+        closest: () => null,
+        parentElement: null,
         matches: (selector: string) => options.section && selector.includes("section[data-testid^='conversation-turn-']"),
     } as unknown as HTMLElement;
 }

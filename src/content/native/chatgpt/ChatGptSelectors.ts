@@ -10,6 +10,26 @@ export function readChatGptTurnId(turn: HTMLElement): string | null {
         ?? turn.getAttribute("data-testid");
 }
 
+export function readChatGptLastKnownHeight(turn: HTMLElement): number | null {
+    const wrapper = resolveChatGptTurnWrapper(turn);
+    const styleValue = wrapper.style?.getPropertyValue?.("--last-known-height")?.trim() ?? "";
+    const inlineValue = wrapper.getAttribute("style")?.match(/--last-known-height:\s*([0-9.]+)px/i)?.[1] ?? "";
+    const parsed = parseFloat(styleValue.endsWith("px") ? styleValue.slice(0, -2) : styleValue || inlineValue);
+    if (!Number.isFinite(parsed) || parsed <= 0) return null;
+    return Math.max(120, Math.min(2400, Math.round(parsed)));
+}
+
+export function resolveChatGptTurnWrapper(turn: HTMLElement): HTMLElement {
+    const id = readChatGptTurnId(turn);
+    let wrapper = turn.closest<HTMLElement>("[data-turn-id-container]") ?? turn;
+    let candidate = wrapper.parentElement?.closest<HTMLElement>("[data-turn-id-container]") ?? null;
+    while (candidate && id && candidate.getAttribute("data-turn-id-container") === id) {
+        wrapper = candidate;
+        candidate = candidate.parentElement?.closest<HTMLElement>("[data-turn-id-container]") ?? null;
+    }
+    return wrapper;
+}
+
 export function dedupeChatGptTurnElements(turns: readonly HTMLElement[]): HTMLElement[] {
     const byId = new Map<string, HTMLElement>();
     const anonymous: HTMLElement[] = [];
