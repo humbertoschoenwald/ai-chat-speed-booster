@@ -154,6 +154,7 @@
 
 #### Stable
 
+- configure site status and overlay placement ([5381699](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/5381699aecc55c291a5ef2d71f8ebc49269b996d)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - hide outer message wrapper ([8f2d6c4](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/8f2d6c44784cd6cc8069231221eefb6c4d949058)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - stabilize load more scroll ([1c63da4](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/1c63da4e49d4e45022855cdfa1a95c32da9d2d59)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - remove chunk reload path ([09224af](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/09224af73da8a7661449e2ebf94c91f58d35ca27)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
