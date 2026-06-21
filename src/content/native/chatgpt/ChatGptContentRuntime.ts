@@ -30,6 +30,7 @@ import {
     type ChatGptTokenEstimate,
 } from "./ChatGptTokenEstimator";
 import { logger } from "../../../shared/logger";
+import { dedupeChatGptTurnElements } from "./ChatGptSelectors";
 
 const NATIVE_SNAPSHOT_SYNC_FAILURE_COOLDOWN_MS = 1_500;
 const NATIVE_PAGE_INSPECTION_SAMPLE_TTL_MS = 1_000;
@@ -211,7 +212,7 @@ export class ChatGptContentRuntime {
                 return;
             }
 
-            const turns = this.ports.queryTurns();
+            const turns = dedupeChatGptTurnElements(this.ports.queryTurns());
             const records = turns.map((turn, index) => this.nativeTurnRegistry.track(turn, index));
             const dirtyRecords = this.nativeTurnRegistry.consumeDirtyRecords(records);
             const toolSourceRecords = dirtyRecords.length > 0 ? dirtyRecords : records;

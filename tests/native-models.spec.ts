@@ -9,9 +9,27 @@ import { createNativeAutoDisableRecord, resolveNativeFeatureFlags } from "../src
 import { NativeWorkScheduler } from "../src/content/native/NativeWorkScheduler";
 import { StaleGenerationRecovery } from "../src/content/native/StaleGenerationRecovery";
 import { VirtualizationConflictDetector } from "../src/content/native/VirtualizationConflictDetector";
+import { dedupeChatGptTurnElements, readChatGptTurnId } from "../src/content/native/chatgpt/ChatGptSelectors";
 import type { ScrollGeometryDelta } from "../src/content/native/ScrollGeometry";
 
 test.describe("native model guards", () => {
+    test("deduplicates ChatGPT turn wrappers by canonical turn id", () => {
+        const turns = Array.from({ length: 8 }, (_, index) => {
+            const id = `turn-${index}`;
+            return [
+                fakeTurn({ id, containerId: id, section: false }),
+                fakeTurn({ id, containerId: id, section: true }),
+            ];
+        }).flat();
+        const deduped = dedupeChatGptTurnElements(turns);
+
+        expect(turns).toHaveLength(16);
+        expect(deduped).toHaveLength(8);
+        expect(deduped.every((turn) => turn.matches("section[data-testid^='conversation-turn-']"))).toBe(true);
+        expect(deduped.map(readChatGptTurnId)).toEqual(Array.from({ length: 8 }, (_, index) => `turn-${index}`));
+    });
+
+
     test("samples Native Mode diagnostics with TTL and force refresh", () => {
         let reads = 0;
         const sampler = new NativeDiagnosticsSampler(100, () => ({ value: ++reads }));
@@ -328,3 +346,16 @@ test("long tasks defer Native Mode background work for a bounded cooldown", () =
     expect(optimizer.shouldDeferBackgroundWork(50_300)).toBe(true);
     expect(optimizer.shouldDeferBackgroundWork(50_700)).toBe(false);
 });
+
+
+function fakeTurn(options: { readonly id: string; readonly containerId: string; readonly section: boolean }): HTMLElement {
+    return {
+        getAttribute: (name: string) => {
+            if (name === "data-turn-id") return options.section ? options.id : null;
+            if (name === "data-turn-id-container") return options.containerId;
+            if (name === "data-testid") return options.section ? `conversation-turn-${options.id}` : null;
+            return null;
+        },
+        matches: (selector: string) => options.section && selector.includes("section[data-testid^='conversation-turn-']"),
+    } as unknown as HTMLElement;
+}
