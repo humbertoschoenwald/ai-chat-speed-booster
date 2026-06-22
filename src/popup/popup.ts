@@ -139,7 +139,12 @@ async function init(): Promise<void> {
 
 function renderPerformanceMode(mode: PerformanceMode, status?: ExtensionStatus): void {
     const nativeSupported = shouldShowNativeModeControl(currentSiteId);
-    const effectiveMode: PerformanceMode = status?.performanceMode ?? (nativeSupported ? mode : "legacy");
+    const requestedRuntimeSupported = mode === "legacy" || nativeSupported;
+    const optimisticMode: PerformanceMode = requestedRuntimeSupported ? mode : "legacy";
+    const waitingForReload = optimisticMode !== "legacy" && status?.performanceMode === "legacy";
+    const effectiveMode: PerformanceMode = waitingForReload
+        ? optimisticMode
+        : status?.performanceMode ?? optimisticMode;
 
     nativeModeSetting.hidden = false;
     modeButtons.forEach((button) => {
@@ -342,7 +347,7 @@ toggleDeliveryTimeoutRefresh.addEventListener("change", async () => {
 modeButtons.forEach((button) => {
     button.addEventListener("click", async () => {
         const requestedMode = button.dataset.mode as PerformanceMode;
-        const mode: PerformanceMode = requestedMode === "native" && !isNativeModeAllowedForSite(currentSiteId)
+        const mode: PerformanceMode = requestedMode !== "legacy" && !isNativeModeAllowedForSite(currentSiteId)
             ? "legacy"
             : requestedMode;
         if (mode === currentConfig.performanceMode) return;
