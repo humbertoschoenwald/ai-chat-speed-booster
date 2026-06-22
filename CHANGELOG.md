@@ -61,6 +61,9 @@
 
 ### Fixes
 
+- update extreme runtime handling ([d7a0248](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/d7a0248037b2e4ad4ea01abf32b3c9ad3167fcc6)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
+- update extension behavior ([1cb528e](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/1cb528e344b08c51200a0025c7b618e5bea8b053)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
+
 #### Architecture
 
 - isolate native popup state ([e4ab3b8](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/e4ab3b82d31975f8581de84177f371a23dc7bd51)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
