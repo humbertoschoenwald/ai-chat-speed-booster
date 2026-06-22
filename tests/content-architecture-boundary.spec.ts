@@ -371,6 +371,10 @@ test("Extreme runtime loads native optimizers and hides tool chrome", () => {
     expect(contentSource).toContain("acsb-extreme-complete-favicon");
     expect(contentSource).toContain("restoreOriginalFavicons");
     expect(contentSource).toContain("acsbOriginalHref");
+    expect(contentSource).toContain("EXTREME_FAVICON_REAPPLY_DELAYS_MS");
+    expect(contentSource).toContain("hasVisibleExtremeBusyIndicator");
+    expect(contentSource).toContain("scheduleExtremeCompletionFaviconPulses");
+    expect(contentSource).toContain("syncExtremeModeChrome();\n    if (rafPending) return;");
     expect(managerSource).toContain("data-acsb-extreme-hidden-tool");
     expect(managerSource).toContain("data-acsb-extreme-provider='chatgpt'");
     expect(managerSource).not.toContain("[class*='tool' i]");

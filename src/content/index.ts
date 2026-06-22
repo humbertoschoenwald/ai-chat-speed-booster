@@ -53,7 +53,13 @@ const FETCH_DOWNLOADING_KEY = "acsb_fetch_downloading" as const;
 const FETCH_DOWNLOADING_STARTED_KEY = "acsb_fetch_downloading_started" as const;
 const STABLE_SCROLL_ANCHOR_KEY = "acsb_stable_scroll_anchor" as const;
 const DEFAULT_STABLE_DOM_REVEAL_ANCHOR_MAX_MS = 420;
+const EXTREME_FAVICON_LINK_SELECTOR = "link[rel~='icon'],link[rel='shortcut icon'],link[rel='apple-touch-icon']";
+const EXTREME_BUSY_SELECTOR = "[aria-busy='true'],[data-is-streaming='true'],[data-testid*='stop' i],[aria-label*='stop' i]";
+const EXTREME_FAVICON_REAPPLY_DELAYS_MS = [250, 1_000, 2_500, 5_000, 10_000] as const;
 let stableAppendRebalanceTimer: ReturnType<typeof setTimeout> | null = null;
+let extremeFaviconState: "inactive" | "busy" | "complete" = "inactive";
+let extremeFaviconPulseGeneration = 0;
+let extremeFaviconRevision = 0;
 
 type EditorLatencyGuardPort = {
     start(): void;
@@ -551,6 +557,7 @@ function getDisplayStatus(status: ExtensionStatus): ExtensionStatus {
 }
 
 function refreshUI(): void {
+    syncExtremeModeChrome();
     if (rafPending) return;
     rafPending = true;
     requestAnimationFrame(() => {
@@ -746,16 +753,15 @@ function syncExtremeModeChrome(): void {
         document.documentElement.removeAttribute("data-acsb-extreme-provider");
     }
     if (!isExtremeModeActive()) {
+        extremeFaviconState = "inactive";
+        clearExtremeFaviconPulses();
         document.querySelectorAll<HTMLElement>(
             "[data-acsb-extreme-hidden-tool='true']",
         ).forEach((element) => {
             element.removeAttribute("data-acsb-extreme-hidden-tool");
             element.style.removeProperty("display");
         });
-        const iconLinks = Array.from(document.querySelectorAll<HTMLLinkElement>(
-            "link[rel~='icon'],link[rel='shortcut icon'],link[rel='apple-touch-icon']",
-        ));
-        restoreOriginalFavicons(iconLinks);
+        restoreOriginalFavicons(readExtremeFaviconLinks());
         document.getElementById("acsb-extreme-complete-favicon")?.remove();
         return;
     }
@@ -792,49 +798,102 @@ function syncExtremeModeChrome(): void {
 function syncExtremeCompletionFavicon(): void {
     const id = "acsb-extreme-complete-favicon";
     const existingOverride = document.getElementById(id) as HTMLLinkElement | null;
-    const iconLinks = Array.from(document.querySelectorAll<HTMLLinkElement>(
-        "link[rel~='icon'],link[rel='shortcut icon'],link[rel='apple-touch-icon']",
-    ));
+    const iconLinks = readExtremeFaviconLinks();
     if (currentSite.id !== "chatgpt") {
+        extremeFaviconState = "inactive";
+        clearExtremeFaviconPulses();
         restoreOriginalFavicons(iconLinks);
         existingOverride?.remove();
         return;
     }
-    const busy = document.querySelector(
-        "[aria-busy='true'],[data-is-streaming='true'],[data-testid*='stop' i],[aria-label*='stop' i]",
-    ) !== null;
-    const redHref = createExtremeCompleteFaviconHref();
+    const busy = hasVisibleExtremeBusyIndicator();
 
     if (busy) {
+        extremeFaviconState = "busy";
+        clearExtremeFaviconPulses();
         restoreOriginalFavicons(iconLinks);
         existingOverride?.remove();
         return;
     }
 
+    applyExtremeCompletionFavicon(iconLinks, existingOverride);
+    if (extremeFaviconState !== "complete") scheduleExtremeCompletionFaviconPulses();
+    extremeFaviconState = "complete";
+}
+
+function readExtremeFaviconLinks(): HTMLLinkElement[] {
+    return Array.from(document.querySelectorAll<HTMLLinkElement>(EXTREME_FAVICON_LINK_SELECTOR));
+}
+
+function hasVisibleExtremeBusyIndicator(): boolean {
+    return Array.from(document.querySelectorAll<HTMLElement>(EXTREME_BUSY_SELECTOR)).some(isVisibleExtremeBusyIndicator);
+}
+
+function isVisibleExtremeBusyIndicator(element: HTMLElement): boolean {
+    if (element.closest("[aria-hidden='true'],[hidden]")) return false;
+    const style = window.getComputedStyle(element);
+    if (style.display === "none" || style.visibility === "hidden" || style.opacity === "0") return false;
+    const rect = element.getBoundingClientRect();
+    return rect.width > 0 || rect.height > 0;
+}
+
+function applyExtremeCompletionFavicon(
+    iconLinks: HTMLLinkElement[],
+    existingOverride: HTMLLinkElement | null,
+): void {
+    const redHref = createExtremeCompleteFaviconHref();
     for (const icon of iconLinks) {
-        if (icon.id === id) continue;
+        if (icon.id === "acsb-extreme-complete-favicon") continue;
         if (!icon.dataset.acsbOriginalHref) icon.dataset.acsbOriginalHref = icon.href;
+        if (!icon.dataset.acsbOriginalRel) icon.dataset.acsbOriginalRel = icon.rel;
         if (!icon.dataset.acsbOriginalType) icon.dataset.acsbOriginalType = icon.type;
+        if (!icon.dataset.acsbOriginalSizes) icon.dataset.acsbOriginalSizes = icon.getAttribute("sizes") ?? "";
         icon.rel = "icon";
         icon.type = "image/svg+xml";
+        icon.setAttribute("sizes", "any");
         icon.href = redHref;
     }
 
     const icon = existingOverride ?? document.createElement("link");
-    icon.id = id;
+    icon.id = "acsb-extreme-complete-favicon";
     icon.rel = "icon";
     icon.type = "image/svg+xml";
+    icon.setAttribute("sizes", "any");
     icon.href = redHref;
+    icon.remove();
     (document.head ?? document.documentElement).appendChild(icon);
+}
+
+function scheduleExtremeCompletionFaviconPulses(): void {
+    const generation = ++extremeFaviconPulseGeneration;
+    for (const delayMs of EXTREME_FAVICON_REAPPLY_DELAYS_MS) {
+        window.setTimeout(() => {
+            if (generation !== extremeFaviconPulseGeneration) return;
+            syncExtremeCompletionFavicon();
+        }, delayMs);
+    }
+}
+
+function clearExtremeFaviconPulses(): void {
+    extremeFaviconPulseGeneration++;
 }
 
 function restoreOriginalFavicons(iconLinks: HTMLLinkElement[]): void {
     for (const icon of iconLinks) {
         if (!icon.dataset.acsbOriginalHref) continue;
         icon.href = icon.dataset.acsbOriginalHref;
+        icon.rel = icon.dataset.acsbOriginalRel ?? icon.rel;
         icon.type = icon.dataset.acsbOriginalType ?? icon.type;
+        const originalSizes = icon.dataset.acsbOriginalSizes;
+        if (originalSizes === "") {
+            icon.removeAttribute("sizes");
+        } else if (originalSizes !== undefined) {
+            icon.setAttribute("sizes", originalSizes);
+        }
         delete icon.dataset.acsbOriginalHref;
+        delete icon.dataset.acsbOriginalRel;
         delete icon.dataset.acsbOriginalType;
+        delete icon.dataset.acsbOriginalSizes;
     }
 }
 
@@ -842,6 +901,7 @@ function createExtremeCompleteFaviconHref(): string {
     const svg = [
         '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">',
         '<rect width="32" height="32" fill="red"/>',
+        `<metadata>${++extremeFaviconRevision}</metadata>`,
         "</svg>",
     ].join("");
     return `data:image/svg+xml,${encodeURIComponent(svg)}`;
