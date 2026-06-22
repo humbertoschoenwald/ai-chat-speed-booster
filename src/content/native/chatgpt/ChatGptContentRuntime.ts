@@ -51,7 +51,7 @@ import {
     type ChatGptTokenEstimate,
 } from "./ChatGptTokenEstimator";
 import { logger } from "../../../shared/logger";
-import { dedupeChatGptTurnElements } from "./ChatGptSelectors";
+import { CHATGPT_STREAMING_SELECTOR, dedupeChatGptTurnElements } from "./ChatGptSelectors";
 
 const NATIVE_SNAPSHOT_SYNC_FAILURE_COOLDOWN_MS = 1_500;
 const NATIVE_PAGE_INSPECTION_SAMPLE_TTL_MS = 1_000;
@@ -242,6 +242,11 @@ export class ChatGptContentRuntime {
             controller.deferBackgroundWork();
             return;
         }
+        if (this.isReplyInProgress()) {
+            controller.protectBackgroundWork("reply-in-progress", 750);
+            controller.deferBackgroundWork();
+            return;
+        }
         if (Date.now() < this.nativeSnapshotSyncCooldownUntilMs) {
             controller.deferBackgroundWork();
             return;
@@ -301,6 +306,10 @@ export class ChatGptContentRuntime {
         } catch (error) {
             this.handleNativeSnapshotSyncError(error);
         }
+    }
+
+    private isReplyInProgress(): boolean {
+        return this.ports.document.querySelector(CHATGPT_STREAMING_SELECTOR) !== null;
     }
 
     private handleNativeSnapshotSyncError(error: unknown): void {
