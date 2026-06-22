@@ -48,7 +48,7 @@ export function deriveRuntimeConfigForSite(config: ExtensionConfig, siteId: stri
             ...config,
             performanceMode,
             visibleMessageLimit: 1,
-            loadMoreBatchSize: 1,
+            loadMoreBatchSize: 0,
             fetchInterceptEnabled: true,
             autoLoad: false,
             hideOldMessages: true,

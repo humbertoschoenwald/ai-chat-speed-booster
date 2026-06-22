@@ -107,7 +107,7 @@ function createStableEditorLatencyGuard(): EditorLatencyGuardPort {
 }
 
 async function initialiseNativeControllerIfNeeded(): Promise<void> {
-    if (config.performanceMode !== "native") return;
+    if (config.performanceMode !== "native" && config.performanceMode !== "extreme") return;
     const [{ EditorInputOptimizer }, { NativeModeController }] = await Promise.all([
         import("./native/EditorInputOptimizer"),
         import("./native/NativeModeController"),
@@ -120,7 +120,8 @@ async function initialiseNativeControllerIfNeeded(): Promise<void> {
 }
 
 async function initialiseChatGptNativeRuntimeIfNeeded(): Promise<void> {
-    if (config.performanceMode !== "native" || currentSite.id !== "chatgpt") return;
+    const runtimeEnabled = config.performanceMode === "native" || config.performanceMode === "extreme";
+    if (!runtimeEnabled || currentSite.id !== "chatgpt") return;
     const { ChatGptContentRuntime } = await import("./native/chatgpt/ChatGptContentRuntime");
     chatGptRuntime = new ChatGptContentRuntime({
         document,
@@ -135,8 +136,50 @@ async function initialiseChatGptNativeRuntimeIfNeeded(): Promise<void> {
     chatGptRuntime.updateConfig(config);
 }
 
+function createUniversalExtremeSiteIfNeeded(storedConfig: ExtensionConfig): SiteConfig | null {
+    const derivedConfig = deriveRuntimeConfigForSite(storedConfig, "universal-extreme");
+    if (!derivedConfig.enabled || derivedConfig.performanceMode !== "extreme") return null;
+
+    return {
+        id: "universal-extreme",
+        name: "Universal Extreme",
+        hostnames: [window.location.hostname],
+        urlPatterns: ["<all_urls>"],
+        selectors: {
+            messageTurn: [
+                "article",
+                "[role='article']",
+                "[data-message-author-role]",
+                "[data-testid*='message' i]",
+                "[data-testid*='conversation' i]",
+                "[class*='message' i]",
+                "[class*='response' i]",
+            ].join(","),
+            scrollContainer: "main",
+            scrollContainerAlt: "body",
+            userMessageSelector: [
+                "[data-message-author-role='user']",
+                "[data-testid*='user' i]",
+                "[class*='user' i]",
+            ].join(","),
+        },
+        messageUnit: {
+            elementsPerMessage: 1,
+        },
+        statusAnchors: {
+            name: "body",
+            bottom: "body",
+        },
+        ui: {
+            loadMoreMargin: "4px 0",
+        },
+    };
+}
+
 async function bootstrap(): Promise<void> {
-    const site = detectCurrentSite();
+    const detectedSite = detectCurrentSite();
+    const storedConfig = await loadConfig();
+    const site = detectedSite ?? createUniversalExtremeSiteIfNeeded(storedConfig);
     if (!site) {
         contentLifecycleState = "unsupported";
         logger.info("no supported site detected, content script inactive");
@@ -154,7 +197,7 @@ async function bootstrap(): Promise<void> {
     currentSite = site;
     logger.info(`bootstrapping content script for ${currentSite.name}`);
 
-    config = deriveRuntimeConfigForSite(await loadConfig(), currentSite.id);
+    config = deriveRuntimeConfigForSite(storedConfig, currentSite.id);
     requestLifecycleTracker = new RequestLifecycleTracker(currentSite.id, currentSite.selectors.userMessageSelector);
     await initialiseNativeControllerIfNeeded();
     messageManager.updateConfig(readStableMessageManagerConfig());
@@ -243,6 +286,13 @@ function scheduleInitialScan(): void {
                     }, delayMs);
                 });
             }
+            return;
+        }
+        if (currentSite.id === "universal-extreme") {
+            messageManager.initialise([]);
+            contentLifecycleState = "active";
+            refreshUI();
+            logger.info("universal extreme scan: no message turns detected");
             return;
         }
         setTimeout(attempt, 100);
@@ -342,7 +392,7 @@ function handleConfigUpdated(newConfig: ExtensionConfig): void {
     chatGptRuntime?.updateConfig(config);
     messageManager.updateConfig(readStableMessageManagerConfig());
     refreshUI();
-    if (modeChanged) reloadCoordinator.scheduleModeSwitchReload();
+    if (modeChanged && currentSite.id === "chatgpt") reloadCoordinator.scheduleModeSwitchReload();
     logger.debug("config updated from external source");
 }
 
@@ -495,7 +545,8 @@ function loadOneMoreMessage(): void {
  */
 let rafPending = false;
 function getDisplayStatus(status: ExtensionStatus): ExtensionStatus {
-    if (config.performanceMode !== "native") return status;
+    const runtimeEnabled = config.performanceMode === "native" || config.performanceMode === "extreme";
+    if (!runtimeEnabled) return status;
     return chatGptRuntime?.getDisplayStatus(status) ?? status;
 }
 
@@ -505,10 +556,7 @@ function refreshUI(): void {
     requestAnimationFrame(() => {
         rafPending = false;
         contentLastUiRefreshAt = Date.now();
-        document.documentElement.toggleAttribute(
-            "data-acsb-extreme-mode",
-            config.enabled && config.performanceMode === "extreme",
-        );
+        syncExtremeModeChrome();
         const status = messageManager.getStatus();
         const displayStatus = getDisplayStatus(status);
         const chatGptInspection = chatGptRuntime?.inspectPage();
@@ -553,7 +601,7 @@ function refreshUI(): void {
             statusIndicator.update(effectiveHiddenMessages, effectiveTotalMessages, config.statusPosition, false, config.theme === "light");
         }
 
-        if (config.performanceMode === "native") {
+        if (config.performanceMode === "native" || config.performanceMode === "extreme") {
             chatGptRuntime?.scheduleNativeScrollWork(nativeModeController);
         }
     });
@@ -682,3 +730,104 @@ bootstrap().catch((err) => {
     }
     logger.error("failed to bootstrap content script", err);
 });
+
+function isExtremeModeActive(): boolean {
+    return config.enabled && config.performanceMode === "extreme";
+}
+
+function syncExtremeModeChrome(): void {
+    document.documentElement.toggleAttribute(
+        "data-acsb-extreme-mode",
+        isExtremeModeActive(),
+    );
+    if (!isExtremeModeActive()) {
+        document.querySelectorAll<HTMLElement>(
+            "[data-acsb-extreme-hidden-tool='true']",
+        ).forEach((element) => {
+            element.removeAttribute("data-acsb-extreme-hidden-tool");
+            element.style.removeProperty("display");
+        });
+        document.getElementById("acsb-extreme-complete-favicon")?.remove();
+        return;
+    }
+    document.querySelectorAll<HTMLElement>(
+        [
+            "[data-testid*='tool' i]",
+            "[data-message-author-role='tool']",
+            "[aria-label*='tool' i]",
+            "[class*='tool' i]",
+        ].join(","),
+    ).forEach((element) => {
+        element.setAttribute("data-acsb-extreme-hidden-tool", "true");
+        element.style.setProperty("display", "none", "important");
+    });
+    document.querySelectorAll<HTMLElement>(
+        "details,button,div,section,article,span",
+    ).forEach((element) => {
+        const text = (element.textContent ?? "").replace(/\s+/g, " ").trim().toLowerCase();
+        if (text.length > 0 && text.length < 240 && (
+            text.includes("looked for available tools")
+            || text.includes("calling tool")
+            || text.includes("called tool")
+            || text.includes("used tool")
+            || text.includes("tool call")
+        )) {
+            element.setAttribute("data-acsb-extreme-hidden-tool", "true");
+            element.style.setProperty("display", "none", "important");
+        }
+    });
+    syncExtremeCompletionFavicon();
+}
+
+function syncExtremeCompletionFavicon(): void {
+    const id = "acsb-extreme-complete-favicon";
+    const busy = document.querySelector(
+        "[aria-busy='true'],[data-is-streaming='true'],[data-testid*='stop' i],[aria-label*='stop' i]",
+    ) !== null;
+    const redHref = createExtremeCompleteFaviconHref();
+    const existingOverride = document.getElementById(id) as HTMLLinkElement | null;
+    const iconLinks = Array.from(document.querySelectorAll<HTMLLinkElement>(
+        "link[rel~='icon'],link[rel='shortcut icon'],link[rel='apple-touch-icon']",
+    ));
+
+    if (busy) {
+        restoreOriginalFavicons(iconLinks);
+        existingOverride?.remove();
+        return;
+    }
+
+    for (const icon of iconLinks) {
+        if (icon.id === id) continue;
+        if (!icon.dataset.acsbOriginalHref) icon.dataset.acsbOriginalHref = icon.href;
+        if (!icon.dataset.acsbOriginalType) icon.dataset.acsbOriginalType = icon.type;
+        icon.rel = "icon";
+        icon.type = "image/svg+xml";
+        icon.href = redHref;
+    }
+
+    const icon = existingOverride ?? document.createElement("link");
+    icon.id = id;
+    icon.rel = "icon";
+    icon.type = "image/svg+xml";
+    icon.href = redHref;
+    (document.head ?? document.documentElement).appendChild(icon);
+}
+
+function restoreOriginalFavicons(iconLinks: HTMLLinkElement[]): void {
+    for (const icon of iconLinks) {
+        if (!icon.dataset.acsbOriginalHref) continue;
+        icon.href = icon.dataset.acsbOriginalHref;
+        icon.type = icon.dataset.acsbOriginalType ?? icon.type;
+        delete icon.dataset.acsbOriginalHref;
+        delete icon.dataset.acsbOriginalType;
+    }
+}
+
+function createExtremeCompleteFaviconHref(): string {
+    const svg = [
+        '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">',
+        '<rect width="32" height="32" fill="red"/>',
+        "</svg>",
+    ].join("");
+    return `data:image/svg+xml,${encodeURIComponent(svg)}`;
+}

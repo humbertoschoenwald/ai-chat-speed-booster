@@ -355,3 +355,32 @@ function listTextFiles(root: string): string[] {
         return /\.(?:cjs|js|mjs|ts|tsx)$/.test(entry) ? [entryPath] : [];
     });
 }
+
+
+test("Extreme runtime loads native optimizers and hides tool chrome", () => {
+    const contentSource = readFileSync(path.resolve("src/content/index.ts"), "utf8");
+    const managerSource = readFileSync(path.resolve("src/content/MessageManager.ts"), "utf8");
+    const runtimeSource = readFileSync(path.resolve("src/content/native/chatgpt/ChatGptContentRuntime.ts"), "utf8");
+
+    expect(contentSource).toContain('config.performanceMode !== "native" && config.performanceMode !== "extreme"');
+    expect(contentSource).toContain('config.performanceMode === "native" || config.performanceMode === "extreme"');
+    expect(contentSource).toContain("syncExtremeModeChrome()");
+    expect(contentSource).toContain('performanceMode === "extreme"');
+    expect(contentSource).toContain("looked for available tools");
+    expect(contentSource).toContain("used tool");
+    expect(contentSource).toContain("acsb-extreme-complete-favicon");
+    expect(contentSource).toContain("restoreOriginalFavicons");
+    expect(contentSource).toContain("acsbOriginalHref");
+    expect(managerSource).toContain("data-acsb-extreme-hidden-tool");
+    expect(runtimeSource).toContain('this.config?.performanceMode !== "native" && this.config?.performanceMode !== "extreme"');
+});
+
+
+test("Extreme runtime keeps latest-message trimming", () => {
+    const policySource = readFileSync(path.resolve("src/shared/native-runtime-policy.ts"), "utf8");
+    const fetchSource = readFileSync(path.resolve("src/content/fetchInterceptor.ts"), "utf8");
+
+    expect(policySource).toContain("loadMoreBatchSize: 0");
+    expect(fetchSource).toContain('settings.performanceMode === "extreme"');
+    expect(fetchSource).toContain("return 1");
+});

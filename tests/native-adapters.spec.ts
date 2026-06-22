@@ -21,7 +21,7 @@ test.describe("native adapter engine", () => {
     test("enables Native Mode only for ChatGPT while other site adapters stay planned", () => {
         expect(getNativeSiteAdapter("chatgpt").support).toBe("enabled");
         expect(getNativeSiteAdapter("claude").support).toBe("planned");
-        expect(getNativeSiteAdapter("gemini").support).toBe("planned");
+        expect(getNativeSiteAdapter("gemini").support).toBe("enabled");
         expect(getNativeSiteAdapter("deepseek").support).toBe("planned");
         expect(getNativeSiteAdapter("grok").support).toBe("planned");
         expect(getNativeSiteAdapter("search-ai-mode").support).toBe("planned");

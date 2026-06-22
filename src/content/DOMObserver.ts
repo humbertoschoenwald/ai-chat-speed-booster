@@ -309,7 +309,7 @@ export class DOMObserver {
         // node contained 2+ message turns) caused duplicate change events
         // and race conditions during SPA navigations.
 
-        if (addedMessages.length > 2 && this.currentSite.isDynamic) { 
+        if (addedMessages.length > 2 && this.currentSite.isDynamic && this.autoLoadEnabled) { 
         // If a large batch of messages is added at once, it's likely a dynamic
         // loading scenario (e.g. Gemini) where the existing message tracking can get out of sync, so we trigger a full reset to be safe
 

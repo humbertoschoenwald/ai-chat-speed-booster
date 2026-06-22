@@ -208,7 +208,7 @@ export class ChatGptContentRuntime {
     }
 
     private ensureNativeState(): void {
-        if (this.config?.performanceMode !== "native") {
+        if (this.config?.performanceMode !== "native" && this.config?.performanceMode !== "extreme") {
             this.detachResizeListener();
             this.chatGptTextSnapshotRenderer?.stop();
             this.chatGptTextSnapshotRenderer = null;
@@ -233,7 +233,7 @@ export class ChatGptContentRuntime {
         const config = this.config;
         const renderer = this.chatGptTextSnapshotRenderer;
         const nativeActive =
-            config?.performanceMode === "native" && controller?.snapshot().active === true;
+            (config?.performanceMode === "native" || config?.performanceMode === "extreme") && controller?.snapshot().active === true;
         if (!renderer || !controller || !config || !nativeActive) {
             this.deactivateNativeArtifacts();
             return;

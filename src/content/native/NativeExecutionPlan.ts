@@ -22,11 +22,12 @@ export function createNativeExecutionPlan(
         return block(adapter, "extension disabled");
     }
 
-    if (config.performanceMode !== "native") {
+    const nativeLikeMode = config.performanceMode === "native" || config.performanceMode === "extreme";
+    if (!nativeLikeMode) {
         return block(adapter, "native mode disabled");
     }
 
-    if (adapter.support !== "enabled") {
+    if (config.performanceMode === "native" && adapter.support !== "enabled") {
         return block(adapter, adapter.supportReason);
     }
 
@@ -35,7 +36,7 @@ export function createNativeExecutionPlan(
     return {
         siteId: adapter.siteId,
         canStart: true,
-        reason: "native adapter enabled",
+        reason: config.performanceMode === "extreme" ? "extreme controller enabled" : "native adapter enabled",
         activeFeatures: flagResolution.activeFeatures,
         blockedFeatures: [...profile?.blockedFeatures ?? [], ...flagResolution.disabledFeatures],
         autoDisabledFeatures: flagResolution.autoDisabledFeatures,

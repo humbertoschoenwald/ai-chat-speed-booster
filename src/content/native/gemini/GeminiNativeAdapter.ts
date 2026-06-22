@@ -3,8 +3,8 @@ import type { NativeSiteAdapter } from "../NativeSiteAdapter";
 export const GEMINI_NATIVE_ADAPTER: NativeSiteAdapter = {
     siteId: "gemini",
     displayName: "Gemini",
-    support: "planned",
-    supportReason: "Gemini has dynamic rendering and needs separate Native Mode validation.",
+    support: "enabled",
+    supportReason: "Gemini runs through the conservative Native/Extreme controller with no automatic reload fallback.",
     capabilities: {
         selectorGuard: true,
         editorInputProtection: false,
