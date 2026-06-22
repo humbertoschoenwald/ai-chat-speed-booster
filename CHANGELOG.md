@@ -115,6 +115,7 @@
 
 #### Extreme
 
+- reapply completion favicon reliably ([373e5cf](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/373e5cf6c50a9b41a309d3aa622ac4b3dc88d713)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - scope chat chrome by provider ([84df647](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/84df64792273e5472a5c75f01a7fb5ae02345ac7)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - save selected runtime ([9080c77](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/9080c77a6224705a9ad71ceafbb6bc4523115e5e)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - keep activation selected during reload ([3f2ee31](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/3f2ee31c17133593db7d8f2eeb951ec0932775f8)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
