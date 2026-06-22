@@ -110,6 +110,10 @@
 
 - decouple native mode and repair chatgpt regressions ([254a0d0](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/254a0d06cac843c89a7681de4e881747023cd907)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 
+#### Extreme
+
+- repair mode ([88defa1](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/88defa17b07f7c05bf898a8628c74a310f6ecdaa)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
+
 #### Fast Mode
 
 - suppress misleading message counts ([71479ae](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/71479aef4e6e60beb5c8046af2870b94d778a79d)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
