@@ -740,6 +740,11 @@ function syncExtremeModeChrome(): void {
         "data-acsb-extreme-mode",
         isExtremeModeActive(),
     );
+    if (isExtremeModeActive()) {
+        document.documentElement.setAttribute("data-acsb-extreme-provider", currentSite.id);
+    } else {
+        document.documentElement.removeAttribute("data-acsb-extreme-provider");
+    }
     if (!isExtremeModeActive()) {
         document.querySelectorAll<HTMLElement>(
             "[data-acsb-extreme-hidden-tool='true']",
@@ -747,48 +752,58 @@ function syncExtremeModeChrome(): void {
             element.removeAttribute("data-acsb-extreme-hidden-tool");
             element.style.removeProperty("display");
         });
+        const iconLinks = Array.from(document.querySelectorAll<HTMLLinkElement>(
+            "link[rel~='icon'],link[rel='shortcut icon'],link[rel='apple-touch-icon']",
+        ));
+        restoreOriginalFavicons(iconLinks);
         document.getElementById("acsb-extreme-complete-favicon")?.remove();
         return;
     }
-    document.querySelectorAll<HTMLElement>(
-        [
-            "[data-testid*='tool' i]",
-            "[data-message-author-role='tool']",
-            "[aria-label*='tool' i]",
-            "[class*='tool' i]",
-        ].join(","),
-    ).forEach((element) => {
-        element.setAttribute("data-acsb-extreme-hidden-tool", "true");
-        element.style.setProperty("display", "none", "important");
-    });
-    document.querySelectorAll<HTMLElement>(
-        "details,button,div,section,article,span",
-    ).forEach((element) => {
-        const text = (element.textContent ?? "").replace(/\s+/g, " ").trim().toLowerCase();
-        if (text.length > 0 && text.length < 240 && (
-            text.includes("looked for available tools")
-            || text.includes("calling tool")
-            || text.includes("called tool")
-            || text.includes("used tool")
-            || text.includes("tool call")
-        )) {
+    if (currentSite.id === "chatgpt") {
+        document.querySelectorAll<HTMLElement>(
+            [
+                "[data-testid*='tool' i]",
+                "[data-message-author-role='tool']",
+                "[aria-label*='tool' i]",
+            ].join(","),
+        ).forEach((element) => {
             element.setAttribute("data-acsb-extreme-hidden-tool", "true");
             element.style.setProperty("display", "none", "important");
-        }
-    });
+        });
+        document.querySelectorAll<HTMLElement>(
+            "details,button,div,section,article,span",
+        ).forEach((element) => {
+            const text = (element.textContent ?? "").replace(/\s+/g, " ").trim().toLowerCase();
+            if (text.length > 0 && text.length < 240 && (
+                text.includes("looked for available tools")
+                || text.includes("calling tool")
+                || text.includes("called tool")
+                || text.includes("used tool")
+                || text.includes("tool call")
+            )) {
+                element.setAttribute("data-acsb-extreme-hidden-tool", "true");
+                element.style.setProperty("display", "none", "important");
+            }
+        });
+    }
     syncExtremeCompletionFavicon();
 }
 
 function syncExtremeCompletionFavicon(): void {
     const id = "acsb-extreme-complete-favicon";
-    const busy = document.querySelector(
-        "[aria-busy='true'],[data-is-streaming='true'],[data-testid*='stop' i],[aria-label*='stop' i]",
-    ) !== null;
-    const redHref = createExtremeCompleteFaviconHref();
     const existingOverride = document.getElementById(id) as HTMLLinkElement | null;
     const iconLinks = Array.from(document.querySelectorAll<HTMLLinkElement>(
         "link[rel~='icon'],link[rel='shortcut icon'],link[rel='apple-touch-icon']",
     ));
+    if (currentSite.id !== "chatgpt") {
+        restoreOriginalFavicons(iconLinks);
+        existingOverride?.remove();
+        return;
+    }
+    const busy = document.querySelector(
+        "[aria-busy='true'],[data-is-streaming='true'],[data-testid*='stop' i],[aria-label*='stop' i]",
+    ) !== null;
+    const redHref = createExtremeCompleteFaviconHref();
 
     if (busy) {
         restoreOriginalFavicons(iconLinks);
