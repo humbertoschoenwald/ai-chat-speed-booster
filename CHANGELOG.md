@@ -142,6 +142,7 @@
 
 #### Native
 
+- defer snapshot sync during busy state ([89246ae](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/89246ae100b1dc73d8f86bb23971aac266bcfe6c)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - cache collapsed tool labels ([b9971b2](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/b9971b204956e126651d262237f9a0f2982ef075)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - avoid nested tool button summaries ([123ef45](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/123ef45a8bdfc2fd53e173175778df5d39d77767)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - scope diagnostics to conversation root ([8a766fe](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/8a766fed42107142e5581e33dae0724386609c2a)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
