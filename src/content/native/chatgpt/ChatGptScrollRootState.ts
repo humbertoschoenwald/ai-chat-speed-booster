@@ -24,7 +24,9 @@ export function readChatGptScrollRootState(root: HTMLElement | null): ChatGptScr
         streamActive,
         scrollFromTop,
         scrolledFromEnd,
-        shouldDeferOldTurnWork: streamActive || scrolledFromEnd === false,
+        shouldDeferOldTurnWork: streamActive
+            || scrolledFromEnd === false
+            || (scrolledFromEnd === null && scrollFromTop !== null && scrollFromTop > 0),
     };
 }
 

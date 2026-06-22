@@ -265,6 +265,13 @@ export class ChatGptContentRuntime {
             const turns = dedupeChatGptTurnElements(this.ports.queryTurns());
             const scrollContainer = this.ports.findScrollContainer();
             this.nativeScrollRootState = readChatGptScrollRootState(scrollContainer);
+            if (this.nativeScrollRootState.shouldDeferOldTurnWork) {
+                renderer.restoreAll(this.ports.document);
+                this.chatGptTurnContentVisibilityController?.restoreAll(this.ports.document);
+                this.nativeSnapshotHosts = 0;
+                this.nativeSnapshotCacheBytes = 0;
+                return;
+            }
             const conversationScope = resolveChatGptConversationScope(this.ports.document, scrollContainer);
             this.nativeThreadCssMetrics = conversationScope instanceof Element
                 ? readChatGptThreadCssMetrics(conversationScope, this.ports.window)

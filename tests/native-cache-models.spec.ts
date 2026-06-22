@@ -4,6 +4,7 @@ import { ToolCallGroupController } from "../src/content/native/ToolCallGroupCont
 import { TurnMeasurementCache } from "../src/content/native/TurnMeasurementCache";
 import { TurnRegistry, type NativeTurnRecord } from "../src/content/native/TurnRegistry";
 import { classifyTurnPriority } from "../src/content/native/chatgpt/ChatGptVisibleTurnPriorityController";
+import { readChatGptScrollRootState } from "../src/content/native/chatgpt/ChatGptScrollRootState";
 
 const element = (kind: "tool" | "running" | "failed" | "expanded", childCount = 0): HTMLElement => ({
     matches: (selector: string) => {
@@ -43,6 +44,10 @@ const wrappedPriorityElement = (wrapperIntersecting: string | null, childInterse
         parentElement: wrapper,
     } as unknown as HTMLElement;
 };
+
+const scrollRoot = (attributes: Record<string, string>): HTMLElement => ({
+    getAttribute: (name: string) => attributes[name] ?? null,
+}) as unknown as HTMLElement;
 
 const record = (key: string, node: HTMLElement, measuredHeight: number | null): NativeTurnRecord => ({
     key,
@@ -88,6 +93,16 @@ test.describe("native cache and tool-call models", () => {
         expect(classifyTurnPriority(priorityElement("false"))).toBe("far");
         expect(classifyTurnPriority(priorityElement(null))).toBe("near");
         expect(classifyTurnPriority(wrappedPriorityElement("true", "false"))).toBe("live");
+    });
+
+    test("classifies scroll root anchor states", () => {
+        const bottom = readChatGptScrollRootState(scrollRoot({ "data-scrolled-from-end": "true" }));
+        const middle = readChatGptScrollRootState(scrollRoot({ "data-scrolled-from-end": "false" }));
+        const unknownMiddle = readChatGptScrollRootState(scrollRoot({ "data-scroll-from-top": "1200" }));
+
+        expect(bottom.shouldDeferOldTurnWork).toBe(false);
+        expect(middle.shouldDeferOldTurnWork).toBe(true);
+        expect(unknownMiddle.shouldDeferOldTurnWork).toBe(true);
     });
 
     test("persists only stable measurement keys", () => {
