@@ -14,9 +14,12 @@ import { fileURLToPath } from "url";
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = resolve(__dirname, "..");
 
-// Read site configs — single source of truth for all supported AI chat sites
+// Read site configs — single source of truth for all supported AI chat sites.
+// Extreme Mode can run as a manual fallback on pages outside the official site list,
+// while the network interceptor remains scoped to reviewed AI-chat URL patterns only.
 const sitesConfig = JSON.parse(readFileSync(resolve(ROOT, "sites.config.json"), "utf8"));
-const allUrlPatterns = sitesConfig.flatMap((s) => s.urlPatterns);
+const allUrlPatterns = [...new Set(sitesConfig.flatMap((s) => s.urlPatterns))];
+const universalContentUrlPatterns = [...new Set([...allUrlPatterns, "<all_urls>"])];
 
 const BROWSERS = ["chrome", "firefox", "edge", "safari"];
 const args = process.argv.slice(2);
@@ -54,11 +57,12 @@ function copyAssets(browser) {
 
     // Read manifest template and inject URL patterns from sites.config.json
     const manifest = JSON.parse(readFileSync(resolve(browserDir, "manifest.json"), "utf8"));
-    manifest.host_permissions = allUrlPatterns;
-    // Inject URL patterns into ALL content_scripts entries
+    manifest.host_permissions = universalContentUrlPatterns;
     if (Array.isArray(manifest.content_scripts)) {
         for (const cs of manifest.content_scripts) {
-            cs.matches = allUrlPatterns;
+            const scriptNames = Array.isArray(cs.js) ? cs.js : [];
+            const usesFetchInterceptor = scriptNames.some((name) => name.includes("fetchInterceptor"));
+            cs.matches = usesFetchInterceptor ? allUrlPatterns : universalContentUrlPatterns;
         }
     }
     writeFileSync(resolve(outdir, "manifest.json"), `${JSON.stringify(manifest, null, 4)}\n`);
