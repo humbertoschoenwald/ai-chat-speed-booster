@@ -16,7 +16,6 @@ import {
     type WeeklyRequestCount,
 } from "../shared/types";
 import { SITES } from "../shared/sites";
-import { isNativeModeAllowedForSite } from "../shared/native-runtime-policy";
 import { detectActivePopupSiteId, shouldUsePopupCachedStatus } from "./popupActiveSite";
 import { shouldShowNativeModeControl } from "./popupCapabilities";
 import { renderPerformanceModeHint, renderPopupStatusText } from "./popupViewModel";
@@ -139,8 +138,7 @@ async function init(): Promise<void> {
 
 function renderPerformanceMode(mode: PerformanceMode, status?: ExtensionStatus): void {
     const nativeSupported = shouldShowNativeModeControl(currentSiteId);
-    const requestedRuntimeSupported = mode === "legacy" || nativeSupported;
-    const optimisticMode: PerformanceMode = requestedRuntimeSupported ? mode : "legacy";
+    const optimisticMode: PerformanceMode = mode;
     const waitingForReload = optimisticMode !== "legacy" && status?.performanceMode === "legacy";
     const effectiveMode: PerformanceMode = waitingForReload
         ? optimisticMode
@@ -347,9 +345,7 @@ toggleDeliveryTimeoutRefresh.addEventListener("change", async () => {
 modeButtons.forEach((button) => {
     button.addEventListener("click", async () => {
         const requestedMode = button.dataset.mode as PerformanceMode;
-        const mode: PerformanceMode = requestedMode !== "legacy" && !isNativeModeAllowedForSite(currentSiteId)
-            ? "legacy"
-            : requestedMode;
+        const mode: PerformanceMode = requestedMode;
         if (mode === currentConfig.performanceMode) return;
         renderConfig({ ...currentConfig, performanceMode: mode });
         const config = await safeSendMessage<ExtensionConfig>({
