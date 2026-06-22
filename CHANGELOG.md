@@ -112,6 +112,7 @@
 
 #### Extreme
 
+- save selected runtime ([9080c77](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/9080c77a6224705a9ad71ceafbb6bc4523115e5e)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - keep activation selected during reload ([3f2ee31](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/3f2ee31c17133593db7d8f2eeb951ec0932775f8)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - repair mode ([88defa1](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/88defa17b07f7c05bf898a8628c74a310f6ecdaa)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 
