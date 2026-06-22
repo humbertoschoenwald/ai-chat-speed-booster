@@ -1,4 +1,5 @@
 import type { NativeTurnRecord } from "../TurnRegistry";
+import { resolveChatGptTurnWrapper } from "./ChatGptSelectors";
 
 export type ChatGptTurnPriority = "live" | "near" | "far" | "uncertain";
 
@@ -20,7 +21,10 @@ export class ChatGptVisibleTurnPriorityController {
 }
 
 export function classifyTurnPriority(element: HTMLElement): ChatGptTurnPriority {
-    const intersecting = element.getAttribute("data-is-intersecting");
+    const wrapper = typeof element.closest === "function"
+        ? resolveChatGptTurnWrapper(element)
+        : element;
+    const intersecting = wrapper.getAttribute("data-is-intersecting");
     if (intersecting === "true") return "live";
     if (intersecting === "false") return "far";
 

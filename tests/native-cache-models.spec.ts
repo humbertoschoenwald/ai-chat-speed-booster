@@ -22,11 +22,27 @@ const element = (kind: "tool" | "running" | "failed" | "expanded", childCount = 
     },
 }) as unknown as HTMLElement;
 
-const priorityElement = (intersecting: string): HTMLElement => ({
+const priorityElement = (intersecting: string | null): HTMLElement => ({
     getAttribute: (name: string) => name === "data-is-intersecting" ? intersecting : null,
     getBoundingClientRect: () => ({ top: 0, bottom: 1 }) as DOMRect,
     ownerDocument: { defaultView: { innerHeight: 800 } },
+    closest: () => null,
+    parentElement: null,
 }) as unknown as HTMLElement;
+
+const wrappedPriorityElement = (wrapperIntersecting: string | null, childIntersecting: string | null): HTMLElement => {
+    const wrapper = {
+        getAttribute: (name: string) => name === "data-is-intersecting" ? wrapperIntersecting : null,
+        parentElement: null,
+    } as unknown as HTMLElement;
+    return {
+        getAttribute: (name: string) => name === "data-is-intersecting" ? childIntersecting : null,
+        getBoundingClientRect: () => ({ top: 4000, bottom: 4100 }) as DOMRect,
+        ownerDocument: { defaultView: { innerHeight: 800 } },
+        closest: (selector: string) => selector === "[data-turn-id-container]" ? wrapper : null,
+        parentElement: wrapper,
+    } as unknown as HTMLElement;
+};
 
 const record = (key: string, node: HTMLElement, measuredHeight: number | null): NativeTurnRecord => ({
     key,
@@ -70,6 +86,8 @@ test.describe("native cache and tool-call models", () => {
     test("classifies visible priority hints", () => {
         expect(classifyTurnPriority(priorityElement("true"))).toBe("live");
         expect(classifyTurnPriority(priorityElement("false"))).toBe("far");
+        expect(classifyTurnPriority(priorityElement(null))).toBe("near");
+        expect(classifyTurnPriority(wrappedPriorityElement("true", "false"))).toBe("live");
     });
 
     test("persists only stable measurement keys", () => {
