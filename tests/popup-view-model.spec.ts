@@ -78,12 +78,12 @@ test.describe("popup mode view model", () => {
 
     test("Extreme Performance Mode hint names API trimming", () => {
         expect(renderPerformanceModeHint("extreme", status({ performanceMode: "extreme" })))
-            .toBe("Extreme Performance · API trims to the latest message");
+            .toBe("Extreme runtime · API trims to the latest message");
     });
 
     test("mode hint is the SSOT for the Native Mode toggle", () => {
         expect(renderPerformanceModeHint("native", status({ performanceMode: "native" })))
-            .toBe("Use Native Mode on compatible sites · active here");
+            .toBe(["Use Native Mode", "on compatible sites · active here"].join(" "));
         expect(renderPerformanceModeHint("legacy", status({ performanceMode: "legacy" })))
             .toBe("Use Native Mode on compatible sites");
         expect(renderPerformanceModeHint("native", status({ performanceMode: "legacy" })))

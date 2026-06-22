@@ -226,7 +226,7 @@ const DOWNLOADING_KEY = "acsb_fetch_downloading";
 
     function readFetchLimit(settings: BridgeSettings, entry: SiteEntry): number {
         const unitSize = elementsPerLogicalMessage(entry);
-        if (settings.performanceMode === "extreme") return unitSize;
+        if (settings.performanceMode === "extreme") return 1;
         const initialLimit = Math.max(1, Math.floor(settings.visibleMessageLimit)) * unitSize;
         const requestedLimit = readSessionNumber(LOADED_VISIBLE_KEY);
         return Math.max(initialLimit, requestedLimit ?? initialLimit);

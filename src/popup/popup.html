@@ -46,15 +46,15 @@
         <section class="popup-settings" aria-label="Settings">
 
             <!-- Runtime mode -->
-            <div class="setting setting--mode" data-tooltip="Choose exactly one runtime. Stable hides older turns in manual batches. Native optimizes ChatGPT without hiding turns.">
+            <div class="setting setting--mode" data-tooltip="Choose exactly one runtime. Extreme trims ChatGPT at the API layer. Stable is the fallback. Native optimizes compatible sites without hiding turns.">
                 <div class="setting__info">
-                    <span class="setting__label">Native Mode</span>
+                    <span class="setting__label">Runtime</span>
                     <span class="setting__hint" id="performance-mode-hint">Stable active</span>
                 </div>
                 <div class="mode-switch" role="radiogroup" aria-label="Runtime mode">
-                    <button type="button" class="mode-switch__btn" id="mode-stable" data-mode="legacy" role="radio">False</button>
-                    <button type="button" class="mode-switch__btn" id="mode-native" data-mode="native" role="radio">True</button>
                     <button type="button" class="mode-switch__btn" id="mode-extreme" data-mode="extreme" role="radio">Extreme</button>
+                    <button type="button" class="mode-switch__btn" id="mode-stable" data-mode="legacy" role="radio">Stable</button>
+                    <button type="button" class="mode-switch__btn" id="mode-native" data-mode="native" role="radio">Native</button>
                 </div>
             </div>
 

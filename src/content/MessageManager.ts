@@ -22,7 +22,8 @@ function buildHideStyle(): string {
     const hiddenOverride = `.${HIDE_CLASS}{display:none!important;overflow-anchor:none!important}`;
     const managedOverride = `[${DATA_ATTR}]{overflow-anchor:none!important}`;
     const visibleOverride = `[${DATA_ATTR}]:not(.${HIDE_CLASS}){content-visibility:visible!important;contain-intrinsic-size:auto!important}`;
-    return hiddenOverride + managedOverride + visibleOverride;
+    const extremeToolOverride = `html[data-acsb-extreme-mode='true'] [data-testid*='tool' i],html[data-acsb-extreme-mode='true'] [data-message-author-role='tool']{display:none!important}`;
+    return hiddenOverride + managedOverride + visibleOverride + extremeToolOverride;
 }
 
 function injectHideStyle(): void {

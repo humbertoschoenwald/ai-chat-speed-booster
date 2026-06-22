@@ -505,6 +505,10 @@ function refreshUI(): void {
     requestAnimationFrame(() => {
         rafPending = false;
         contentLastUiRefreshAt = Date.now();
+        document.documentElement.toggleAttribute(
+            "data-acsb-extreme-mode",
+            config.enabled && config.performanceMode === "extreme",
+        );
         const status = messageManager.getStatus();
         const displayStatus = getDisplayStatus(status);
         const chatGptInspection = chatGptRuntime?.inspectPage();

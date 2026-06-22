@@ -139,7 +139,7 @@ async function init(): Promise<void> {
 
 function renderPerformanceMode(mode: PerformanceMode, status?: ExtensionStatus): void {
     const nativeSupported = shouldShowNativeModeControl(currentSiteId);
-    const effectiveMode: PerformanceMode = mode === "extreme" ? "extreme" : nativeSupported ? (status?.performanceMode ?? mode) : "legacy";
+    const effectiveMode: PerformanceMode = status?.performanceMode ?? (nativeSupported ? mode : "legacy");
 
     nativeModeSetting.hidden = false;
     modeButtons.forEach((button) => {

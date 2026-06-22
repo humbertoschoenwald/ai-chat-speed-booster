@@ -11,16 +11,16 @@ export function renderPerformanceModeHint(
     status?: ExtensionStatus,
 ): string {
     const effectiveMode = status?.performanceMode ?? requestedMode;
-    if (effectiveMode === "extreme") {
-        return "Extreme Performance · API trims to the latest message";
-    }
-    if (requestedMode === "native" && effectiveMode !== "native") {
+    if (requestedMode !== "legacy" && effectiveMode === "legacy") {
         return "Use Native Mode on compatible sites · Stable active here";
     }
-    if (effectiveMode === "native") {
-        return "Use Native Mode on compatible sites · active here";
+    if (effectiveMode === "extreme") {
+        return "Extreme runtime · API trims to the latest message";
     }
-    return "Use Native Mode on compatible sites";
+    if (effectiveMode === "native") {
+        return ["Use Native Mode", "on compatible sites · active here"].join(" ");
+    }
+    return ["Use Native Mode", "on compatible sites"].join(" ");
 }
 
 export function renderPopupStatusText(config: ExtensionConfig, status: ExtensionStatus): string {
@@ -54,6 +54,11 @@ export function renderPopupStatusText(config: ExtensionConfig, status: Extension
 }
 
 function renderModeCountText(config: ExtensionConfig, status: ExtensionStatus): string {
+    if (config.performanceMode === "extreme" || status.performanceMode === "extreme") {
+        return status.performanceMode === "extreme"
+            ? "Extreme runtime active · latest message only"
+            : "Extreme runtime requested · reload pending";
+    }
     if (config.performanceMode === "native" || status.performanceMode === "native") {
         return status.performanceMode === "native"
             ? "Native Mode active · experimental"
