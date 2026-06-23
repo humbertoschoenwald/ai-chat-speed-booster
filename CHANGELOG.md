@@ -181,6 +181,10 @@
 
 - delay accepted request storage (#30) ([92db52d](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/92db52d13db93dbce6a7e3912f71f5a2319a14c3)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 
+#### Runtime
+
+- scope high speed mode ([7b4fd2e](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/7b4fd2e00da51aeacd53e29c11d284ad117ad75c)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
+
 #### Settings
 
 - default fast mode off ([4d380b8](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/4d380b827046e6cb76064038ab0f2067fa73a771)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
