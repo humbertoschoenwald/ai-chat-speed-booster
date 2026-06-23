@@ -27,6 +27,7 @@ test.describe("native model guards", () => {
             streamActive: true,
             scrollFromTop: 240,
             scrolledFromEnd: false,
+            openInteractionSurface: false,
             shouldDeferOldTurnWork: true,
         });
         expect(readChatGptScrollRootState(null).shouldDeferOldTurnWork).toBe(true);

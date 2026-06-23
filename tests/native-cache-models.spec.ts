@@ -45,8 +45,10 @@ const wrappedPriorityElement = (wrapperIntersecting: string | null, childInterse
     } as unknown as HTMLElement;
 };
 
-const scrollRoot = (attributes: Record<string, string>): HTMLElement => ({
+const scrollRoot = (attributes: Record<string, string>, openSurface = false): HTMLElement => ({
     getAttribute: (name: string) => attributes[name] ?? null,
+    matches: () => false,
+    querySelector: () => (openSurface ? ({} as Element) : null),
 }) as unknown as HTMLElement;
 
 const record = (key: string, node: HTMLElement, measuredHeight: number | null): NativeTurnRecord => ({
@@ -100,9 +102,13 @@ test.describe("native cache and tool-call models", () => {
         const middle = readChatGptScrollRootState(scrollRoot({ "data-scrolled-from-end": "false" }));
         const unknownMiddle = readChatGptScrollRootState(scrollRoot({ "data-scroll-from-top": "1200" }));
 
+        const openSurface = readChatGptScrollRootState(scrollRoot({ "data-scrolled-from-end": "true" }, true));
+
         expect(bottom.shouldDeferOldTurnWork).toBe(false);
         expect(middle.shouldDeferOldTurnWork).toBe(true);
         expect(unknownMiddle.shouldDeferOldTurnWork).toBe(true);
+        expect(openSurface.openInteractionSurface).toBe(true);
+        expect(openSurface.shouldDeferOldTurnWork).toBe(true);
     });
 
     test("persists only stable measurement keys", () => {
