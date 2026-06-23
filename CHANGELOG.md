@@ -115,6 +115,7 @@
 
 #### Extreme
 
+- keep tool calls visible ([53a7430](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/53a74309464514af90a26eb0d6355652877ad906)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - trim by primary messages ([308fc9e](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/308fc9e4c932dcc30e0a9c18bd6d5d75a6119f6f)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - preserve recent ChatGPT turns ([004a7ca](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/004a7cae12d1b68f200b2259beeeabe857ddd41d)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - reapply completion favicon reliably ([373e5cf](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/373e5cf6c50a9b41a309d3aa622ac4b3dc88d713)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
