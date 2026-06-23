@@ -40,6 +40,7 @@ const TOOL_CALL_MUTATION_SELECTOR = [
     '[data-testid*="tool" i]',
     '[class*="tool" i]',
 ].join(",");
+const CHATGPT_PAGE_CHROME_SELECTOR = "nav,aside,[role='navigation'],[data-testid*='sidebar' i],[data-testid*='history' i]";
 
 export class DOMObserver {
     private observer: MutationObserver | null = null;
@@ -362,6 +363,11 @@ export class DOMObserver {
             return { elements: [], scanned: 0, skipped: 1 };
         }
 
+        const scanRoot = this.resolveMessageScanRoot(root);
+        if (!scanRoot) return { elements: [], scanned: 0, skipped: 1 };
+        root = scanRoot;
+        if (scannedNodes.has(root)) return { elements: [], scanned: 0, skipped: 1 };
+
         scannedNodes.add(root);
         if (this.isMessageTurn(root)) {
             if (filterMessageTurns([root], this.selectors).length === 0) {
@@ -391,6 +397,15 @@ export class DOMObserver {
 
     private dedupeNestedMessageTurns(elements: HTMLElement[]): HTMLElement[] {
         return elements.filter((element) => !elements.some((candidate) => candidate !== element && candidate.contains(element)));
+    }
+
+    private resolveMessageScanRoot(root: HTMLElement): HTMLElement | null {
+        if (this.currentSite.id !== "chatgpt") return root;
+        const scrollRoot = this.scrollEl ?? this.findScrollContainer();
+        if (!scrollRoot) return root.closest(CHATGPT_PAGE_CHROME_SELECTOR) ? null : root;
+        if (root === scrollRoot || scrollRoot.contains(root)) return root;
+        if (root.contains(scrollRoot)) return scrollRoot;
+        return null;
     }
 
     private classifyMutationBatch(mutations: MutationRecord[]): MutationBatchClass {
