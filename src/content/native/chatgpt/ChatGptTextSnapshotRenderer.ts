@@ -47,14 +47,22 @@ export class ChatGptTextSnapshotRenderer {
         if (this.root) return;
         this.root = root;
         injectSnapshotStyle(root);
+        root.addEventListener("pointerover", this.restoreTarget, true);
         root.addEventListener("pointerdown", this.restoreTarget, true);
+        root.addEventListener("touchstart", this.restoreTarget, true);
+        root.addEventListener("contextmenu", this.restoreTarget, true);
+        root.addEventListener("keydown", this.restoreTarget, true);
         root.addEventListener("focusin", this.restoreTarget, true);
     }
 
     stop(): void {
         const root = this.root;
         if (!root) return;
+        root.removeEventListener("pointerover", this.restoreTarget, true);
         root.removeEventListener("pointerdown", this.restoreTarget, true);
+        root.removeEventListener("touchstart", this.restoreTarget, true);
+        root.removeEventListener("contextmenu", this.restoreTarget, true);
+        root.removeEventListener("keydown", this.restoreTarget, true);
         root.removeEventListener("focusin", this.restoreTarget, true);
         this.restoreAll(root);
         ChatGptTextSnapshotRenderer.cleanupNativeArtifacts(root);
@@ -127,7 +135,8 @@ export class ChatGptTextSnapshotRenderer {
     }
 
     private readonly restoreTarget = (event: Event): void => {
-        const target = event.target instanceof Element ? event.target.closest<HTMLElement>(`[${HOST_ATTR}="true"]`) : null;
+        const eventTarget = event.target instanceof Element ? event.target : null;
+        const target = eventTarget?.closest<HTMLElement>(`[${HOST_ATTR}="true"]`) ?? null;
         if (target) this.restore(target);
     };
 }
@@ -185,6 +194,7 @@ function isSafeSnapshotCandidate(turn: HTMLElement): boolean {
     if (turn.querySelector(".loading-shimmer, .animate-spin, [data-is-streaming='true'], [aria-busy='true']")) return false;
     if (turn.querySelector(CHATGPT_ERROR_SELECTOR)) return false;
     if (turn.querySelector(CHATGPT_TOOL_SELECTOR)) return false;
+    if (turn.querySelector("button,[role='button'],a[href],[aria-haspopup='menu']")) return false;
     const lower = text.toLowerCase();
     if (lower.includes("calling tool") || lower.includes("working on it")) return false;
     return true;

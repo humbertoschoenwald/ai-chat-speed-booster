@@ -329,6 +329,22 @@ test("ChatGPT conversation changes reset Native Mode scoped state", () => {
     expect(source).toContain("messageManager.destroy(false)");
 });
 
+test("Native text snapshots avoid controls and restore before interaction", () => {
+    const source = readFileSync(path.resolve("src/content/native/chatgpt/ChatGptTextSnapshotRenderer.ts"), "utf8");
+
+    expect(source).toContain("pointerover");
+    expect(source).toContain("pointerdown");
+    expect(source).toContain("touchstart");
+    expect(source).toContain("contextmenu");
+    expect(source).toContain("keydown");
+    expect(source).toContain("focusin");
+    expect(source).toContain("SNAPSHOT_SELECTOR");
+    expect(source).toContain("button,[role='button'],a[href],[aria-haspopup='menu']");
+    expect(source).toContain("eventTarget?.closest");
+    expect(source).toContain("if (target) this.restore(target)");
+});
+
+
 test("Native historical turn containment keeps safe predicates", () => {
     const source = readFileSync(path.resolve("src/content/native/chatgpt/ChatGptTurnContainmentController.ts"), "utf8");
 
@@ -342,6 +358,10 @@ test("Native historical turn containment keeps safe predicates", () => {
     expect(source).toContain("data-acsb-native-quiet-turn");
     expect(source).toContain("transition-duration:0s!important");
     expect(source).toContain("pointerenter");
+    expect(source).toContain("pointerover");
+    expect(source).toContain("touchstart");
+    expect(source).toContain("contextmenu");
+    expect(source).toContain("keydown");
     expect(source).toContain("focusin");
 });
 

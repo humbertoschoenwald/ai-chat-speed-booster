@@ -100,6 +100,10 @@ function bindQuietRestore(turn: HTMLElement): void {
         turn.removeAttribute(QUIET_ATTR);
     };
     turn.addEventListener("pointerenter", restore, { passive: true });
+    turn.addEventListener("pointerover", restore, { passive: true });
+    turn.addEventListener("touchstart", restore, { passive: true });
+    turn.addEventListener("contextmenu", restore);
+    turn.addEventListener("keydown", restore);
     turn.addEventListener("focusin", restore);
     turn.setAttribute(QUIET_RESTORE_BOUND_ATTR, "true");
 }
