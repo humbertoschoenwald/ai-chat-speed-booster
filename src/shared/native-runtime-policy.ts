@@ -25,7 +25,9 @@ export function getEffectivePerformanceMode(
     configuredMode: PerformanceMode,
     siteId: string | undefined,
 ): PerformanceMode {
-    if (configuredMode === "extreme") return "extreme";
+    if (configuredMode === "extreme") {
+        return siteId === "chatgpt" ? "extreme" : "legacy";
+    }
     return configuredMode === "native" && isNativeModeAllowedForSite(siteId)
         ? "native"
         : "legacy";

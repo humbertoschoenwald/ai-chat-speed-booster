@@ -106,7 +106,13 @@ test("Native Mode is unavailable outside ChatGPT", () => {
         performanceMode: "native",
     }, "gemini");
 
+    const geminiExtremeRuntime = deriveRuntimeConfigForSite({
+        ...DEFAULT_CONFIG,
+        performanceMode: "extreme",
+    }, "gemini");
+
     expect(geminiRuntime.performanceMode).toBe("legacy");
+    expect(geminiExtremeRuntime.performanceMode).toBe("legacy");
     expect(geminiRuntime.fetchInterceptEnabled).toBe(DEFAULT_CONFIG.fetchInterceptEnabled);
     expect(geminiRuntime.autoLoad).toBe(DEFAULT_CONFIG.autoLoad);
 });
