@@ -107,8 +107,11 @@ export class ChatGptTextSnapshotCache {
     }
 }
 
-export function renderChatGptTextSnapshot(snapshot: ChatGptTextSnapshot): string {
-    return `<div data-acsb-native-snapshot="true">${escapeText(snapshot.text)}</div>`;
+export function renderChatGptTextSnapshot(snapshot: ChatGptTextSnapshot, options: { readonly copyAvailable?: boolean } = {}): string {
+    const copyAffordance = options.copyAvailable
+        ? `<span data-acsb-native-copy-affordance="true" aria-hidden="true">Copy available</span>`
+        : "";
+    return `<div data-acsb-native-snapshot="true">${escapeText(snapshot.text)}${copyAffordance}</div>`;
 }
 
 function measureUtf8Bytes(value: string): number {

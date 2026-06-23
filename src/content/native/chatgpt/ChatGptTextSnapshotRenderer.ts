@@ -29,6 +29,8 @@ const HOST_ATTR = "data-acsb-native-snapshot-host";
 const SNAPSHOT_SELECTOR = '[data-acsb-native-snapshot="true"]';
 const STYLE_ID = "acsb-native-text-snapshot-style";
 const MAX_SNAPSHOT_WRITES_PER_SYNC = 8;
+const COPY_CONTROL_SELECTOR = "[data-testid='copy-turn-action-button'],[aria-label*='copy' i]";
+const INTERACTIVE_CONTROL_SELECTOR = "button,[role='button'],a[href],[aria-haspopup='menu']";
 
 export class ChatGptTextSnapshotRenderer {
     static cleanupNativeArtifacts(root: Document = document): void {
@@ -122,7 +124,9 @@ export class ChatGptTextSnapshotRenderer {
         this.cache.put(key, text, nowMs);
         const snapshot = this.cache.get(key, nowMs);
         if (!snapshot) return false;
-        turn.insertAdjacentHTML("beforeend", renderChatGptTextSnapshot(snapshot));
+        turn.insertAdjacentHTML("beforeend", renderChatGptTextSnapshot(snapshot, {
+            copyAvailable: hasCopyControl(turn),
+        }));
         turn.setAttribute(HOST_ATTR, "true");
         turn.setAttribute("data-acsb-native-role", getTurnRole(turn));
         return true;
@@ -146,7 +150,8 @@ function injectSnapshotStyle(root: Document): void {
     const style = root.createElement("style");
     style.id = STYLE_ID;
     style.textContent = `[${HOST_ATTR}="true"]>:not(${SNAPSHOT_SELECTOR}){display:none!important}` +
-        `${SNAPSHOT_SELECTOR}{white-space:pre-wrap;contain:content;content-visibility:auto;}`;
+        `${SNAPSHOT_SELECTOR}{white-space:pre-wrap;contain:content;content-visibility:auto;}` +
+        `${SNAPSHOT_SELECTOR} [data-acsb-native-copy-affordance="true"]{display:inline-block;margin-inline-start:0.5rem;font-size:0.75em;opacity:0.7;pointer-events:none;}`;
     (root.head ?? root.documentElement).appendChild(style);
 }
 
@@ -194,10 +199,19 @@ function isSafeSnapshotCandidate(turn: HTMLElement): boolean {
     if (turn.querySelector(".loading-shimmer, .animate-spin, [data-is-streaming='true'], [aria-busy='true']")) return false;
     if (turn.querySelector(CHATGPT_ERROR_SELECTOR)) return false;
     if (turn.querySelector(CHATGPT_TOOL_SELECTOR)) return false;
-    if (turn.querySelector("button,[role='button'],a[href],[aria-haspopup='menu']")) return false;
+    if (hasNonCopyInteractiveControl(turn)) return false;
     const lower = text.toLowerCase();
     if (lower.includes("calling tool") || lower.includes("working on it")) return false;
     return true;
+}
+
+function hasCopyControl(turn: HTMLElement): boolean {
+    return turn.querySelector(COPY_CONTROL_SELECTOR) !== null;
+}
+
+function hasNonCopyInteractiveControl(turn: HTMLElement): boolean {
+    return Array.from(turn.querySelectorAll<HTMLElement>(INTERACTIVE_CONTROL_SELECTOR))
+        .some((control) => !control.matches(COPY_CONTROL_SELECTOR));
 }
 
 function isPinnedTurn(turn: HTMLElement): boolean {

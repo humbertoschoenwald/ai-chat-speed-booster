@@ -56,6 +56,17 @@ test.describe("ChatGPT text snapshot cache", () => {
             `<div data-acsb-native-snapshot="true">&lt;hello&gt;&amp;&quot;&#39;</div>`,
         );
     });
+
+    test("can render a static copy affordance without changing text", () => {
+        const cache = new ChatGptTextSnapshotCache({ maxBytes: 100, maxEntryBytes: 100, ttlMs: 100 });
+        cache.put("copy", "copyable text", 0);
+        const snapshot = cache.get("copy", 1);
+
+        expect(snapshot).not.toBeNull();
+        expect(renderChatGptTextSnapshot(snapshot!, { copyAvailable: true })).toBe(
+            `<div data-acsb-native-snapshot="true">copyable text<span data-acsb-native-copy-affordance="true" aria-hidden="true">Copy available</span></div>`,
+        );
+    });
 });
 
 
