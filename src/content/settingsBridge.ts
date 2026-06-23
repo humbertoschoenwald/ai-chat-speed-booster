@@ -35,7 +35,7 @@ function writeBridge(raw: Record<string, unknown> | undefined): void {
         performanceMode,
         fetchInterceptEnabled: performanceMode === "extreme",
         visibleMessageLimit: performanceMode === "extreme"
-            ? 1
+            ? 3
             : typeof raw?.visibleMessageLimit === "number"
                 ? raw.visibleMessageLimit
                 : 3,

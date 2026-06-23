@@ -56,6 +56,7 @@ const DEFAULT_STABLE_DOM_REVEAL_ANCHOR_MAX_MS = 420;
 const EXTREME_FAVICON_LINK_SELECTOR = "link[rel~='icon'],link[rel='shortcut icon'],link[rel='apple-touch-icon']";
 const EXTREME_BUSY_SELECTOR = "[aria-busy='true'],[data-is-streaming='true'],[data-testid*='stop' i],[aria-label*='stop' i]";
 const EXTREME_FAVICON_REAPPLY_DELAYS_MS = [250, 1_000, 2_500, 5_000, 10_000] as const;
+const EXTREME_RECENT_TURN_KEEP_COUNT = 6;
 let stableAppendRebalanceTimer: ReturnType<typeof setTimeout> | null = null;
 let extremeFaviconState: "inactive" | "busy" | "complete" = "inactive";
 let extremeFaviconPulseGeneration = 0;
@@ -742,6 +743,24 @@ function isExtremeModeActive(): boolean {
     return config.enabled && config.performanceMode === "extreme";
 }
 
+function readExtremeProtectedTurns(): WeakSet<HTMLElement> {
+    const protectedTurns = new WeakSet<HTMLElement>();
+    if (currentSite.id !== "chatgpt") return protectedTurns;
+    const turns = Array.from(document.querySelectorAll<HTMLElement>(currentSite.selectors.messageTurn));
+    for (const turn of turns.slice(-EXTREME_RECENT_TURN_KEEP_COUNT)) protectedTurns.add(turn);
+    return protectedTurns;
+}
+
+function isInExtremeProtectedTurn(element: HTMLElement, protectedTurns: WeakSet<HTMLElement>): boolean {
+    const turn = element.closest<HTMLElement>(currentSite.selectors.messageTurn);
+    return turn !== null && protectedTurns.has(turn);
+}
+
+function clearExtremeHiddenElement(element: HTMLElement): void {
+    element.removeAttribute("data-acsb-extreme-hidden-tool");
+    element.style.removeProperty("display");
+}
+
 function syncExtremeModeChrome(): void {
     document.documentElement.toggleAttribute(
         "data-acsb-extreme-mode",
@@ -757,15 +776,18 @@ function syncExtremeModeChrome(): void {
         clearExtremeFaviconPulses();
         document.querySelectorAll<HTMLElement>(
             "[data-acsb-extreme-hidden-tool='true']",
-        ).forEach((element) => {
-            element.removeAttribute("data-acsb-extreme-hidden-tool");
-            element.style.removeProperty("display");
-        });
+        ).forEach(clearExtremeHiddenElement);
         restoreOriginalFavicons(readExtremeFaviconLinks());
         document.getElementById("acsb-extreme-complete-favicon")?.remove();
         return;
     }
     if (currentSite.id === "chatgpt") {
+        const protectedTurns = readExtremeProtectedTurns();
+        document.querySelectorAll<HTMLElement>(
+            "[data-acsb-extreme-hidden-tool='true']",
+        ).forEach((element) => {
+            if (isInExtremeProtectedTurn(element, protectedTurns)) clearExtremeHiddenElement(element);
+        });
         document.querySelectorAll<HTMLElement>(
             [
                 "[data-testid*='tool' i]",
@@ -773,12 +795,20 @@ function syncExtremeModeChrome(): void {
                 "[aria-label*='tool' i]",
             ].join(","),
         ).forEach((element) => {
+            if (isInExtremeProtectedTurn(element, protectedTurns)) {
+                clearExtremeHiddenElement(element);
+                return;
+            }
             element.setAttribute("data-acsb-extreme-hidden-tool", "true");
             element.style.setProperty("display", "none", "important");
         });
         document.querySelectorAll<HTMLElement>(
             "details,button,div,section,article,span",
         ).forEach((element) => {
+            if (isInExtremeProtectedTurn(element, protectedTurns)) {
+                clearExtremeHiddenElement(element);
+                return;
+            }
             const text = (element.textContent ?? "").replace(/\s+/g, " ").trim().toLowerCase();
             if (text.length > 0 && text.length < 240 && (
                 text.includes("looked for available tools")

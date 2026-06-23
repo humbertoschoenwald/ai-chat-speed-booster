@@ -180,7 +180,7 @@ test("ChatGPT Stable Mode reviewed behavior is locked", () => {
     expect(bridgeSource).toContain('fetchInterceptEnabled: performanceMode === "extreme"');
     expect(policySource).toContain("fetchInterceptEnabled: false");
     expect(policySource).toContain('performanceMode === "extreme"');
-    expect(policySource).toContain("visibleMessageLimit: 1");
+    expect(policySource).toContain("visibleMessageLimit: 3");
     expect(fetchSource).not.toContain("responseCache");
     expect(fetchSource).not.toContain("restoreCachedChunkState");
     for (const runtimeSource of [contentSource, managerSource, bridgeSource, policySource, fetchSource]) {
@@ -397,6 +397,9 @@ test("Extreme runtime loads native optimizers and hides tool chrome", () => {
     expect(contentSource).toContain('config.performanceMode === "native" || config.performanceMode === "extreme"');
     expect(contentSource).toContain("syncExtremeModeChrome()");
     expect(contentSource).toContain('performanceMode === "extreme"');
+    expect(contentSource).toContain("EXTREME_RECENT_TURN_KEEP_COUNT");
+    expect(contentSource).toContain("isInExtremeProtectedTurn");
+    expect(contentSource).toContain("clearExtremeHiddenElement");
     expect(contentSource).toContain("looked for available tools");
     expect(contentSource).toContain("used tool");
     expect(contentSource).toContain("acsb-extreme-complete-favicon");
@@ -408,6 +411,7 @@ test("Extreme runtime loads native optimizers and hides tool chrome", () => {
     expect(contentSource).toContain("syncExtremeModeChrome();\n    if (rafPending) return;");
     expect(managerSource).toContain("data-acsb-extreme-hidden-tool");
     expect(managerSource).toContain("data-acsb-extreme-provider='chatgpt'");
+    expect(managerSource).not.toContain("[data-testid*='tool' i]");
     expect(managerSource).not.toContain("[class*='tool' i]");
     expect(contentSource).toContain('currentSite.id === "chatgpt"');
     expect(contentSource).toContain('currentSite.id !== "chatgpt"');
@@ -421,6 +425,6 @@ test("Extreme runtime keeps latest-message trimming", () => {
     const fetchSource = readFileSync(path.resolve("src/content/fetchInterceptor.ts"), "utf8");
 
     expect(policySource).toContain("loadMoreBatchSize: 0");
-    expect(fetchSource).toContain('settings.performanceMode === "extreme"');
-    expect(fetchSource).toContain("return 1");
+    expect(fetchSource).toContain("settings.visibleMessageLimit");
+    expect(fetchSource).toContain("requestedLimit ?? initialLimit");
 });

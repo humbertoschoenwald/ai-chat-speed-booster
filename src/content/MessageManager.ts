@@ -22,12 +22,7 @@ function buildHideStyle(): string {
     const hiddenOverride = `.${HIDE_CLASS}{display:none!important;overflow-anchor:none!important}`;
     const managedOverride = `[${DATA_ATTR}]{overflow-anchor:none!important}`;
     const visibleOverride = `[${DATA_ATTR}]:not(.${HIDE_CLASS}){content-visibility:visible!important;contain-intrinsic-size:auto!important}`;
-    const extremeToolOverride = [
-        "html[data-acsb-extreme-mode='true'][data-acsb-extreme-provider='chatgpt'] [data-testid*='tool' i]",
-        "html[data-acsb-extreme-mode='true'][data-acsb-extreme-provider='chatgpt'] [data-message-author-role='tool']",
-        "html[data-acsb-extreme-mode='true'][data-acsb-extreme-provider='chatgpt'] [aria-label*='tool' i]",
-        "html[data-acsb-extreme-mode='true'][data-acsb-extreme-provider='chatgpt'] [data-acsb-extreme-hidden-tool='true']",
-    ].join(",") + "{display:none!important}";
+    const extremeToolOverride = "html[data-acsb-extreme-mode='true'][data-acsb-extreme-provider='chatgpt'] [data-acsb-extreme-hidden-tool='true']{display:none!important}";
     return hiddenOverride + managedOverride + visibleOverride + extremeToolOverride;
 }
 

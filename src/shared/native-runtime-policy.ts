@@ -49,7 +49,7 @@ export function deriveRuntimeConfigForSite(config: ExtensionConfig, siteId: stri
         return {
             ...config,
             performanceMode,
-            visibleMessageLimit: 1,
+            visibleMessageLimit: 3,
             loadMoreBatchSize: 0,
             fetchInterceptEnabled: true,
             autoLoad: false,
