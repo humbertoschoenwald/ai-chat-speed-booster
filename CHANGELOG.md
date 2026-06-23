@@ -145,6 +145,7 @@
 
 #### Native
 
+- drain scheduler in one pass ([76d827f](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/76d827fcfae0f76a6e5f20525ed7f4a63d3b838d)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - keep static copy affordance ([a0581ac](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/a0581ac50534e72da523d3943dcf69cd0fd0dc98)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - pause while UI is open ([79d54b1](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/79d54b1c7c88f2f71ce3b8ac95129905450e6ce4)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - clamp ChatGPT scans to thread root ([8a01037](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/8a010377ac2aded6bfa270fd4945990adf844efb)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
