@@ -144,6 +144,7 @@
 
 #### Native
 
+- restore old turns early ([9cb5e1e](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/9cb5e1e6e8f9de8284317267991e496c7239375c)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - guard historical turn layout ([4fb724c](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/4fb724c579f68b47a756d6c44c8125a92e552c0b)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - prioritize visible turn hints ([5c55379](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/5c553791da3e61fa01fbb376083afb6af102c497)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - defer snapshot sync during busy state ([89246ae](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/89246ae100b1dc73d8f86bb23971aac266bcfe6c)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
