@@ -144,6 +144,7 @@
 
 #### Native
 
+- pause while UI is open ([79d54b1](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/79d54b1c7c88f2f71ce3b8ac95129905450e6ce4)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - clamp ChatGPT scans to thread root ([8a01037](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/8a010377ac2aded6bfa270fd4945990adf844efb)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - restore old turns early ([9cb5e1e](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/9cb5e1e6e8f9de8284317267991e496c7239375c)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - guard historical turn layout ([4fb724c](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/4fb724c579f68b47a756d6c44c8125a92e552c0b)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
