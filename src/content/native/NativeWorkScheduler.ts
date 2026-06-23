@@ -36,7 +36,7 @@ const LANE_PRIORITY: Record<NativeWorkLane, number> = {
 const INPUT_PROTECTED_LANES = new Set<NativeWorkLane>(["input", "recovery"]);
 
 export class NativeWorkScheduler {
-    private readonly queue: NativeWorkItem[] = [];
+    private queue: NativeWorkItem[] = [];
     private lastRunAt: number | null = null;
     private lastDeferredAt: number | null = null;
 
@@ -61,15 +61,20 @@ export class NativeWorkScheduler {
         });
         const ran: string[] = [];
         const deferred: string[] = [];
+        const ranItems = new Set<NativeWorkItem>();
 
         for (const item of ordered) {
             if (inputProtected && !INPUT_PROTECTED_LANES.has(item.lane)) {
                 deferred.push(item.id);
                 continue;
             }
-            this.cancel(item.id);
             item.run();
             ran.push(item.id);
+            ranItems.add(item);
+        }
+
+        if (ranItems.size > 0) {
+            this.queue = this.queue.filter((item) => !ranItems.has(item));
         }
 
         if (ran.length > 0) this.lastRunAt = now;

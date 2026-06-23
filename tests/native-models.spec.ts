@@ -209,6 +209,26 @@ test.describe("native model guards", () => {
         expect(scheduler.snapshot()).toMatchObject({ queued: 0, lastRunAt: 20 });
     });
 
+    test("drains scheduler work without cancelling inside the drain loop", () => {
+        const scheduler = new NativeWorkScheduler();
+        const ran: string[] = [];
+
+        scheduler.schedule("input", "input-guard", () => {
+            ran.push("input-guard");
+            scheduler.schedule("idle", "queued-during-run", () => ran.push("queued-during-run"), 30);
+        }, 1);
+        scheduler.schedule("idle", "deferred-idle", () => ran.push("deferred-idle"), 2);
+
+        const protectedDrain = scheduler.drain({ inputProtected: true, now: 10 });
+        expect(protectedDrain).toEqual({ ran: ["input-guard"], deferred: ["deferred-idle"] });
+        expect(scheduler.snapshot()).toMatchObject({ queued: 2 });
+
+        const normalDrain = scheduler.drain({ now: 20 });
+        expect(normalDrain).toEqual({ ran: ["deferred-idle", "queued-during-run"], deferred: [] });
+        expect(ran).toEqual(["input-guard", "deferred-idle", "queued-during-run"]);
+        expect(scheduler.snapshot()).toMatchObject({ queued: 0 });
+    });
+
     test("keeps small input native and blocks chunking during composition", () => {
         const planner = new InputChunkPlanner(100, 25);
 
