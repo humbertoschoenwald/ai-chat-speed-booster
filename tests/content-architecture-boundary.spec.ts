@@ -388,7 +388,7 @@ function listTextFiles(root: string): string[] {
 }
 
 
-test("Extreme runtime loads native optimizers and hides tool chrome", () => {
+test("Extreme runtime loads native optimizers without hiding tool calls", () => {
     const contentSource = readFileSync(path.resolve("src/content/index.ts"), "utf8");
     const managerSource = readFileSync(path.resolve("src/content/MessageManager.ts"), "utf8");
     const runtimeSource = readFileSync(path.resolve("src/content/native/chatgpt/ChatGptContentRuntime.ts"), "utf8");
@@ -397,11 +397,10 @@ test("Extreme runtime loads native optimizers and hides tool chrome", () => {
     expect(contentSource).toContain('config.performanceMode === "native" || config.performanceMode === "extreme"');
     expect(contentSource).toContain("syncExtremeModeChrome()");
     expect(contentSource).toContain('performanceMode === "extreme"');
-    expect(contentSource).toContain("EXTREME_RECENT_TURN_KEEP_COUNT");
-    expect(contentSource).toContain("isInExtremeProtectedTurn");
     expect(contentSource).toContain("clearExtremeHiddenElement");
-    expect(contentSource).toContain("looked for available tools");
-    expect(contentSource).toContain("used tool");
+    expect(contentSource).not.toContain("looked for available tools");
+    expect(contentSource).not.toContain("used tool");
+    expect(contentSource).not.toContain("[data-testid*='tool' i]");
     expect(contentSource).toContain("acsb-extreme-complete-favicon");
     expect(contentSource).toContain("restoreOriginalFavicons");
     expect(contentSource).toContain("acsbOriginalHref");
