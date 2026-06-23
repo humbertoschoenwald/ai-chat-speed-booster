@@ -309,14 +309,29 @@ const DOWNLOADING_KEY = "acsb_fetch_downloading";
     // Tree-walk strategy (ChatGPT-style mapping tree)
     // -------------------------------------------------------------------
 
+    function readVisibleRole(
+        node: Record<string, unknown>,
+        tc: TreeWalkConfig,
+    ): string | null {
+        const msg = node[tc.messageKey];
+        if (!msg) return null;
+        const role = getNestedValue(msg, tc.roleAccessor);
+        return typeof role === "string" && tc.visibleRoles.includes(role) ? role : null;
+    }
+
     function isVisibleNode(
         node: Record<string, unknown>,
         tc: TreeWalkConfig,
     ): boolean {
-        const msg = node[tc.messageKey];
-        if (!msg) return false;
-        const role = getNestedValue(msg, tc.roleAccessor);
-        return typeof role === "string" && tc.visibleRoles.includes(role);
+        return readVisibleRole(node, tc) !== null;
+    }
+
+    function isPrimaryConversationNode(
+        node: Record<string, unknown>,
+        tc: TreeWalkConfig,
+    ): boolean {
+        const role = readVisibleRole(node, tc);
+        return role === "user" || role === "assistant";
     }
 
     function trimTreeWalk(
@@ -344,10 +359,10 @@ const DOWNLOADING_KEY = "acsb_fetch_downloading";
 
         chain.reverse(); // chain[0] = root ancestor, chain[last] = current_node
 
-        // Count visible messages in the chain
+        // Count primary conversation messages in the chain
         let totalVisible = 0;
         for (const id of chain) {
-            if (isVisibleNode(mapping[id], tc)) totalVisible++;
+            if (isPrimaryConversationNode(mapping[id], tc)) totalVisible++;
         }
 
         if (totalVisible <= limit) return null; // nothing to trim
@@ -355,14 +370,14 @@ const DOWNLOADING_KEY = "acsb_fetch_downloading";
         if (__DEV__)
             console.debug(
                 PREFIX,
-                `tree-walk: ${totalVisible} visible → keeping last ${limit}`,
+                `tree-walk: ${totalVisible} primary visible → keeping last ${limit}`,
             );
 
-        // Walk from end, count visible messages, find the cutoff index
+        // Walk from end, count primary messages, find the cutoff index
         let count = 0;
         let cutoff = 0;
         for (let i = chain.length - 1; i >= 0; i--) {
-            if (isVisibleNode(mapping[chain[i]], tc)) {
+            if (isPrimaryConversationNode(mapping[chain[i]], tc)) {
                 count++;
                 if (count >= limit) {
                     cutoff = i;
