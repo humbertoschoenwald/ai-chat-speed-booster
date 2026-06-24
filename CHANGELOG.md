@@ -26,6 +26,7 @@
 
 #### Native
 
+- add turn cost profiles ([b2b39f7](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/b2b39f73e6b6e0b064ee281365e10420d6287710)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - read scroll root state ([c38ab21](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/c38ab21f36928ed1d01a1e0c7ba4eaa8066a119d)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - contain old code blocks ([227f009](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/227f0095c27e3f643ac6065128d1a50c87cbe999)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - read thread CSS metrics ([ffdd81d](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/ffdd81d2fd913574e7cc786c49fc20266b9bb2e6)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
