@@ -26,6 +26,7 @@
 
 #### Native
 
+- extract message metadata ([b00506b](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/b00506bb786b3156d0f9c353da487e8549e0c95e)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - exclude composer scope ([bb8185a](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/bb8185a2ee7d3a004a38bf927513c1fcdace8045)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - observe state deltas ([8e71f36](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/8e71f36239762e3b66e01caea1c0fa6c3e78006f)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - add turn cost profiles ([b2b39f7](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/b2b39f73e6b6e0b064ee281365e10420d6287710)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
@@ -255,6 +256,7 @@
 
 #### Ui
 
+- keep chat input visible ([76bf62a](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/76bf62a36dff1a438d689c732af9cb7d5c015a71)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - show raw load-more count ([0bf04aa](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/0bf04aa7f8694b62a38f77f5e34dd5a70387d978)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 
 #### Validate
