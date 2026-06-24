@@ -26,6 +26,7 @@
 
 #### Native
 
+- observe state deltas ([8e71f36](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/8e71f36239762e3b66e01caea1c0fa6c3e78006f)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - add turn cost profiles ([b2b39f7](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/b2b39f73e6b6e0b064ee281365e10420d6287710)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - read scroll root state ([c38ab21](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/c38ab21f36928ed1d01a1e0c7ba4eaa8066a119d)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - contain old code blocks ([227f009](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/227f0095c27e3f643ac6065128d1a50c87cbe999)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
