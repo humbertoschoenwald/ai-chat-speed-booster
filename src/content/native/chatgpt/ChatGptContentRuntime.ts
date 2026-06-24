@@ -34,6 +34,10 @@ import {
     type ChatGptInteractiveNodeBudgetSnapshot,
 } from "./ChatGptInteractiveNodeBudget";
 import {
+    createChatGptMessageMetadataSummary,
+    type ChatGptMessageMetadataSummary,
+} from "./ChatGptMessageMetadata";
+import {
     readChatGptScrollRootState,
     type ChatGptScrollRootState,
 } from "./ChatGptScrollRootState";
@@ -87,6 +91,7 @@ export interface ChatGptContentRuntimeStatus {
     readonly nativeInteractiveNodeBudget: ChatGptInteractiveNodeBudgetSnapshot | null;
     readonly nativeToolCardDensityProfile: ChatGptToolCardDensityProfile | null;
     readonly nativeTurnCostProfile: ChatGptTurnCostProfileSummary | null;
+    readonly nativeMessageMetadata: ChatGptMessageMetadataSummary | null;
     readonly nativeThreadCssMetrics: ChatGptThreadCssMetrics | null;
     readonly nativeCodeBlockContainment: ChatGptCodeBlockContainmentSnapshot | null;
     readonly nativeScrollRootState: ChatGptScrollRootState | null;
@@ -114,6 +119,7 @@ export class ChatGptContentRuntime {
     private nativeInteractiveNodeBudget: ChatGptInteractiveNodeBudgetSnapshot | null = null;
     private nativeToolCardDensityProfile: ChatGptToolCardDensityProfile | null = null;
     private nativeTurnCostProfile: ChatGptTurnCostProfileSummary | null = null;
+    private nativeMessageMetadata: ChatGptMessageMetadataSummary | null = null;
     private nativeThreadCssMetrics: ChatGptThreadCssMetrics | null = null;
     private nativeCodeBlockContainment: ChatGptCodeBlockContainmentSnapshot | null = null;
     private nativeScrollRootState: ChatGptScrollRootState | null = null;
@@ -156,6 +162,7 @@ export class ChatGptContentRuntime {
         this.nativeInteractiveNodeBudget = null;
         this.nativeToolCardDensityProfile = null;
         this.nativeTurnCostProfile = null;
+        this.nativeMessageMetadata = null;
         this.nativeThreadCssMetrics = null;
         this.nativeCodeBlockContainment = null;
         this.nativeScrollRootState = null;
@@ -199,6 +206,7 @@ export class ChatGptContentRuntime {
             nativeInteractiveNodeBudget: this.nativeInteractiveNodeBudget,
             nativeToolCardDensityProfile: this.nativeToolCardDensityProfile,
             nativeTurnCostProfile: this.nativeTurnCostProfile,
+            nativeMessageMetadata: this.nativeMessageMetadata,
             nativeThreadCssMetrics: this.nativeThreadCssMetrics,
             nativeCodeBlockContainment: this.nativeCodeBlockContainment,
             nativeScrollRootState: this.nativeScrollRootState,
@@ -311,6 +319,7 @@ export class ChatGptContentRuntime {
             if (toolSourceRecords === records) this.nativeToolCallGroups.reset();
             const toolGroups = recordsForToolIndex.flatMap((record) => [...this.nativeToolCallGroups.indexTurn(record)]);
             this.nativeToolCardDensityProfile = createChatGptToolCardDensityProfile(toolGroups, records.length);
+            this.nativeMessageMetadata = createChatGptMessageMetadataSummary(records);
             this.toolCallSummaries.sync(
                 toolGroups,
                 this.nativeToolCardDensityProfile.behavior === "static-summary",
@@ -367,6 +376,7 @@ export class ChatGptContentRuntime {
         this.nativeInteractiveNodeBudget = null;
         this.nativeToolCardDensityProfile = null;
         this.nativeTurnCostProfile = null;
+        this.nativeMessageMetadata = null;
         this.nativeThreadCssMetrics = null;
         this.nativeCodeBlockContainment = null;
         this.nativeScrollRootState = null;

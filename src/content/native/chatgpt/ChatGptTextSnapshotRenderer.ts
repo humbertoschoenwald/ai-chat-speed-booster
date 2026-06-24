@@ -10,6 +10,7 @@ import {
     CHATGPT_TOOL_SELECTOR,
     CHATGPT_TURN_SELECTOR,
 } from "./ChatGptSelectors";
+import { readChatGptMessageIdentityKey } from "./ChatGptMessageMetadata";
 
 export interface ChatGptTextSnapshotRenderOptions {
     readonly enabled: boolean;
@@ -166,7 +167,7 @@ function computeLiveKeys(turns: readonly HTMLElement[], liveWindowSize: number, 
 }
 
 function getTurnKey(turn: HTMLElement, index: number): string {
-    return turn.getAttribute("data-turn-id") ?? turn.getAttribute("data-testid") ?? `chatgpt-turn-${index}`;
+    return readChatGptMessageIdentityKey(turn) ?? `chatgpt-turn-${index}`;
 }
 
 function getTurnRole(turn: HTMLElement): string {

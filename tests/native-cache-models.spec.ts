@@ -5,6 +5,7 @@ import { TurnMeasurementCache } from "../src/content/native/TurnMeasurementCache
 import { TurnRegistry, type NativeTurnRecord } from "../src/content/native/TurnRegistry";
 import { classifyTurnPriority } from "../src/content/native/chatgpt/ChatGptVisibleTurnPriorityController";
 import { readChatGptScrollRootState } from "../src/content/native/chatgpt/ChatGptScrollRootState";
+import * as ChatGptMeta from "../src/content/native/chatgpt/ChatGptMessageMetadata";
 
 const element = (kind: "tool" | "running" | "failed" | "expanded", childCount = 0): HTMLElement => ({
     matches: (selector: string) => {
@@ -152,3 +153,41 @@ test("render-unit budget keeps normal turns in the configured native window", ()
         liveWindowSize: 5,
     });
 });
+
+test("ChatGPT metadata extraction tolerates missing message identifiers", () => {
+    const metadata = ChatGptMeta.readChatGptMessageMetadata(metadataElement({ role: "assistant" }));
+
+    expect(metadata.messageId).toBeNull();
+    expect(metadata.authorRole).toBe("assistant");
+    expect(metadata.modelLabel).toBeNull();
+});
+
+test("ChatGPT metadata summary reports repeated ids and current assistant metadata", () => {
+    const first = { ...record("metadata:first", element("tool"), null), metadata: ChatGptMeta.readChatGptMessageMetadata(metadataElement({ id: "same", role: "user" })) };
+    const second = { ...record("metadata:second", element("tool"), null), metadata: ChatGptMeta.readChatGptMessageMetadata(metadataElement({ id: "same", role: "assistant", model: "gpt-test" })) };
+    const third = { ...record("metadata:third", element("tool"), null), metadata: ChatGptMeta.readChatGptMessageMetadata(metadataElement({ role: "assistant" })) };
+
+    expect(ChatGptMeta.createChatGptMessageMetadataSummary([first, second, third])).toMatchObject({
+        totalTurns: 3,
+        messageIdCount: 2,
+        missingMessageIdCount: 1,
+        repeatedMessageIdCount: 2,
+        currentAssistant: {
+            messageId: null,
+            authorRole: "assistant",
+        },
+    });
+});
+
+function metadataElement(options: { readonly id?: string; readonly role?: string; readonly model?: string }): HTMLElement {
+    return {
+        matches: (selector: string) => selector.includes("data-message"),
+        querySelector: () => null,
+        getAttribute: (name: string) => {
+            if (name === "data-message-id") return options.id ?? null;
+            if (name === "data-message-author-role") return options.role ?? null;
+            if (name === "data-message-model-slug") return options.model ?? null;
+            return null;
+        },
+    } as unknown as HTMLElement;
+}

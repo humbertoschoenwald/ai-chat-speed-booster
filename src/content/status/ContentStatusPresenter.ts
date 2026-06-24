@@ -105,6 +105,11 @@ export function createExtensionStatus(input: ContentStatusPresenterInput): Exten
         nativeModeTurnCostSample: chatGpt?.nativeTurnCostProfile?.sample.map(
             (item) => `${item.role}:${item.costBucket}:${item.selectedBehavior}`,
         ),
+        nativeModeMessageIdCount: chatGpt?.nativeMessageMetadata?.messageIdCount,
+        nativeModeMissingMessageIdCount: chatGpt?.nativeMessageMetadata?.missingMessageIdCount,
+        nativeModeRepeatedMessageIdCount: chatGpt?.nativeMessageMetadata?.repeatedMessageIdCount,
+        nativeModeCurrentAssistantMessageId: chatGpt?.nativeMessageMetadata?.currentAssistant?.messageId,
+        nativeModeCurrentAssistantModelLabel: chatGpt?.nativeMessageMetadata?.currentAssistant?.modelLabel,
         nativeModeThreadResponseHeightPx: chatGpt?.nativeThreadCssMetrics?.responseHeightPx,
         nativeModeThreadContentMaxWidthPx: chatGpt?.nativeThreadCssMetrics?.contentMaxWidthPx,
         nativeModeThreadScrollToBottomBannerOffsetPx: chatGpt?.nativeThreadCssMetrics?.scrollToBottomBannerOffsetPx,

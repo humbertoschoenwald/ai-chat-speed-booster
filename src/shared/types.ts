@@ -158,6 +158,11 @@ export interface ExtensionStatus {
     readonly nativeModeTurnCostBuckets?: Record<string, number>;
     readonly nativeModeTurnCostBehaviors?: Record<string, number>;
     readonly nativeModeTurnCostSample?: readonly string[];
+    readonly nativeModeMessageIdCount?: number;
+    readonly nativeModeMissingMessageIdCount?: number;
+    readonly nativeModeRepeatedMessageIdCount?: number;
+    readonly nativeModeCurrentAssistantMessageId?: string | null;
+    readonly nativeModeCurrentAssistantModelLabel?: string | null;
     readonly nativeModeThreadResponseHeightPx?: number | null;
     readonly nativeModeThreadContentMaxWidthPx?: number | null;
     readonly nativeModeThreadScrollToBottomBannerOffsetPx?: number | null;

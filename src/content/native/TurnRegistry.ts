@@ -1,3 +1,5 @@
+import { readChatGptMessageIdentityKey, readChatGptMessageMetadata, type ChatGptMessageMetadata } from "./chatgpt/ChatGptMessageMetadata";
+
 export type NativeTurnRole = "user" | "assistant" | "system" | "unknown";
 export type NativeTurnHydrationState = "hydrated" | "frozen" | "placeholder";
 export type NativeTurnPinReason =
@@ -13,6 +15,7 @@ export interface NativeTurnRecord {
     readonly key: string;
     element: HTMLElement;
     role: NativeTurnRole;
+    metadata?: ChatGptMessageMetadata;
     hydrationState: NativeTurnHydrationState;
     measuredHeight: number | null;
     readonly pinReasons: Set<NativeTurnPinReason>;
@@ -48,9 +51,11 @@ export class TurnRegistry {
         const existing = this.keyToRecord.get(key);
         if (existing) {
             const role = this.deriveRole(element);
-            if (existing.element !== element || existing.role !== role) {
+            const metadata = readChatGptMessageMetadata(element);
+            if (existing.element !== element || existing.role !== role || !metadataEquals(existing.metadata, metadata)) {
                 existing.element = element;
                 existing.role = role;
+                existing.metadata = metadata;
                 this.elementToRecord.set(element, existing);
                 this.markTurnDirty(existing);
             }
@@ -61,6 +66,7 @@ export class TurnRegistry {
             key,
             element,
             role: this.deriveRole(element),
+            metadata: readChatGptMessageMetadata(element),
             hydrationState: "hydrated",
             measuredHeight: null,
             pinReasons: new Set(),
@@ -181,9 +187,9 @@ export class TurnRegistry {
     }
 
     private deriveKey(element: HTMLElement, structuralIndex: number): string {
-        const testId = element.getAttribute("data-testid");
-        if (testId?.startsWith("conversation-turn-")) return `testid:${testId}`;
-        const turnId = element.getAttribute("data-message-id") ?? element.id;
+        const metadataKey = readChatGptMessageIdentityKey(element);
+        if (metadataKey) return `metadata:${metadataKey}`;
+        const turnId = element.id;
         if (turnId) return `attr:${turnId}`;
         return `unstable:${location.pathname}:${structuralIndex}`;
     }
@@ -200,4 +206,13 @@ export class TurnRegistry {
         if (text.includes("system")) return "system";
         return "unknown";
     }
+}
+
+function metadataEquals(left: ChatGptMessageMetadata | undefined, right: ChatGptMessageMetadata): boolean {
+    if (!left) return false;
+    return left.messageId === right.messageId
+        && left.turnId === right.turnId
+        && left.testId === right.testId
+        && left.authorRole === right.authorRole
+        && left.modelLabel === right.modelLabel;
 }
