@@ -352,6 +352,10 @@ test("Native text snapshots avoid controls and restore before interaction", () =
     expect(source).toContain("SNAPSHOT_SELECTOR");
     expect(source).toContain("button,[role='button'],a[href],[aria-haspopup='menu']");
     expect(source).toContain("containsChatGptComposerScope(turn)");
+    expect(source).toContain("readCompletedChatGptMarkdownProseText");
+    expect(source).toContain("MARKDOWN_PROSE_BODY_SELECTOR");
+    expect(source).toContain("TEXT_EXTRACTION_EXCLUSION_SELECTOR");
+    expect(source).toContain("const cached = this.cache.get(key, nowMs)");
     expect(source).toContain("eventTarget?.closest");
     expect(source).toContain("if (target) this.restore(target)");
 });

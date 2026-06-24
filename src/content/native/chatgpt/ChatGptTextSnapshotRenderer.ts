@@ -33,6 +33,17 @@ const STYLE_ID = "acsb-native-text-snapshot-style";
 const MAX_SNAPSHOT_WRITES_PER_SYNC = 8;
 const COPY_CONTROL_SELECTOR = "[data-testid='copy-turn-action-button'],[aria-label*='copy' i]";
 const INTERACTIVE_CONTROL_SELECTOR = "button,[role='button'],a[href],[aria-haspopup='menu']";
+const MARKDOWN_PROSE_BODY_SELECTOR = ".markdown,.prose,[data-message-author-role]";
+const TEXT_EXTRACTION_EXCLUSION_SELECTOR = [
+    CHATGPT_TOOL_SELECTOR,
+    "button",
+    "[role='button']",
+    "[aria-hidden='true']",
+    "[data-acsb-native-copy-affordance='true']",
+    "textarea",
+    "[contenteditable='true']",
+    ".ProseMirror",
+].join(",");
 
 export class ChatGptTextSnapshotRenderer {
     static cleanupNativeArtifacts(root: Document = document): void {
@@ -121,10 +132,17 @@ export class ChatGptTextSnapshotRenderer {
     private snapshot(turn: HTMLElement, key: string, nowMs: number): boolean {
         if (turn.getAttribute(HOST_ATTR) === "true") return true;
         if (!isSafeSnapshotCandidate(turn)) return false;
-        const text = (turn.innerText || turn.textContent || "").replace(/\s+/g, " ").trim();
+        const cached = this.cache.get(key, nowMs);
+        if (cached) return this.renderSnapshot(turn, cached);
+        const text = readCompletedChatGptMarkdownProseText(turn);
         if (!text) return false;
         this.cache.put(key, text, nowMs);
         const snapshot = this.cache.get(key, nowMs);
+        if (!snapshot) return false;
+        return this.renderSnapshot(turn, snapshot);
+    }
+
+    private renderSnapshot(turn: HTMLElement, snapshot: ReturnType<ChatGptTextSnapshotCache["get"]>): boolean {
         if (!snapshot) return false;
         turn.insertAdjacentHTML("beforeend", renderChatGptTextSnapshot(snapshot, {
             copyAvailable: hasCopyControl(turn),
@@ -193,17 +211,23 @@ function findViewportTurnIndex(turns: readonly HTMLElement[]): number {
     return turns.length - 1;
 }
 
+export function readCompletedChatGptMarkdownProseText(turn: HTMLElement): string {
+    if (containsChatGptComposerScope(turn)) return "";
+    const source = turn.querySelector<HTMLElement>(MARKDOWN_PROSE_BODY_SELECTOR) ?? turn;
+    const clone = source.cloneNode(true) as HTMLElement;
+    clone.querySelectorAll<HTMLElement>(TEXT_EXTRACTION_EXCLUSION_SELECTOR).forEach((node) => node.remove());
+    const text = (clone.innerText || clone.textContent || "").replace(/\s+/g, " ").trim();
+    const lower = text.toLowerCase();
+    return lower.includes("calling tool") || lower.includes("working on it") ? "" : text;
+}
+
 function isSafeSnapshotCandidate(turn: HTMLElement): boolean {
-    const text = (turn.innerText || turn.textContent || "").replace(/\s+/g, " ").trim();
-    if (!text) return false;
     if (turn.contains(document.activeElement)) return false;
     if (containsChatGptComposerScope(turn)) return false;
     if (turn.querySelector(".loading-shimmer, .animate-spin, [data-is-streaming='true'], [aria-busy='true']")) return false;
     if (turn.querySelector(CHATGPT_ERROR_SELECTOR)) return false;
     if (turn.querySelector(CHATGPT_TOOL_SELECTOR)) return false;
     if (hasNonCopyInteractiveControl(turn)) return false;
-    const lower = text.toLowerCase();
-    if (lower.includes("calling tool") || lower.includes("working on it")) return false;
     return true;
 }
 
