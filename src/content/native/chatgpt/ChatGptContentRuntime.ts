@@ -322,7 +322,7 @@ export class ChatGptContentRuntime {
             this.nativeMessageMetadata = createChatGptMessageMetadataSummary(records);
             this.toolCallSummaries.sync(
                 toolGroups,
-                this.nativeToolCardDensityProfile.behavior === "static-summary",
+                false,
             );
             this.nativeRenderBudget = createRenderUnitBudgetSnapshot(
                 turns,

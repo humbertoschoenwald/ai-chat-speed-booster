@@ -351,6 +351,7 @@ test("Native text snapshots avoid controls and restore before interaction", () =
     expect(source).toContain("focusin");
     expect(source).toContain("SNAPSHOT_SELECTOR");
     expect(source).toContain("button,[role='button'],a[href],[aria-haspopup='menu']");
+    expect(source).toContain("containsChatGptComposerScope(turn)");
     expect(source).toContain("eventTarget?.closest");
     expect(source).toContain("if (target) this.restore(target)");
 });
@@ -363,6 +364,7 @@ test("Native historical turn containment keeps safe predicates", () => {
     expect(source).toContain("contain-intrinsic-size:auto var(--acsb-contained-turn-height,320px)!important");
     expect(source).toContain("isSafeCompletedTurn(turn)");
     expect(source).toContain("turn.contains(document.activeElement)");
+    expect(source).toContain("containsChatGptComposerScope(turn)");
     expect(source).toContain("[aria-busy='true']");
     expect(source).toContain("CHATGPT_ERROR_SELECTOR");
     expect(source).toContain("CHATGPT_TOOL_SELECTOR");

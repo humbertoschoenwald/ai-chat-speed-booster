@@ -10,6 +10,7 @@ import {
     CHATGPT_TOOL_SELECTOR,
     CHATGPT_TURN_SELECTOR,
 } from "./ChatGptSelectors";
+import { containsChatGptComposerScope } from "./ChatGptComposerScope";
 import { readChatGptMessageIdentityKey } from "./ChatGptMessageMetadata";
 
 export interface ChatGptTextSnapshotRenderOptions {
@@ -196,7 +197,7 @@ function isSafeSnapshotCandidate(turn: HTMLElement): boolean {
     const text = (turn.innerText || turn.textContent || "").replace(/\s+/g, " ").trim();
     if (!text) return false;
     if (turn.contains(document.activeElement)) return false;
-    if (turn.closest("form, [contenteditable='true']")) return false;
+    if (containsChatGptComposerScope(turn)) return false;
     if (turn.querySelector(".loading-shimmer, .animate-spin, [data-is-streaming='true'], [aria-busy='true']")) return false;
     if (turn.querySelector(CHATGPT_ERROR_SELECTOR)) return false;
     if (turn.querySelector(CHATGPT_TOOL_SELECTOR)) return false;

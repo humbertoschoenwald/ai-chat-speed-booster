@@ -24,6 +24,12 @@ export function isInChatGptComposerScope(element: HTMLElement): boolean {
         || (element.closest?.(COMPOSER_EDITABLE_SELECTOR) ?? null) !== null;
 }
 
+export function containsChatGptComposerScope(element: HTMLElement): boolean {
+    return isInChatGptComposerScope(element)
+        || (element.querySelector?.(COMPOSER_ROOT_SELECTOR) ?? null) !== null
+        || (element.querySelector?.(COMPOSER_EDITABLE_SELECTOR) ?? null) !== null;
+}
+
 export function filterChatGptComposerScopeElements(elements: readonly HTMLElement[]): HTMLElement[] {
     return elements.filter((element) => !isInChatGptComposerScope(element));
 }
