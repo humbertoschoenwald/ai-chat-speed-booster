@@ -9,10 +9,14 @@ import { containsChatGptComposerScope } from "./ChatGptComposerScope";
 export interface ChatGptTurnContentVisibilityOptions {
     readonly liveWindowSize: number;
     readonly nearestWindow: number;
+    readonly maxContainedTurns: number;
 }
 
 export interface ChatGptTurnContentVisibilityResult {
     readonly containedTurns: number;
+    readonly budgetLimit: number;
+    readonly budgetOverrun: number;
+    readonly budgetAffectedTurnIds: readonly string[];
 }
 
 const CONTAINED_ATTR = "data-acsb-native-contained-turn";
@@ -51,13 +55,20 @@ export class ChatGptTurnContentVisibilityController {
             const shouldContain = !live.has(index) && isSafeCompletedTurn(turn);
             return {
                 turn,
+                index,
+                key: getTurnKey(turn, index),
                 shouldContain,
                 height: shouldContain ? this.readCachedHeight(turn, index) : 0,
             };
         });
+        const candidates = decisions.filter((decision) => decision.shouldContain);
+        const budgetLimit = Math.max(0, Math.floor(options.maxContainedTurns));
+        const allowedCandidates = new Set(candidates.slice(Math.max(0, candidates.length - budgetLimit)).map((decision) => decision.turn));
+        const budgetAffectedTurnIds: string[] = [];
         let containedTurns = 0;
-        decisions.forEach(({ turn, shouldContain, height }) => {
-            if (!shouldContain) {
+        decisions.forEach(({ turn, shouldContain, height, key }) => {
+            if (!shouldContain || !allowedCandidates.has(turn)) {
+                if (shouldContain) budgetAffectedTurnIds.push(key);
                 turn.removeAttribute(CONTAINED_ATTR);
                 turn.removeAttribute(QUIET_ATTR);
                 turn.style.removeProperty("--acsb-contained-turn-height");
@@ -69,7 +80,12 @@ export class ChatGptTurnContentVisibilityController {
             bindQuietRestore(turn);
             containedTurns += 1;
         });
-        return { containedTurns };
+        return {
+            containedTurns,
+            budgetLimit,
+            budgetOverrun: Math.max(0, candidates.length - budgetLimit),
+            budgetAffectedTurnIds,
+        };
     }
 
     private readCachedHeight(turn: HTMLElement, index: number): number {

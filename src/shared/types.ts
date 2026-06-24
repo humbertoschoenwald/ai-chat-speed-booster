@@ -129,6 +129,9 @@ export interface ExtensionStatus {
     readonly observerOverBudgetCount?: number;
     readonly nativeModeSnapshotHosts?: number;
     readonly nativeModeSnapshotCacheBytes?: number;
+    readonly nativeModeSnapshotHostBudgetLimit?: number;
+    readonly nativeModeSnapshotHostBudgetOverrun?: number;
+    readonly nativeModeSnapshotHostBudgetAffectedTurnIds?: readonly string[];
     readonly nativeModeApproxInputTokens?: number;
     readonly nativeModeTokenLimit?: number;
     readonly nativeModeTokenWarningLevel?: "ok" | "warn" | "critical";

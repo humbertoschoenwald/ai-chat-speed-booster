@@ -361,6 +361,22 @@ test("Native text snapshots avoid controls and restore before interaction", () =
 });
 
 
+test("Native snapshot hosts stay budgeted and Stable expects zero hosts", () => {
+    const runtimeSource = readFileSync(path.resolve("src/content/native/chatgpt/ChatGptContentRuntime.ts"), "utf8");
+    const containmentSource = readFileSync(path.resolve("src/content/native/chatgpt/ChatGptTurnContainmentController.ts"), "utf8");
+    const presenterSource = readFileSync(path.resolve("src/content/status/ContentStatusPresenter.ts"), "utf8");
+
+    expect(runtimeSource).toContain("computeNativeSnapshotHostBudget");
+    expect(runtimeSource).toContain("maxContainedTurns");
+    expect(runtimeSource).toContain("nativeSnapshotHostBudget");
+    expect(runtimeSource).toContain("scrubStableNativeArtifacts");
+    expect(runtimeSource).toContain('this.config?.performanceMode === "native"');
+    expect(containmentSource).toContain("budgetOverrun");
+    expect(containmentSource).toContain("budgetAffectedTurnIds");
+    expect(presenterSource).toContain("nativeModeSnapshotHostBudgetOverrun");
+});
+
+
 test("Native historical turn containment keeps safe predicates", () => {
     const source = readFileSync(path.resolve("src/content/native/chatgpt/ChatGptTurnContainmentController.ts"), "utf8");
 

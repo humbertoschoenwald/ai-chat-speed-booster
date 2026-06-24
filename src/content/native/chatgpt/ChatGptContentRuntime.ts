@@ -56,7 +56,10 @@ import {
     type ChatGptTurnCostProfileSummary,
 } from "./ChatGptTurnCostProfile";
 import { ChatGptToolCallSummaryController } from "./ChatGptToolCallSummaryController";
-import { ChatGptTurnContentVisibilityController } from "./ChatGptTurnContainmentController";
+import {
+    ChatGptTurnContentVisibilityController,
+    type ChatGptTurnContentVisibilityResult,
+} from "./ChatGptTurnContainmentController";
 import { ChatGptVisibleTurnPriorityController } from "./ChatGptVisibleTurnPriorityController";
 import {
     estimateChatGptPromptTokens,
@@ -68,6 +71,8 @@ import { CHATGPT_STREAMING_SELECTOR, dedupeChatGptTurnElements } from "./ChatGpt
 
 const NATIVE_SNAPSHOT_SYNC_FAILURE_COOLDOWN_MS = 1_500;
 const NATIVE_PAGE_INSPECTION_SAMPLE_TTL_MS = 1_000;
+const NATIVE_SNAPSHOT_HOST_BUDGET_FLOOR = 2;
+const NATIVE_SNAPSHOT_HOST_BUDGET_CEILING = 10;
 
 export interface ChatGptContentRuntimePorts {
     readonly document: Document;
@@ -87,6 +92,7 @@ export interface ChatGptPageInspection {
 export interface ChatGptContentRuntimeStatus {
     readonly nativeSnapshotHosts: number;
     readonly nativeSnapshotCacheBytes: number;
+    readonly nativeSnapshotHostBudget: ChatGptTurnContentVisibilityResult | null;
     readonly nativeRenderBudget: RenderUnitBudgetSnapshot | null;
     readonly nativeInteractiveNodeBudget: ChatGptInteractiveNodeBudgetSnapshot | null;
     readonly nativeToolCardDensityProfile: ChatGptToolCardDensityProfile | null;
@@ -125,6 +131,7 @@ export class ChatGptContentRuntime {
     private nativeScrollRootState: ChatGptScrollRootState | null = null;
     private nativeSnapshotHosts = 0;
     private nativeSnapshotCacheBytes = 0;
+    private nativeSnapshotHostBudget: ChatGptTurnContentVisibilityResult | null = null;
     private nativeSnapshotSyncCooldownUntilMs = 0;
     private nativeScrollWorkRaf: number | null = null;
     private config: ExtensionConfig | null = null;
@@ -169,6 +176,7 @@ export class ChatGptContentRuntime {
         this.dataStateDeltas.disconnect();
         this.nativeSnapshotHosts = 0;
         this.nativeSnapshotCacheBytes = 0;
+        this.nativeSnapshotHostBudget = null;
     }
 
     inspectPage(): ChatGptPageInspection {
@@ -202,6 +210,7 @@ export class ChatGptContentRuntime {
         return {
             nativeSnapshotHosts: this.nativeSnapshotHosts,
             nativeSnapshotCacheBytes: this.nativeSnapshotCacheBytes,
+            nativeSnapshotHostBudget: this.nativeSnapshotHostBudget,
             nativeRenderBudget: this.nativeRenderBudget,
             nativeInteractiveNodeBudget: this.nativeInteractiveNodeBudget,
             nativeToolCardDensityProfile: this.nativeToolCardDensityProfile,
@@ -285,6 +294,7 @@ export class ChatGptContentRuntime {
                 renderer.restoreAll(this.ports.document);
                 this.nativeSnapshotHosts = 0;
                 this.nativeSnapshotCacheBytes = 0;
+                this.nativeSnapshotHostBudget = null;
                 return;
             }
 
@@ -301,6 +311,7 @@ export class ChatGptContentRuntime {
                 this.chatGptTurnContentVisibilityController?.restoreAll(this.ports.document);
                 this.nativeSnapshotHosts = 0;
                 this.nativeSnapshotCacheBytes = 0;
+                this.nativeSnapshotHostBudget = null;
                 return;
             }
             const conversationScope = resolveChatGptConversationScope(this.ports.document, scrollContainer);
@@ -345,7 +356,9 @@ export class ChatGptContentRuntime {
             const result = this.chatGptTurnContentVisibilityController?.sync(turns, {
                 liveWindowSize: this.nativeRenderBudget.liveWindowSize,
                 nearestWindow: 2,
+                maxContainedTurns: computeNativeSnapshotHostBudget(this.nativeRenderBudget.liveWindowSize),
             });
+            this.nativeSnapshotHostBudget = result ?? null;
             this.nativeSnapshotHosts = result?.containedTurns ?? 0;
             this.nativeSnapshotCacheBytes = 0;
         } catch (error) {
@@ -383,6 +396,7 @@ export class ChatGptContentRuntime {
         this.dataStateDeltas.disconnect();
         this.nativeSnapshotHosts = 0;
         this.nativeSnapshotCacheBytes = 0;
+        this.nativeSnapshotHostBudget = null;
     }
 
     private scrubStableNativeArtifacts(): void {
@@ -401,4 +415,9 @@ export class ChatGptContentRuntime {
         this.ports.window.removeEventListener("resize", this.ports.onViewportResize);
         this.chatGptResizeListenerAttached = false;
     }
+}
+
+function computeNativeSnapshotHostBudget(liveWindowSize: number): number {
+    const requested = Math.max(NATIVE_SNAPSHOT_HOST_BUDGET_FLOOR, Math.floor(liveWindowSize) + 4);
+    return Math.min(NATIVE_SNAPSHOT_HOST_BUDGET_CEILING, requested);
 }
