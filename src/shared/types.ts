@@ -144,6 +144,9 @@ export interface ExtensionStatus {
     readonly nativeModeTurnNodeCost?: number;
     readonly nativeModeToolNodeCost?: number;
     readonly nativeModeToolGroupCount?: number;
+    readonly nativeModeComposerButtons?: number;
+    readonly nativeModeComposerSvgs?: number;
+    readonly nativeModeComposerEditableNodes?: number;
     readonly nativeModeRunningToolCount?: number;
     readonly nativeModeFailedToolCount?: number;
     readonly nativeModeToolCardDensityScore?: number;

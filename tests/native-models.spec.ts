@@ -122,7 +122,7 @@ test.describe("native model guards", () => {
         const toolGroup = fakeScope({ buttons: 2, svgs: 2 });
         const turnA = fakeScope({ buttons: 3, svgs: 2, toolGroups: [toolGroup] });
         const turnB = fakeScope({ buttons: 1, svgs: 1 });
-        const root = fakeScope({ buttons: 7, svgs: 5, composerButtons: 1 });
+        const root = fakeScope({ buttons: 7, svgs: 5, composerButtons: 1, composerSvgs: 1, composerEditableNodes: 2 });
 
         expect(createChatGptInteractiveNodeBudgetSnapshot(root, [turnA, turnB])).toEqual({
             totalButtons: 7,
@@ -132,6 +132,8 @@ test.describe("native model guards", () => {
             toolGroupButtons: 2,
             toolGroupSvgs: 2,
             composerButtons: 1,
+            composerSvgs: 1,
+            composerEditableNodes: 2,
             nonThreadButtons: 3,
         });
     });
@@ -577,15 +579,19 @@ function fakeCostElement(options: { readonly nodes: number; readonly toolGroups?
     } as unknown as HTMLElement;
 }
 
-function fakeScope(options: { readonly buttons: number; readonly svgs: number; readonly composerButtons?: number; readonly toolGroups?: readonly HTMLElement[] }): HTMLElement {
+function fakeScope(options: { readonly buttons: number; readonly svgs: number; readonly composerButtons?: number; readonly composerSvgs?: number; readonly composerEditableNodes?: number; readonly toolGroups?: readonly HTMLElement[] }): HTMLElement {
     const buttons = Array.from({ length: options.buttons }, () => ({}) as HTMLElement);
     const svgs = Array.from({ length: options.svgs }, () => ({}) as HTMLElement);
     const composerButtons = Array.from({ length: options.composerButtons ?? 0 }, () => ({}) as HTMLElement);
+    const composerSvgs = Array.from({ length: options.composerSvgs ?? 0 }, () => ({}) as HTMLElement);
+    const composerEditableNodes = Array.from({ length: options.composerEditableNodes ?? 0 }, () => ({}) as HTMLElement);
     return {
         querySelectorAll: (selector: string) => {
             if (selector === "button") return buttons;
             if (selector === "svg") return svgs;
-            if (selector === "form button") return composerButtons;
+            if (selector.includes("form") && selector.includes("button")) return composerButtons;
+            if (selector.includes("form") && selector.includes("svg")) return composerSvgs;
+            if (selector.includes("textarea") || selector.includes("ProseMirror")) return composerEditableNodes;
             if (selector.includes("tool")) return [...options.toolGroups ?? []];
             return [];
         },
