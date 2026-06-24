@@ -148,6 +148,13 @@ export interface ExtensionStatus {
     readonly nativeModeFailedToolCount?: number;
     readonly nativeModeToolCardDensityScore?: number;
     readonly nativeModeToolCardDensityBehavior?: string;
+    readonly nativeModeTurnCostUserTurns?: number;
+    readonly nativeModeTurnCostAssistantTurns?: number;
+    readonly nativeModeTurnCostToolRichAssistantTurns?: number;
+    readonly nativeModeTurnCostLargeUserCodeTurns?: number;
+    readonly nativeModeTurnCostBuckets?: Record<string, number>;
+    readonly nativeModeTurnCostBehaviors?: Record<string, number>;
+    readonly nativeModeTurnCostSample?: readonly string[];
     readonly nativeModeThreadResponseHeightPx?: number | null;
     readonly nativeModeThreadContentMaxWidthPx?: number | null;
     readonly nativeModeThreadScrollToBottomBannerOffsetPx?: number | null;

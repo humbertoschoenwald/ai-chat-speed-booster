@@ -12,6 +12,7 @@ import { ChatGptCodeBlockContainmentController } from "../src/content/native/cha
 import { resolveChatGptConversationScope } from "../src/content/native/chatgpt/ChatGptConversationScope";
 import { createChatGptInteractiveNodeBudgetSnapshot } from "../src/content/native/chatgpt/ChatGptInteractiveNodeBudget";
 import { createChatGptToolCardDensityProfile } from "../src/content/native/chatgpt/ChatGptToolCardDensityProfile";
+import { createChatGptTurnCostProfile, prioritizeChatGptTurnRecordsByCost } from "../src/content/native/chatgpt/ChatGptTurnCostProfile";
 import { readChatGptScrollRootState } from "../src/content/native/chatgpt/ChatGptScrollRootState";
 import { parseCssMetric, readChatGptThreadCssMetrics } from "../src/content/native/chatgpt/ChatGptThreadCssMetrics";
 import { VirtualizationConflictDetector } from "../src/content/native/VirtualizationConflictDetector";
@@ -124,6 +125,35 @@ test.describe("native model guards", () => {
             composerButtons: 1,
             nonThreadButtons: 3,
         });
+    });
+
+    test("profiles turn role costs and prioritizes tool-rich assistant turns", () => {
+        const userCode = fakeCostTurn("user-code", "user", {
+            nodes: 72,
+            codeBlocks: 2,
+        });
+        const assistantPlain = fakeCostTurn("assistant-plain", "assistant", { nodes: 16 });
+        const assistantTool = fakeCostTurn("assistant-tool", "assistant", {
+            nodes: 42,
+            toolGroups: 2,
+            buttons: 6,
+            svgs: 12,
+        });
+
+        const profile = createChatGptTurnCostProfile(
+            [userCode, assistantPlain, assistantTool],
+            [toolGroupForTurn(assistantTool.key), toolGroupForTurn(assistantTool.key)],
+            1,
+        );
+
+        expect(profile.userTurns).toBe(1);
+        expect(profile.assistantTurns).toBe(2);
+        expect(profile.toolRichAssistantTurns).toBe(1);
+        expect(profile.largeUserCodeTurns).toBe(1);
+        expect(profile.behaviors["tool-card"]).toBe(1);
+        expect(profile.behaviors["contain-code"]).toBe(1);
+        expect(profile.sample.map((item) => `${item.role}:${item.costBucket}:${item.selectedBehavior}`)).toContain("assistant:tool-rich:tool-card");
+        expect(prioritizeChatGptTurnRecordsByCost([assistantPlain, userCode, assistantTool])[0]).toBe(assistantTool);
     });
 
     test("deduplicates ChatGPT turn wrappers by canonical turn id", () => {
@@ -509,6 +539,35 @@ function fakeTurn(options: { readonly id: string; readonly containerId: string; 
 }
 
 
+function fakeCostTurn(
+    key: string,
+    role: "user" | "assistant",
+    options: { readonly nodes: number; readonly toolGroups?: number; readonly codeBlocks?: number; readonly buttons?: number; readonly svgs?: number },
+) {
+    return {
+        key,
+        role,
+        element: fakeCostElement(options),
+        hydrationState: "hydrated",
+        measuredHeight: null,
+        pinReasons: new Set(),
+        lastMeasuredAt: null,
+    };
+}
+
+function fakeCostElement(options: { readonly nodes: number; readonly toolGroups?: number; readonly codeBlocks?: number; readonly buttons?: number; readonly svgs?: number }): HTMLElement {
+    const counts = {
+        "*": options.nodes,
+        "[data-testid*=\"tool\" i],[data-message-author-role=\"tool\"],[class*=\"tool\" i]": options.toolGroups ?? 0,
+        "pre,pre code,.cm-editor,.cm-content": options.codeBlocks ?? 0,
+        "button,[role='button']": options.buttons ?? 0,
+        svg: options.svgs ?? 0,
+    };
+    return {
+        querySelectorAll: (selector: string) => Array.from({ length: counts[selector as keyof typeof counts] ?? 0 }, () => ({}) as HTMLElement),
+    } as unknown as HTMLElement;
+}
+
 function fakeScope(options: { readonly buttons: number; readonly svgs: number; readonly composerButtons?: number; readonly toolGroups?: readonly HTMLElement[] }): HTMLElement {
     const buttons = Array.from({ length: options.buttons }, () => ({}) as HTMLElement);
     const svgs = Array.from({ length: options.svgs }, () => ({}) as HTMLElement);
@@ -524,6 +583,16 @@ function fakeScope(options: { readonly buttons: number; readonly svgs: number; r
     } as unknown as HTMLElement;
 }
 
+
+function toolGroupForTurn(ownerTurnKey: string) {
+    return {
+        id: `tool-${Math.random()}`,
+        ownerTurnKey,
+        element: {} as HTMLElement,
+        state: "completed" as const,
+        estimatedNodeCost: 1,
+    };
+}
 
 function toolGroup(state: "completed" | "running" | "failed" | "user-expanded") {
     return {
