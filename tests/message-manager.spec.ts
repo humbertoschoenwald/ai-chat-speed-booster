@@ -16,12 +16,15 @@ class FakeClassList {
 class FakeTurn {
     readonly classList = new FakeClassList();
     private readonly attributes = new Map<string, string>();
-    constructor(readonly domIndex: number) {
+    constructor(readonly domIndex: number, private readonly containsChatInput = false) {
         this.attributes.set("data-turn-id-container", `turn-${domIndex}`);
     }
     getAttribute(name: string): string | null { return this.attributes.get(name) ?? null; }
     setAttribute(name: string, value: string): void { this.attributes.set(name, value); }
     removeAttribute(name: string): void { this.attributes.delete(name); }
+    matches(selector: string): boolean { return this.containsChatInput && selector.includes("textarea"); }
+    closest(selector: string): FakeTurn | null { return this.containsChatInput && selector.includes("textarea") ? this : null; }
+    querySelector(selector: string): FakeTurn | null { return this.containsChatInput && selector.includes("textarea") ? this : null; }
     compareDocumentPosition(other: FakeTurn): number {
         if (this.domIndex < other.domIndex) return FOLLOWING;
         if (this.domIndex > other.domIndex) return PRECEDING;
@@ -107,6 +110,55 @@ test("Stable Mode keeps an unmatched newest turn visible", () => {
         initialWindow.forEach(expectVisible);
         expectVisible(newestTurn);
 
+    } finally {
+        restoreDocument();
+    }
+});
+
+test("Stable Mode counts hidden elements directly across partial logical groups", () => {
+    const restoreDocument = setupDocument();
+    try {
+        const manager = createStableManager();
+        const initialWindow = turns(1, 7);
+
+        manager.initialise(initialWindow.map(asElement));
+
+        expect(manager.getStatus()).toMatchObject({
+            totalMessages: 4,
+            visibleMessages: 4,
+            hiddenMessages: 0,
+        });
+
+        manager.updateConfig({
+            ...DEFAULT_CONFIG,
+            performanceMode: "legacy",
+            visibleMessageLimit: 2,
+            loadMoreBatchSize: 3,
+            hideOldMessages: true,
+        });
+        manager.rebalanceVisibility();
+
+        expect(manager.getStatus()).toMatchObject({
+            totalMessages: 4,
+            visibleMessages: 2,
+            hiddenMessages: 2,
+        });
+    } finally {
+        restoreDocument();
+    }
+});
+
+test("Stable Mode never hides chat input scopes", () => {
+    const restoreDocument = setupDocument();
+    try {
+        const manager = createStableManager();
+        const oldTurns = turns(1, 6);
+        const inputScope = new FakeTurn(0, true);
+
+        manager.initialise([...oldTurns, inputScope].map(asElement));
+
+        oldTurns.slice(0, 2).forEach(expectHidden);
+        expectVisible(inputScope);
     } finally {
         restoreDocument();
     }

@@ -16,14 +16,14 @@ import { logger } from "../shared/logger";
 const HIDE_CLASS = "acsb-hidden";
 const DOCUMENT_POSITION_PRECEDING = 0x02;
 const DOCUMENT_POSITION_FOLLOWING = 0x04;
+const CHAT_INPUT_SCOPE_SELECTOR = "#prompt-textarea,textarea,input,[contenteditable='true'],[contenteditable='plaintext-only'],form";
 
 let styleInjected = false;
 function buildHideStyle(): string {
     const hiddenOverride = `.${HIDE_CLASS}{display:none!important;overflow-anchor:none!important}`;
     const managedOverride = `[${DATA_ATTR}]{overflow-anchor:none!important}`;
     const visibleOverride = `[${DATA_ATTR}]:not(.${HIDE_CLASS}){content-visibility:visible!important;contain-intrinsic-size:auto!important}`;
-    const extremeToolOverride = "html[data-acsb-extreme-mode='true'][data-acsb-extreme-provider='chatgpt'] [data-acsb-extreme-hidden-tool='true']{display:none!important}";
-    return hiddenOverride + managedOverride + visibleOverride + extremeToolOverride;
+    return hiddenOverride + managedOverride + visibleOverride;
 }
 
 function injectHideStyle(): void {
@@ -140,11 +140,12 @@ export class MessageManager {
     getStatus(): ExtensionStatus {
         const total = this.elementsToLogicalCount(this.messages.length);
         const visible = this.elementsToLogicalCount(this.visibleCount);
+        const hidden = this.elementsToLogicalCount(Math.max(0, this.messages.length - this.visibleCount));
         return {
             enabled: this.config.enabled,
             totalMessages: total,
             visibleMessages: visible,
-            hiddenMessages: Math.max(0, total - visible),
+            hiddenMessages: hidden,
             showStatus: this.config.showStatus,
             statusPosition: this.config.statusPosition,
             legacyRevealLoopCount: this.legacyRevealLoopCount,
@@ -215,6 +216,10 @@ export class MessageManager {
 
     private hideMessage(msg: TrackedMessage): void {
         const layoutElement = this.resolveLayoutElement(msg.element);
+        if (this.isChatInputScope(msg.element) || this.isChatInputScope(layoutElement)) {
+            this.showMessage(msg);
+            return;
+        }
         if (!msg.visible) {
             if (!msg.element.classList.contains(HIDE_CLASS) || !layoutElement.classList.contains(HIDE_CLASS)) {
                 this.recordLegacyRevealLoop();
@@ -236,6 +241,12 @@ export class MessageManager {
         msg.visible = true;
         this.visibleCounter++;
         this.clearHiddenState(msg.element, layoutElement);
+    }
+
+    private isChatInputScope(element: HTMLElement): boolean {
+        return element.matches?.(CHAT_INPUT_SCOPE_SELECTOR) === true
+            || element.closest?.(CHAT_INPUT_SCOPE_SELECTOR) !== null
+            || element.querySelector?.(CHAT_INPUT_SCOPE_SELECTOR) !== null;
     }
 
     private resolveLayoutElement(element: HTMLElement): HTMLElement {
