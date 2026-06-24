@@ -167,6 +167,8 @@ export interface ExtensionStatus {
     readonly nativeModeScrollRootFromTop?: number | null;
     readonly nativeModeScrolledFromEnd?: boolean | null;
     readonly nativeModeShouldDeferOldTurnWork?: boolean;
+    readonly nativeModeDataStateOpenCount?: number;
+    readonly nativeModeDataStateChangedCount?: number;
     readonly nativeModeLiveWindowSize?: number;
     readonly nativeModeRevealLoopCount?: number;
     readonly nativeModeScrollOscillationCount?: number;

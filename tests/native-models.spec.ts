@@ -9,6 +9,7 @@ import { createNativeAutoDisableRecord, resolveNativeFeatureFlags } from "../src
 import { NativeWorkScheduler } from "../src/content/native/NativeWorkScheduler";
 import { StaleGenerationRecovery } from "../src/content/native/StaleGenerationRecovery";
 import { ChatGptCodeBlockContainmentController } from "../src/content/native/chatgpt/ChatGptCodeBlockContainmentController";
+import { countOpenChatGptDataStateElements } from "../src/content/native/chatgpt/ChatGptDataStateDeltaObserver";
 import { resolveChatGptConversationScope } from "../src/content/native/chatgpt/ChatGptConversationScope";
 import { createChatGptInteractiveNodeBudgetSnapshot } from "../src/content/native/chatgpt/ChatGptInteractiveNodeBudget";
 import { createChatGptToolCardDensityProfile } from "../src/content/native/chatgpt/ChatGptToolCardDensityProfile";
@@ -33,6 +34,14 @@ test.describe("native model guards", () => {
         });
         expect(readChatGptScrollRootState(null).shouldDeferOldTurnWork).toBe(true);
         expect(root.writeCount).toBe(0);
+    });
+
+    test("counts only open ChatGPT data-state elements from many closed nodes", () => {
+        const closedNodes = Array.from({ length: 100 }, () => fakeDataStateElement("closed"));
+        const openNode = fakeDataStateElement("open");
+        const root = fakeDataStateRoot([...closedNodes, openNode]);
+
+        expect(countOpenChatGptDataStateElements(root)).toBe(1);
     });
 
 
@@ -635,6 +644,19 @@ function fakeCodeTurn(blocks: ReturnType<typeof fakeCodeBlock>[]) {
     };
 }
 
+
+function fakeDataStateElement(state: "open" | "closed") {
+    return {
+        getAttribute: (name: string) => name === "data-state" ? state : null,
+    } as unknown as HTMLElement;
+}
+
+function fakeDataStateRoot(nodes: readonly HTMLElement[]): HTMLElement {
+    return {
+        getAttribute: () => null,
+        querySelectorAll: () => nodes,
+    } as unknown as HTMLElement;
+}
 
 function fakeScrollRoot(options: { readonly streamActive?: string; readonly fromTop?: string; readonly fromEnd?: string }) {
     const attrs = new Map<string, string | undefined>([

@@ -9,7 +9,7 @@ export interface ChatGptScrollRootState {
 
 const CHATGPT_OPEN_INTERACTION_SELECTOR = "[data-state='open'],[role='dialog'],[role='menu'],[aria-expanded='true']";
 
-export function readChatGptScrollRootState(root: HTMLElement | null): ChatGptScrollRootState {
+export function readChatGptScrollRootState(root: HTMLElement | null, openInteractionSurfaceOverride?: boolean): ChatGptScrollRootState {
     if (!root) {
         return {
             rootPresent: false,
@@ -23,7 +23,7 @@ export function readChatGptScrollRootState(root: HTMLElement | null): ChatGptScr
     const streamActive = readBooleanAttr(root, "data-stream-active") ?? false;
     const scrolledFromEnd = readBooleanAttr(root, "data-scrolled-from-end");
     const scrollFromTop = readNumberAttr(root, "data-scroll-from-top");
-    const openInteractionSurface = hasOpenInteractionSurface(root);
+    const openInteractionSurface = openInteractionSurfaceOverride ?? hasOpenInteractionSurface(root);
     return {
         rootPresent: true,
         streamActive,

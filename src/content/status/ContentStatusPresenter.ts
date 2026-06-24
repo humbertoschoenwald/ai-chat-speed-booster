@@ -114,6 +114,8 @@ export function createExtensionStatus(input: ContentStatusPresenterInput): Exten
         nativeModeScrollRootFromTop: chatGpt?.nativeScrollRootState?.scrollFromTop,
         nativeModeScrolledFromEnd: chatGpt?.nativeScrollRootState?.scrolledFromEnd,
         nativeModeShouldDeferOldTurnWork: chatGpt?.nativeScrollRootState?.shouldDeferOldTurnWork,
+        nativeModeDataStateOpenCount: chatGpt?.nativeDataStateDelta?.openStateCount,
+        nativeModeDataStateChangedCount: chatGpt?.nativeDataStateDelta?.changedElementCount,
         nativeModeLiveWindowSize: chatGpt?.nativeRenderBudget?.liveWindowSize,
         nativeModeRevealLoopCount: chatGpt?.nativeRevealLoopCount,
         nativeModeScrollOscillationCount: chatGpt?.nativeScrollOscillationCount,
