@@ -26,6 +26,7 @@
 
 #### Native
 
+- budget snapshot hosts ([be8361d](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/be8361d3ee63cf3d48f0619f271fe3014af679c8)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - cache markdown prose text ([5ae4425](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/5ae4425b143d4e04388050a947064cebf7e29503)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - extract message metadata ([b00506b](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/b00506bb786b3156d0f9c353da487e8549e0c95e)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - exclude composer scope ([bb8185a](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/bb8185a2ee7d3a004a38bf927513c1fcdace8045)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
