@@ -4,6 +4,7 @@ import type { MutationBatchClass } from "../shared/types";
 import { logger } from "../shared/logger";
 import { filterMessageTurns } from "../shared/messageTurnFilter";
 import { AutoLoadScrollGate } from "./scroll/AutoLoadScrollGate";
+import { isChatGptPageAssetNode } from "./native/chatgpt/ChatGptPageAssetScope";
 
 
 export interface DOMObserverCallbacks {
@@ -265,7 +266,7 @@ export class DOMObserver {
 
             for (const node of mutation.addedNodes) {
                 if (!(node instanceof HTMLElement)) continue;
-                if (this.isComposerOwned(node)) {
+                if (this.isIgnoredMutationRoot(node)) {
                     skippedNodeCount += 1;
                     continue;
                 }
@@ -278,7 +279,7 @@ export class DOMObserver {
 
             for (const node of mutation.removedNodes) {
                 if (!(node instanceof HTMLElement)) continue;
-                if (this.isComposerOwned(node)) {
+                if (this.isIgnoredMutationRoot(node)) {
                     skippedNodeCount += 1;
                     continue;
                 }
@@ -444,6 +445,13 @@ export class DOMObserver {
 
     private isComposerOwned(el: HTMLElement): boolean {
         return el.closest(COMPOSER_SELECTOR) !== null;
+    }
+
+    private isIgnoredMutationRoot(el: HTMLElement): boolean {
+        if (this.isComposerOwned(el)) return true;
+        if (this.currentSite.id === "chatgpt" && isChatGptPageAssetNode(el)) return true;
+        if (this.currentSite.id === "chatgpt" && el.closest(CHATGPT_PAGE_CHROME_SELECTOR)) return true;
+        return false;
     }
 
     private isMessageTurn(el: HTMLElement): boolean {

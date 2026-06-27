@@ -379,6 +379,19 @@ test("Native snapshot hosts stay budgeted and Stable expects zero hosts", () => 
 });
 
 
+test("ChatGPT page assets stay outside conversation work scope", () => {
+    const observerSource = readFileSync(path.resolve("src/content/DOMObserver.ts"), "utf8");
+    const assetSource = readFileSync(path.resolve("src/content/native/chatgpt/ChatGptPageAssetScope.ts"), "utf8");
+    const scopeSource = readFileSync(path.resolve("src/content/native/chatgpt/ChatGptConversationScope.ts"), "utf8");
+
+    expect(observerSource).toContain("isIgnoredMutationRoot(node)");
+    expect(observerSource).toContain("isChatGptPageAssetNode(el)");
+    expect(assetSource).toContain("modulepreload");
+    expect(assetSource).toContain("stylesheet");
+    expect(scopeSource).toContain("CHATGPT_CONVERSATION_SCOPE_SELECTOR");
+});
+
+
 test("ChatGPT Native nonessential work waits for initial modal boot gate", () => {
     const runtimeSource = readFileSync(path.resolve("src/content/native/chatgpt/ChatGptContentRuntime.ts"), "utf8");
     const gateSource = readFileSync(path.resolve("src/content/native/chatgpt/ChatGptInitialModalBootGate.ts"), "utf8");
