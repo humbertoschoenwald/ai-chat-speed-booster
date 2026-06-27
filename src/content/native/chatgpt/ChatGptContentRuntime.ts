@@ -16,6 +16,10 @@ import {
     type ChatGptCodeBlockContainmentSnapshot,
 } from "./ChatGptCodeBlockContainmentController";
 import {
+    ChatGptActionToolbarHoverGate,
+    type ChatGptActionToolbarHoverGateSnapshot,
+} from "./ChatGptActionToolbarHoverGate";
+import {
     detectChatGptDeliveryTimeout,
     type ChatGptDeliveryTimeoutSnapshot,
 } from "./ChatGptDeliveryTimeoutDetector";
@@ -123,6 +127,7 @@ export interface ChatGptContentRuntimeStatus {
     readonly nativeMessageMetadata: ChatGptMessageMetadataSummary | null;
     readonly nativeThreadCssMetrics: ChatGptThreadCssMetrics | null;
     readonly nativeCodeBlockContainment: ChatGptCodeBlockContainmentSnapshot | null;
+    readonly nativeActionToolbarHoverGate: ChatGptActionToolbarHoverGateSnapshot | null;
     readonly nativeScrollRootState: ChatGptScrollRootState | null;
     readonly nativeDataStateDelta: ChatGptDataStateDeltaSnapshot | null;
     readonly nativeSelectorDrift: ChatGptSelectorDriftSentinelSnapshot | null;
@@ -139,6 +144,7 @@ export class ChatGptContentRuntime {
     private readonly nativeTurnRegistry = new TurnRegistry();
     private readonly nativeToolCallGroups = new ToolCallGroupController();
     private readonly codeBlockContainment = new ChatGptCodeBlockContainmentController();
+    private readonly actionToolbarHoverGate = new ChatGptActionToolbarHoverGate();
     private readonly pageInspectionSampler: NativeDiagnosticsSampler<ChatGptPageInspection>;
     private readonly toolCallSummaries = new ChatGptToolCallSummaryController();
     private readonly visibleTurnPriorities = new ChatGptVisibleTurnPriorityController();
@@ -156,6 +162,7 @@ export class ChatGptContentRuntime {
     private nativeMessageMetadata: ChatGptMessageMetadataSummary | null = null;
     private nativeThreadCssMetrics: ChatGptThreadCssMetrics | null = null;
     private nativeCodeBlockContainment: ChatGptCodeBlockContainmentSnapshot | null = null;
+    private nativeActionToolbarHoverGate: ChatGptActionToolbarHoverGateSnapshot | null = null;
     private nativeScrollRootState: ChatGptScrollRootState | null = null;
     private nativeSelectorDrift: ChatGptSelectorDriftSentinelSnapshot | null = null;
     private nativeTurnContentState: ChatGptTurnContentStateSnapshot | null = null;
@@ -204,6 +211,7 @@ export class ChatGptContentRuntime {
         this.nativeMessageMetadata = null;
         this.nativeThreadCssMetrics = null;
         this.nativeCodeBlockContainment = null;
+        this.nativeActionToolbarHoverGate = null;
         this.nativeScrollRootState = null;
         this.nativeSelectorDrift = null;
         this.nativeTurnContentState = null;
@@ -265,6 +273,7 @@ export class ChatGptContentRuntime {
             nativeMessageMetadata: this.nativeMessageMetadata,
             nativeThreadCssMetrics: this.nativeThreadCssMetrics,
             nativeCodeBlockContainment: this.nativeCodeBlockContainment,
+            nativeActionToolbarHoverGate: this.nativeActionToolbarHoverGate,
             nativeScrollRootState: this.nativeScrollRootState,
             nativeDataStateDelta: this.dataStateDeltas.snapshot(),
             nativeSelectorDrift: this.nativeSelectorDrift,
@@ -289,6 +298,7 @@ export class ChatGptContentRuntime {
         this.chatGptTurnContentVisibilityController = null;
         this.toolCallSummaries.stop(this.ports.document);
         this.codeBlockContainment.stop(this.ports.document);
+        this.actionToolbarHoverGate.stop(this.ports.document);
         this.dataStateDeltas.disconnect();
     }
 
@@ -301,6 +311,7 @@ export class ChatGptContentRuntime {
             this.chatGptTurnContentVisibilityController = null;
             this.toolCallSummaries.stop(this.ports.document);
             this.codeBlockContainment.stop(this.ports.document);
+            this.actionToolbarHoverGate.stop(this.ports.document);
             this.scrubStableNativeArtifacts();
             return;
         }
@@ -312,6 +323,7 @@ export class ChatGptContentRuntime {
         this.chatGptTurnContentVisibilityController.start(this.ports.document);
         this.toolCallSummaries.start(this.ports.document);
         this.codeBlockContainment.start(this.ports.document);
+        this.actionToolbarHoverGate.start(this.ports.document);
     }
 
     private syncNativeSnapshots(controller: NativeModeController | null): void {
@@ -431,6 +443,10 @@ export class ChatGptContentRuntime {
                     this.nativeRenderBudget.liveWindowSize + 2,
                     this.nativeStaticContentMeasurement.codeBucketByTurnKey,
                 );
+            this.nativeActionToolbarHoverGate = this.actionToolbarHoverGate.sync(
+                hydratedRecords,
+                this.nativeRenderBudget.liveWindowSize + 2,
+            );
 
             renderer.restoreAll(this.ports.document);
             const result = this.chatGptTurnContentVisibilityController?.sync(hydratedTurns, {
@@ -472,6 +488,7 @@ export class ChatGptContentRuntime {
         this.nativeMessageMetadata = null;
         this.nativeThreadCssMetrics = null;
         this.nativeCodeBlockContainment = null;
+        this.nativeActionToolbarHoverGate = null;
         this.nativeScrollRootState = null;
         this.nativeSelectorDrift = null;
         this.nativeTurnContentState = null;

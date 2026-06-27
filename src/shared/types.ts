@@ -185,6 +185,9 @@ export interface ExtensionStatus {
     readonly nativeModeSkippedEditableCodeBlockCount?: number;
     readonly nativeModeSkippedNoCodeBucketCount?: number;
     readonly nativeModeHeavyCodeContainmentTurnCount?: number;
+    readonly nativeModeActionToolbarGatedTurnCount?: number;
+    readonly nativeModeActionToolbarRestoredTurnCount?: number;
+    readonly nativeModeActionToolbarProtectedTailSize?: number;
     readonly nativeModeScrollRootPresent?: boolean;
     readonly nativeModeStreamActive?: boolean;
     readonly nativeModeScrollRootFromTop?: number | null;
