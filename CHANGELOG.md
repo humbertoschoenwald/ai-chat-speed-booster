@@ -27,6 +27,7 @@
 
 #### Native
 
+- gate action toolbar hover cost ([a8f14a5](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/a8f14a598e3ee2e6697f2dc68231366fe8c411a6)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - bucket code node measurements ([30e686e](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/30e686ef23c8c9653f767b1ad54c984984c23723)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - cache segment marker deltas ([868a5fa](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/868a5fa0d05eb2bbaa706aa619a1aa3f88795d5b)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - cache static measurements ([26d9ab0](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/26d9ab0267c44e384edd4bfc72cac69d474ed35e)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
