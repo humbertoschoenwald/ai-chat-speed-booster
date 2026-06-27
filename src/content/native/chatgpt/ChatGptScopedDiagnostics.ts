@@ -1,3 +1,4 @@
+import { inspectChatGptAnchoredMenuRelationships, type ChatGptAnchoredMenuRelationshipSnapshot } from "./ChatGptAnchoredMenuRelationships";
 import { containsChatGptComposerScope } from "./ChatGptComposerScope";
 import { dedupeChatGptTurnElements } from "./ChatGptSelectors";
 import { CHATGPT_SIDEBAR_SCOPE_SELECTOR } from "./ChatGptSidebarScope";
@@ -11,6 +12,7 @@ export interface ChatGptScopedDiagnosticsSnapshot {
     readonly composerNodeCount: number;
     readonly sidebarNodeCount: number;
     readonly stickyChrome: ChatGptStickyChromeBoundarySnapshot;
+    readonly anchoredMenus: ChatGptAnchoredMenuRelationshipSnapshot;
 }
 
 const COMPOSER_SCOPE_SELECTOR = "#prompt-textarea,[data-testid='prompt-textarea'],textarea,[contenteditable='true'],.ProseMirror";
@@ -29,6 +31,10 @@ export function inspectChatGptScopedDiagnostics(options: {
         composerNodeCount: countComposerNodes(options.documentRoot),
         sidebarNodeCount: countNodesInScopes(options.documentRoot, CHATGPT_SIDEBAR_SCOPE_SELECTOR),
         stickyChrome: inspectChatGptStickyChromeBoundary(options.documentRoot),
+        anchoredMenus: inspectChatGptAnchoredMenuRelationships({
+            documentRoot: options.documentRoot,
+            turns: canonicalTurns,
+        }),
     };
 }
 

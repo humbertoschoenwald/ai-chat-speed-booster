@@ -237,6 +237,10 @@ export interface ExtensionStatus {
     readonly nativeModeStickyChromeNodeCount?: number;
     readonly nativeModeFixedChromeNodeCount?: number;
     readonly nativeModeHeaderChromeNodeCount?: number;
+    readonly nativeModeAnchoredMenuDocumentCount?: number;
+    readonly nativeModeAnchoredMenuComposerCount?: number;
+    readonly nativeModeAnchoredMenuSidebarCount?: number;
+    readonly nativeModeAnchoredMenuTurnCount?: number;
     readonly nativeModePlaceholderTurnCount?: number;
     readonly nativeModeHydratedTurnCount?: number;
     readonly nativeModeActiveTurnCount?: number;

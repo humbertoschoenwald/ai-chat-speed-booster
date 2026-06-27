@@ -5,6 +5,7 @@ import {
     readChatGptLastKnownHeight,
 } from "./ChatGptSelectors";
 import { containsChatGptComposerScope } from "./ChatGptComposerScope";
+import { hasChatGptAnchoredMenuRelationship } from "./ChatGptAnchoredMenuRelationships";
 import { containsChatGptConversationScreenshotBoundary } from "./ChatGptConversationScreenshotBoundary";
 
 export interface ChatGptTurnContentVisibilityOptions {
@@ -159,6 +160,7 @@ function isSafeCompletedTurn(turn: HTMLElement): boolean {
     if (turn.contains(document.activeElement)) return false;
     if (containsChatGptComposerScope(turn)) return false;
     if (containsChatGptConversationScreenshotBoundary(turn)) return false;
+    if (hasChatGptAnchoredMenuRelationship(turn)) return false;
     if (turn.querySelector(".loading-shimmer, .animate-spin, [data-is-streaming='true'], [aria-busy='true']")) return false;
     if (turn.querySelector(CHATGPT_ERROR_SELECTOR)) return false;
     if (turn.querySelector(CHATGPT_TOOL_SELECTOR)) return false;
