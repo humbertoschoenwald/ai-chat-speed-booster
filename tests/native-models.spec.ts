@@ -10,6 +10,7 @@ import { NativeWorkScheduler } from "../src/content/native/NativeWorkScheduler";
 import { StaleGenerationRecovery } from "../src/content/native/StaleGenerationRecovery";
 import { ChatGptCodeBlockContainmentController } from "../src/content/native/chatgpt/ChatGptCodeBlockContainmentController";
 import { countOpenChatGptDataStateElements } from "../src/content/native/chatgpt/ChatGptDataStateDeltaObserver";
+import { ChatGptInitialModalBootGate, getChatGptInitialModalDoneSelector } from "../src/content/native/chatgpt/ChatGptInitialModalBootGate";
 import { resolveChatGptConversationScope } from "../src/content/native/chatgpt/ChatGptConversationScope";
 import { createChatGptInteractiveNodeBudgetSnapshot } from "../src/content/native/chatgpt/ChatGptInteractiveNodeBudget";
 import { createChatGptToolCardDensityProfile } from "../src/content/native/chatgpt/ChatGptToolCardDensityProfile";
@@ -680,4 +681,60 @@ function fakeScrollRoot(options: { readonly streamActive?: string; readonly from
             this.writeCount += 1;
         },
     } as unknown as HTMLElement & { writeCount: number };
+}
+
+test("ChatGPT initial modal boot gate waits for marker or fallback", () => {
+    const gate = new ChatGptInitialModalBootGate({ fallbackMs: 200 });
+    const root = modalGateRoot(false);
+
+    expect(gate.read(root, 1_000)).toMatchObject({
+        ready: false,
+        markerPresent: false,
+        fallbackElapsed: false,
+        elapsedMs: 0,
+    });
+    expect(gate.read(root, 1_199)).toMatchObject({
+        ready: false,
+        markerPresent: false,
+        fallbackElapsed: false,
+    });
+    expect(gate.read(root, 1_200)).toMatchObject({
+        ready: true,
+        markerPresent: false,
+        fallbackElapsed: true,
+        elapsedMs: 200,
+    });
+});
+
+test("ChatGPT initial modal boot gate opens immediately when marker is present", () => {
+    const gate = new ChatGptInitialModalBootGate({ fallbackMs: 10_000 });
+
+    expect(gate.read(modalGateRoot(true), 2_000)).toMatchObject({
+        ready: true,
+        markerPresent: true,
+        fallbackElapsed: false,
+    });
+    expect(getChatGptInitialModalDoneSelector()).toContain("blocking-initial-modals-done");
+});
+
+test("ChatGPT initial modal boot gate observes a delayed marker", () => {
+    const gate = new ChatGptInitialModalBootGate({ fallbackMs: 10_000 });
+    let done = false;
+    const root = {
+        querySelector: () => done ? ({}) : null,
+    } as unknown as ParentNode;
+
+    expect(gate.read(root, 3_000).ready).toBe(false);
+    done = true;
+    expect(gate.read(root, 3_050)).toMatchObject({
+        ready: true,
+        markerPresent: true,
+        fallbackElapsed: false,
+    });
+});
+
+function modalGateRoot(done: boolean): ParentNode {
+    return {
+        querySelector: () => done ? ({}) : null,
+    } as unknown as ParentNode;
 }

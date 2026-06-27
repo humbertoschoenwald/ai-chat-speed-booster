@@ -132,6 +132,10 @@ export interface ExtensionStatus {
     readonly nativeModeSnapshotHostBudgetLimit?: number;
     readonly nativeModeSnapshotHostBudgetOverrun?: number;
     readonly nativeModeSnapshotHostBudgetAffectedTurnIds?: readonly string[];
+    readonly nativeModeInitialModalReady?: boolean;
+    readonly nativeModeInitialModalMarkerPresent?: boolean;
+    readonly nativeModeInitialModalFallbackElapsed?: boolean;
+    readonly nativeModeInitialModalElapsedMs?: number;
     readonly nativeModeApproxInputTokens?: number;
     readonly nativeModeTokenLimit?: number;
     readonly nativeModeTokenWarningLevel?: "ok" | "warn" | "critical";

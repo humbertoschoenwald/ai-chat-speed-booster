@@ -377,6 +377,20 @@ test("Native snapshot hosts stay budgeted and Stable expects zero hosts", () => 
 });
 
 
+test("ChatGPT Native nonessential work waits for initial modal boot gate", () => {
+    const runtimeSource = readFileSync(path.resolve("src/content/native/chatgpt/ChatGptContentRuntime.ts"), "utf8");
+    const gateSource = readFileSync(path.resolve("src/content/native/chatgpt/ChatGptInitialModalBootGate.ts"), "utf8");
+
+    expect(gateSource).toContain("blocking-initial-modals-done");
+    expect(gateSource).toContain("DEFAULT_INITIAL_MODAL_FALLBACK_MS");
+    expect(runtimeSource).toContain("readInitialModalBootGate");
+    expect(runtimeSource).toContain("createNeutralPageInspection");
+    expect(runtimeSource).toContain("if (!bootGate.ready)");
+    expect(runtimeSource).toContain("renderer.restoreAll(this.ports.document)");
+    expect(runtimeSource).toContain("nativeInitialModalBootGate");
+});
+
+
 test("Native historical turn containment keeps safe predicates", () => {
     const source = readFileSync(path.resolve("src/content/native/chatgpt/ChatGptTurnContainmentController.ts"), "utf8");
 
