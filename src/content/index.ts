@@ -7,6 +7,7 @@
 import { DOMObserver } from "./DOMObserver";
 import { MessageManager } from "./MessageManager";
 import { RequestLifecycleTracker } from "./RequestLifecycleTracker";
+import { ChatGptStickyNoteController } from "./chatgpt/ChatGptStickyNoteController";
 import { LoadMoreButton, StatusIndicator } from "./UIComponents";
 
 import { ContentBootstrapLease } from "./runtime/ContentBootstrapLease";
@@ -42,6 +43,7 @@ let statusIndicator: StatusIndicator;
 let domObserver: DOMObserver;
 let nativeModeController: NativeModeControllerPort | null = null;
 let chatGptRuntime: ChatGptRuntimePort | null = null;
+let chatGptStickyNotes: ChatGptStickyNoteController | null = null;
 const contentBootTime = Date.now();
 let contentLifecycleState: ContentLifecycleState = "initializing";
 let contentLastUiRefreshAt: number | null = null;
@@ -142,6 +144,12 @@ async function initialiseChatGptNativeRuntimeIfNeeded(): Promise<void> {
     chatGptRuntime.updateConfig(config);
 }
 
+function initialiseChatGptStickyNotesIfNeeded(): void {
+    if (currentSite.id !== "chatgpt") return;
+    chatGptStickyNotes ??= new ChatGptStickyNoteController();
+    chatGptStickyNotes.start();
+}
+
 function createUniversalExtremeSiteIfNeeded(storedConfig: ExtensionConfig): SiteConfig | null {
     const derivedConfig = deriveRuntimeConfigForSite(storedConfig, "universal-extreme");
     if (!derivedConfig.enabled || derivedConfig.performanceMode !== "extreme") return null;
@@ -235,6 +243,7 @@ async function bootstrap(): Promise<void> {
         },
     });
     await initialiseChatGptNativeRuntimeIfNeeded();
+    initialiseChatGptStickyNotesIfNeeded();
 
     domObserver.start();
     domObserver.SetAutoLoad(config.autoLoad);
@@ -719,6 +728,8 @@ window.addEventListener("beforeunload", () => {
     document.removeEventListener("keydown", cancelDeliveryTimeoutRefresh, true);
     chatGptRuntime?.dispose();
     chatGptRuntime = null;
+    chatGptStickyNotes?.stop();
+    chatGptStickyNotes = null;
     editorLatencyGuard.stop();
     nativeModeController?.stop("content script unloading");
     nativeModeController = null;
