@@ -12,6 +12,7 @@ import {
 } from "./ChatGptSelectors";
 import { CHATGPT_ACCESSIBLE_STATUS_SELECTOR, containsChatGptAccessibleStatus } from "./ChatGptAccessibleStatusPreservation";
 import { containsChatGptComposerScope } from "./ChatGptComposerScope";
+import { containsChatGptConversationScreenshotBoundary } from "./ChatGptConversationScreenshotBoundary";
 import { readChatGptMessageIdentityKey } from "./ChatGptMessageMetadata";
 import { ChatGptSegmentMarkerDeltaCache } from "./ChatGptSegmentMarkerDeltaCache";
 
@@ -241,6 +242,7 @@ export function readCompletedChatGptMarkdownProseText(turn: HTMLElement): string
 function isSafeSnapshotCandidate(turn: HTMLElement): boolean {
     if (turn.contains(document.activeElement)) return false;
     if (containsChatGptComposerScope(turn)) return false;
+    if (containsChatGptConversationScreenshotBoundary(turn)) return false;
     if (turn.querySelector(".loading-shimmer, .animate-spin, [data-is-streaming='true'], [aria-busy='true']")) return false;
     if (turn.querySelector(CHATGPT_ERROR_SELECTOR)) return false;
     if (turn.querySelector(CHATGPT_TOOL_SELECTOR)) return false;

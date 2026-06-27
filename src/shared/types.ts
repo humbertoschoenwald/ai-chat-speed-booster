@@ -204,6 +204,8 @@ export interface ExtensionStatus {
     readonly nativeModeAccessibleStatusNodeCount?: number;
     readonly nativeModeTurnScopedAccessibleStatusCount?: number;
     readonly nativeModeGlobalAccessibleStatusCount?: number;
+    readonly nativeModeConversationScreenshotBoundaryCount?: number;
+    readonly nativeModeConversationScreenshotProtectedTurnCount?: number;
     readonly nativeModeScrollRootPresent?: boolean;
     readonly nativeModeStreamActive?: boolean;
     readonly nativeModeScrollRootFromTop?: number | null;

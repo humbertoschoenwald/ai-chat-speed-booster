@@ -28,6 +28,10 @@ import {
     type ChatGptAccessibleStatusPreservationSnapshot,
 } from "./ChatGptAccessibleStatusPreservation";
 import {
+    inspectChatGptConversationScreenshotBoundary,
+    type ChatGptConversationScreenshotBoundarySnapshot,
+} from "./ChatGptConversationScreenshotBoundary";
+import {
     detectChatGptDeliveryTimeout,
     type ChatGptDeliveryTimeoutSnapshot,
 } from "./ChatGptDeliveryTimeoutDetector";
@@ -148,6 +152,7 @@ export interface ChatGptContentRuntimeStatus {
     readonly nativeActionToolbarHoverGate: ChatGptActionToolbarHoverGateSnapshot | null;
     readonly nativeToastPortalBoundary: ChatGptToastPortalBoundarySnapshot | null;
     readonly nativeAccessibleStatus: ChatGptAccessibleStatusPreservationSnapshot | null;
+    readonly nativeConversationScreenshotBoundary?: ChatGptConversationScreenshotBoundarySnapshot | null;
     readonly nativeScrollRootState: ChatGptScrollRootState | null;
     readonly nativeDataStateDelta: ChatGptDataStateDeltaSnapshot | null;
     readonly nativeSelectorDrift: ChatGptSelectorDriftSentinelSnapshot | null;
@@ -188,6 +193,7 @@ export class ChatGptContentRuntime {
     private nativeActionToolbarHoverGate: ChatGptActionToolbarHoverGateSnapshot | null = null;
     private nativeToastPortalBoundary: ChatGptToastPortalBoundarySnapshot | null = null;
     private nativeAccessibleStatus: ChatGptAccessibleStatusPreservationSnapshot | null = null;
+    private nativeConversationScreenshotBoundary: ChatGptConversationScreenshotBoundarySnapshot | null = null;
     private nativeScrollRootState: ChatGptScrollRootState | null = null;
     private nativeSelectorDrift: ChatGptSelectorDriftSentinelSnapshot | null = null;
     private nativeScopedDiagnostics: ChatGptScopedDiagnosticsSnapshot | null = null;
@@ -242,6 +248,7 @@ export class ChatGptContentRuntime {
         this.nativeActionToolbarHoverGate = null;
         this.nativeToastPortalBoundary = null;
         this.nativeAccessibleStatus = null;
+        this.nativeConversationScreenshotBoundary = null;
         this.nativeScrollRootState = null;
         this.nativeSelectorDrift = null;
         this.nativeScopedDiagnostics = null;
@@ -314,6 +321,7 @@ export class ChatGptContentRuntime {
             nativeActionToolbarHoverGate: this.nativeActionToolbarHoverGate,
             nativeToastPortalBoundary: this.nativeToastPortalBoundary,
             nativeAccessibleStatus: this.nativeAccessibleStatus,
+            nativeConversationScreenshotBoundary: this.nativeConversationScreenshotBoundary,
             nativeScrollRootState: this.nativeScrollRootState,
             nativeDataStateDelta: this.dataStateDeltas.snapshot(),
             nativeSelectorDrift: this.nativeSelectorDrift,
@@ -453,6 +461,7 @@ export class ChatGptContentRuntime {
             });
             this.nativeToastPortalBoundary = inspectChatGptToastPortalBoundary(this.ports.document);
             this.nativeAccessibleStatus = inspectChatGptAccessibleStatusPreservation(this.ports.document);
+            this.nativeConversationScreenshotBoundary = inspectChatGptConversationScreenshotBoundary(conversationScope, turns);
             this.nativeThreadCssMetrics = conversationScope instanceof Element
                 ? readChatGptThreadCssMetrics(conversationScope, this.ports.window)
                 : null;
@@ -556,6 +565,7 @@ export class ChatGptContentRuntime {
         this.nativeActionToolbarHoverGate = null;
         this.nativeToastPortalBoundary = null;
         this.nativeAccessibleStatus = null;
+        this.nativeConversationScreenshotBoundary = null;
         this.nativeScrollRootState = null;
         this.nativeSelectorDrift = null;
         this.nativeScopedDiagnostics = null;

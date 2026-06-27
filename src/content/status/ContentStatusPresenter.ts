@@ -151,6 +151,8 @@ export function createExtensionStatus(input: ContentStatusPresenterInput): Exten
         nativeModeAccessibleStatusNodeCount: chatGpt?.nativeAccessibleStatus?.statusNodeCount,
         nativeModeTurnScopedAccessibleStatusCount: chatGpt?.nativeAccessibleStatus?.turnScopedStatusNodeCount,
         nativeModeGlobalAccessibleStatusCount: chatGpt?.nativeAccessibleStatus?.globalStatusNodeCount,
+        nativeModeConversationScreenshotBoundaryCount: chatGpt?.nativeConversationScreenshotBoundary?.boundaryNodeCount,
+        nativeModeConversationScreenshotProtectedTurnCount: chatGpt?.nativeConversationScreenshotBoundary?.protectedTurnCount,
         nativeModeScrollRootPresent: chatGpt?.nativeScrollRootState?.rootPresent,
         nativeModeStreamActive: chatGpt?.nativeScrollRootState?.streamActive,
         nativeModeScrollRootFromTop: chatGpt?.nativeScrollRootState?.scrollFromTop,
