@@ -452,7 +452,7 @@ function computeNativeSnapshotHostBudget(liveWindowSize: number): number {
 
 function createNeutralPageInspection(): ChatGptPageInspection {
     return {
-        deliveryTimeout: { detected: false, confidence: "none", retryButtonCount: 0, assistantErrorCount: 0, firstMessageId: null, reason: null },
+        deliveryTimeout: { detected: false, confidence: "none", scope: "none", retryButtonCount: 0, assistantErrorCount: 0, firstMessageId: null, affectedMessageIds: [], reason: null },
         maxLengthReadonly: { detected: false, reason: null },
         tokenEstimate: estimateChatGptPromptTokens(""),
     };

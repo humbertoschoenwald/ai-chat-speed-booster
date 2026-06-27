@@ -52,6 +52,8 @@ test("content entrypoint delegates popup status DTO shaping", () => {
     for (const field of [
         "nativeModeSnapshotHosts:",
         "chatGptDeliveryTimeoutDetected:",
+        "chatGptDeliveryTimeoutScope:",
+        "chatGptDeliveryTimeoutAffectedMessageIds:",
         "editorInputEventCount:",
         "observerLastBatchClass:",
         "nativeModeVirtualizationDisabled:",
@@ -462,4 +464,18 @@ test("Extreme runtime keeps latest-message trimming", () => {
     expect(policySource).toContain("loadMoreBatchSize: 0");
     expect(fetchSource).toContain("settings.visibleMessageLimit");
     expect(fetchSource).toContain("requestedLimit ?? initialLimit");
+});
+
+test("ChatGPT delivery timeout scope does not degrade for affected-turn-only errors", () => {
+    const runtimeSource = readFileSync(path.resolve("src/content/index.ts"), "utf8");
+    const detectorSource = readFileSync(path.resolve("src/content/native/chatgpt/ChatGptDeliveryTimeoutDetector.ts"), "utf8");
+    const containmentSource = readFileSync(path.resolve("src/content/native/chatgpt/ChatGptTurnContainmentController.ts"), "utf8");
+    const rendererSource = readFileSync(path.resolve("src/content/native/chatgpt/ChatGptTextSnapshotRenderer.ts"), "utf8");
+
+    expect(runtimeSource).toContain('deliveryTimeout.detected && deliveryTimeout.scope !== "turn"');
+    expect(detectorSource).toContain("ChatGptDeliveryTimeoutScope");
+    expect(detectorSource).toContain("affectedMessageIds");
+    expect(detectorSource).toContain('"turn"');
+    expect(containmentSource).toContain("CHATGPT_ERROR_SELECTOR");
+    expect(rendererSource).toContain("CHATGPT_ERROR_SELECTOR");
 });

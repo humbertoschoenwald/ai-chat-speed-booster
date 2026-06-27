@@ -13,22 +13,27 @@ export const CHATGPT_DELIVERY_TIMEOUT_ASSISTANT_SELECTOR =
 export const CHATGPT_DELIVERY_TIMEOUT_TEXT = "Message delivery timed out. Please try again.";
 
 export type ChatGptDeliveryTimeoutConfidence = "none" | "structural" | "text-fallback";
+export type ChatGptDeliveryTimeoutScope = "none" | "turn" | "conversation" | "unknown";
 
 export interface ChatGptDeliveryTimeoutSnapshot {
     readonly detected: boolean;
     readonly confidence: ChatGptDeliveryTimeoutConfidence;
+    readonly scope: ChatGptDeliveryTimeoutScope;
     readonly retryButtonCount: number;
     readonly assistantErrorCount: number;
     readonly firstMessageId: string | null;
+    readonly affectedMessageIds: readonly string[];
     readonly reason: string | null;
 }
 
 const EMPTY_DELIVERY_TIMEOUT_SNAPSHOT: ChatGptDeliveryTimeoutSnapshot = {
     detected: false,
     confidence: "none",
+    scope: "none",
     retryButtonCount: 0,
     assistantErrorCount: 0,
     firstMessageId: null,
+    affectedMessageIds: [],
     reason: null,
 };
 
@@ -51,17 +56,21 @@ function countLiteral(haystack: string, needle: string): number {
 
 function snapshot(
     confidence: ChatGptDeliveryTimeoutConfidence,
+    scope: ChatGptDeliveryTimeoutScope,
     retryButtonCount: number,
     assistantErrorCount: number,
     firstMessageId: string | null,
+    affectedMessageIds: readonly string[],
     reason: string,
 ): ChatGptDeliveryTimeoutSnapshot {
     return {
         detected: confidence !== "none",
         confidence,
+        scope,
         retryButtonCount,
         assistantErrorCount,
         firstMessageId,
+        affectedMessageIds,
         reason,
     };
 }
@@ -76,6 +85,7 @@ export function detectChatGptDeliveryTimeout(root: ParentNode = document): ChatG
 
     let assistantErrorCount = 0;
     let firstMessageId: string | null = null;
+    const affectedMessageIds = new Set<string>();
     for (const button of retryButtons) {
         const assistant = button.closest<HTMLElement>(CHATGPT_DELIVERY_TIMEOUT_ASSISTANT_SELECTOR);
         const errorContainer = button.closest<HTMLElement>(CHATGPT_DELIVERY_TIMEOUT_ERROR_CONTAINER_SELECTOR)
@@ -83,31 +93,41 @@ export function detectChatGptDeliveryTimeout(root: ParentNode = document): ChatG
             ?? null;
         if (assistant && errorContainer) {
             assistantErrorCount += 1;
-            firstMessageId ??= assistant.getAttribute("data-message-id");
+            const messageId = assistant.getAttribute("data-message-id");
+            firstMessageId ??= messageId;
+            if (messageId) affectedMessageIds.add(messageId);
         }
     }
 
     if (assistantErrorCount > 0) {
         return snapshot(
             "structural",
+            "turn",
             retryButtons.length,
             assistantErrorCount,
             firstMessageId,
+            [...affectedMessageIds],
             "chatgpt-retry-button-near-assistant-error-container",
         );
     }
 
     const hasTimeoutText = retryButtons.some((button) => {
         const assistant = button.closest<HTMLElement>(CHATGPT_DELIVERY_TIMEOUT_ASSISTANT_SELECTOR);
-        return assistant?.textContent?.includes(CHATGPT_DELIVERY_TIMEOUT_TEXT) === true;
+        if (assistant?.textContent?.includes(CHATGPT_DELIVERY_TIMEOUT_TEXT) !== true) return false;
+        const messageId = assistant.getAttribute("data-message-id");
+        firstMessageId ??= messageId;
+        if (messageId) affectedMessageIds.add(messageId);
+        return true;
     });
 
     if (hasTimeoutText) {
         return snapshot(
             "text-fallback",
+            "turn",
             retryButtons.length,
             0,
             firstMessageId,
+            [...affectedMessageIds],
             "chatgpt-retry-button-near-timeout-text",
         );
     }
@@ -129,9 +149,11 @@ export function detectChatGptDeliveryTimeoutHtml(html: string): ChatGptDeliveryT
     if (retryButtonCount > 0 && assistantCount > 0 && errorClassCount > 0) {
         return snapshot(
             "structural",
+            "turn",
             retryButtonCount,
             Math.min(retryButtonCount, errorClassCount),
             null,
+            [],
             "chatgpt-html-retry-button-assistant-error-signature",
         );
     }
@@ -139,9 +161,11 @@ export function detectChatGptDeliveryTimeoutHtml(html: string): ChatGptDeliveryT
     if (retryButtonCount > 0 && timeoutTextCount > 0) {
         return snapshot(
             "text-fallback",
+            "unknown",
             retryButtonCount,
             0,
             null,
+            [],
             "chatgpt-html-retry-button-timeout-text-signature",
         );
     }

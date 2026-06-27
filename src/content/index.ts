@@ -578,7 +578,7 @@ function refreshUI(): void {
         const chatGptInspection = chatGptRuntime?.inspectPage();
         if (chatGptInspection) {
             const deliveryTimeout = chatGptInspection.deliveryTimeout;
-            if (deliveryTimeout.detected) {
+            if (deliveryTimeout.detected && deliveryTimeout.scope !== "turn") {
                 contentLifecycleState = "degraded";
                 contentLastRecoverableErrorClass = `chatgpt-delivery-timeout:${deliveryTimeout.confidence}`;
                 scheduleDeliveryTimeoutRefresh(deliveryTimeout.reason);

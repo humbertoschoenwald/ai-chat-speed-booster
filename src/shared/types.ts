@@ -141,9 +141,11 @@ export interface ExtensionStatus {
     readonly nativeModeTokenWarningLevel?: "ok" | "warn" | "critical";
     readonly chatGptDeliveryTimeoutDetected?: boolean;
     readonly chatGptDeliveryTimeoutConfidence?: "none" | "structural" | "text-fallback";
+    readonly chatGptDeliveryTimeoutScope?: string;
     readonly chatGptDeliveryTimeoutRetryButtonCount?: number;
     readonly chatGptDeliveryTimeoutAssistantErrorCount?: number;
     readonly chatGptDeliveryTimeoutFirstMessageId?: string | null;
+    readonly chatGptDeliveryTimeoutAffectedMessageIds?: readonly string[];
     readonly chatGptDeliveryTimeoutReason?: string | null;
     readonly chatGptMaxLengthReadonlyDetected?: boolean;
     readonly chatGptMaxLengthReadonlyReason?: string | null;

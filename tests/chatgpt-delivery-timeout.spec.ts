@@ -26,7 +26,9 @@ test.describe("ChatGPT delivery timeout detector", () => {
         expect(snapshot.detected).toBe(true);
         expect(snapshot.confidence).toBe("structural");
         expect(snapshot.retryButtonCount).toBe(1);
+        expect(snapshot.scope).toBe("turn");
         expect(snapshot.assistantErrorCount).toBe(1);
+        expect(snapshot.affectedMessageIds).toEqual([]);
         expect(snapshot.reason).toBe("chatgpt-html-retry-button-assistant-error-signature");
     });
 
