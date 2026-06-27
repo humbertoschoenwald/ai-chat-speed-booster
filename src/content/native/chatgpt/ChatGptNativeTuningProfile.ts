@@ -15,11 +15,11 @@ export const CHATGPT_NATIVE_TUNING_PROFILE: NativeTuningProfile = {
         composerRoot: "[contenteditable='true'], textarea",
         streamingControls: [
             "button[aria-label*='Stop']",
-            "button[data-testid*='stop']",
+            "[data-is-streaming='true']",
         ],
         toolCallRoots: [
-            "[data-testid*='tool']",
-            "[class*='tool']",
+            "[data-message-author-role='tool']",
+            "[aria-label*='tool' i]",
         ],
     },
     enabledFeatures: [

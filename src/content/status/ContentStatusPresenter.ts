@@ -158,6 +158,8 @@ export function createExtensionStatus(input: ContentStatusPresenterInput): Exten
         nativeModeSelectorDriftScrollRootPresent: chatGpt?.nativeSelectorDrift?.scrollRootPresent,
         nativeModeSelectorDriftToolCardCount: chatGpt?.nativeSelectorDrift?.toolCardCount,
         nativeModeSelectorDriftKnownToolLabelCount: chatGpt?.nativeSelectorDrift?.knownToolLabelCount,
+        nativeModeAmbiguousTestIdCount: chatGpt?.nativeSelectorDrift?.ambiguousTestIds.ambiguousTestIdCount,
+        nativeModeAmbiguousTestIdValues: chatGpt?.nativeSelectorDrift?.ambiguousTestIds.ambiguousValues,
         nativeModePlaceholderTurnCount: chatGpt?.nativeTurnContentState?.placeholderTurns,
         nativeModeHydratedTurnCount: chatGpt?.nativeTurnContentState?.hydratedTurns,
         nativeModeActiveTurnCount: chatGpt?.nativeTurnContentState?.activeTurns,

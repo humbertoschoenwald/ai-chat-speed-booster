@@ -1,3 +1,4 @@
+import { inspectChatGptAmbiguousTestIds, type ChatGptAmbiguousTestIdSnapshot } from "./ChatGptAmbiguousTestIdAvoidance";
 import { containsChatGptComposerScope } from "./ChatGptComposerScope";
 import { CHATGPT_TURN_SELECTOR, CHATGPT_TOOL_SELECTOR, dedupeChatGptTurnElements } from "./ChatGptSelectors";
 import { classifyChatGptToolCardLabel } from "./ChatGptToolCardLabelTaxonomy";
@@ -13,6 +14,7 @@ export interface ChatGptSelectorDriftSentinelSnapshot {
     readonly scrollRootPresent: boolean;
     readonly toolCardCount: number;
     readonly knownToolLabelCount: number;
+    readonly ambiguousTestIds: ChatGptAmbiguousTestIdSnapshot;
     readonly riskyOptimizationAllowed: boolean;
 }
 
@@ -33,6 +35,7 @@ export function inspectChatGptSelectorDrift(input: ChatGptSelectorDriftSentinelI
     const composer = root.querySelector?.<HTMLElement>(COMPOSER_CANDIDATE_SELECTOR) ?? null;
     const toolCards = Array.from(root.querySelectorAll?.<HTMLElement>(CHATGPT_TOOL_SELECTOR) ?? []);
     const knownToolLabelCount = countKnownToolLabels(toolCards);
+    const ambiguousTestIds = inspectChatGptAmbiguousTestIds(root);
 
     if (!input.scrollRoot) failedContracts.push("chatgpt-scroll-root-missing");
     if (input.turns.length > 0 && dedupedTurns.length === 0) failedContracts.push("chatgpt-turn-selector-empty");
@@ -50,6 +53,7 @@ export function inspectChatGptSelectorDrift(input: ChatGptSelectorDriftSentinelI
         scrollRootPresent: input.scrollRoot !== null,
         toolCardCount: toolCards.length,
         knownToolLabelCount,
+        ambiguousTestIds,
         riskyOptimizationAllowed: confidence !== "low",
     };
 }
