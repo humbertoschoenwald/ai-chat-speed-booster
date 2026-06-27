@@ -15,6 +15,7 @@ import { containsChatGptComposerScope } from "./ChatGptComposerScope";
 import { containsChatGptConversationScreenshotBoundary } from "./ChatGptConversationScreenshotBoundary";
 import { readChatGptMessageIdentityKey } from "./ChatGptMessageMetadata";
 import { ChatGptSegmentMarkerDeltaCache } from "./ChatGptSegmentMarkerDeltaCache";
+import { readChatGptTerminalMarkdownNodeText } from "./ChatGptTerminalMarkdownNodeFastPath";
 
 export interface ChatGptTextSnapshotRenderOptions {
     readonly enabled: boolean;
@@ -140,6 +141,8 @@ export class ChatGptTextSnapshotRenderer {
     private snapshot(turn: HTMLElement, key: string, nowMs: number): boolean {
         if (turn.getAttribute(HOST_ATTR) === "true") return true;
         if (!isSafeSnapshotCandidate(turn)) return false;
+        const terminalFastPath = readChatGptTerminalMarkdownNodeText(turn);
+        if (terminalFastPath.status === "inconsistent") this.cache.delete(key);
         const cached = this.cache.get(key, nowMs);
         if (cached) return this.renderSnapshot(turn, cached);
         const { text } = this.segmentMarkers.readOrExtract(
@@ -231,6 +234,8 @@ function findViewportTurnIndex(turns: readonly HTMLElement[]): number {
 
 export function readCompletedChatGptMarkdownProseText(turn: HTMLElement): string {
     if (containsChatGptComposerScope(turn)) return "";
+    const terminalFastPath = readChatGptTerminalMarkdownNodeText(turn);
+    if (terminalFastPath.status === "simple") return terminalFastPath.text;
     const source = turn.querySelector<HTMLElement>(MARKDOWN_PROSE_BODY_SELECTOR) ?? turn;
     const clone = source.cloneNode(true) as HTMLElement;
     clone.querySelectorAll<HTMLElement>(TEXT_EXTRACTION_EXCLUSION_SELECTOR).forEach((node) => node.remove());
