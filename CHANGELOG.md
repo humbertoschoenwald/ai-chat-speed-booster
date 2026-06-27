@@ -27,6 +27,7 @@
 
 #### Native
 
+- filter sidebar changes ([3d6b968](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/3d6b9682eb713aab44da0207c109b9c5d265ce6b)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - report scoped diagnostics ([1568e6b](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/1568e6bc7a4c0f829e55177574e98f7a83510acc)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - avoid ambiguous test ids ([96e53aa](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/96e53aa35f359551b715f1923a78f8a8c79a3f01)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - preserve accessible status ([9428ea6](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/9428ea6060fe9322f9f344e0e0a7be0e872e9076)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
