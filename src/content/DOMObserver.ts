@@ -6,6 +6,7 @@ import { filterMessageTurns } from "../shared/messageTurnFilter";
 import { AutoLoadScrollGate } from "./scroll/AutoLoadScrollGate";
 import { isChatGptPageAssetNode } from "./native/chatgpt/ChatGptPageAssetScope";
 import { isChatGptToastPortalNode } from "./native/chatgpt/ChatGptToastPortalBoundary";
+import { isChatGptSidebarListNode } from "./native/chatgpt/ChatGptSidebarScope";
 
 
 export interface DOMObserverCallbacks {
@@ -42,7 +43,7 @@ const TOOL_CALL_MUTATION_SELECTOR = [
     '[data-testid*="tool" i]',
     '[class*="tool" i]',
 ].join(",");
-const CHATGPT_PAGE_CHROME_SELECTOR = "nav,aside,[role='navigation'],[data-testid*='sidebar' i],[data-testid*='history' i]";
+
 
 export class DOMObserver {
     private observer: MutationObserver | null = null;
@@ -404,7 +405,7 @@ export class DOMObserver {
     private resolveMessageScanRoot(root: HTMLElement): HTMLElement | null {
         if (this.currentSite.id !== "chatgpt") return root;
         const scrollRoot = this.scrollEl ?? this.findScrollContainer();
-        if (!scrollRoot) return root.closest(CHATGPT_PAGE_CHROME_SELECTOR) ? null : root;
+        if (!scrollRoot) return isChatGptSidebarListNode(root) ? null : root;
         if (root === scrollRoot || scrollRoot.contains(root)) return root;
         if (root.contains(scrollRoot)) return scrollRoot;
         return null;
@@ -452,7 +453,7 @@ export class DOMObserver {
         if (this.isComposerOwned(el)) return true;
         if (this.currentSite.id === "chatgpt" && isChatGptPageAssetNode(el)) return true;
         if (this.currentSite.id === "chatgpt" && isChatGptToastPortalNode(el)) return true;
-        if (this.currentSite.id === "chatgpt" && el.closest(CHATGPT_PAGE_CHROME_SELECTOR)) return true;
+        if (this.currentSite.id === "chatgpt" && isChatGptSidebarListNode(el)) return true;
         return false;
     }
 

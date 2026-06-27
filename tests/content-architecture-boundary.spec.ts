@@ -334,7 +334,7 @@ test("ChatGPT conversation changes reset Native Mode scoped state", () => {
 test("ChatGPT Native message scans stay inside the conversation root", () => {
     const source = readFileSync(path.resolve("src/content/DOMObserver.ts"), "utf8");
 
-    expect(source).toContain("CHATGPT_PAGE_CHROME_SELECTOR");
+    expect(source).toContain("isChatGptSidebarListNode");
     expect(source).toContain("resolveMessageScanRoot(root)");
     expect(source).toContain('this.currentSite.id !== "chatgpt"');
     expect(source).toContain("root.contains(scrollRoot)");

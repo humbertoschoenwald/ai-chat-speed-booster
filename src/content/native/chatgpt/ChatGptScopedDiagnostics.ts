@@ -1,5 +1,6 @@
 import { containsChatGptComposerScope } from "./ChatGptComposerScope";
 import { dedupeChatGptTurnElements } from "./ChatGptSelectors";
+import { CHATGPT_SIDEBAR_SCOPE_SELECTOR } from "./ChatGptSidebarScope";
 
 export interface ChatGptScopedDiagnosticsSnapshot {
     readonly documentNodeCount: number;
@@ -10,7 +11,6 @@ export interface ChatGptScopedDiagnosticsSnapshot {
     readonly sidebarNodeCount: number;
 }
 
-const SIDEBAR_SCOPE_SELECTOR = "nav,aside,[role='navigation'],[data-testid*='sidebar' i],[data-testid*='history' i]";
 const COMPOSER_SCOPE_SELECTOR = "#prompt-textarea,[data-testid='prompt-textarea'],textarea,[contenteditable='true'],.ProseMirror";
 
 export function inspectChatGptScopedDiagnostics(options: {
@@ -25,7 +25,7 @@ export function inspectChatGptScopedDiagnostics(options: {
         canonicalTurnCount: canonicalTurns.length,
         canonicalTurnNodeCount: canonicalTurns.reduce((total, turn) => total + countNodes(turn), 0),
         composerNodeCount: countComposerNodes(options.documentRoot),
-        sidebarNodeCount: countNodesInScopes(options.documentRoot, SIDEBAR_SCOPE_SELECTOR),
+        sidebarNodeCount: countNodesInScopes(options.documentRoot, CHATGPT_SIDEBAR_SCOPE_SELECTOR),
     };
 }
 
@@ -35,7 +35,7 @@ export function getChatGptScopedDiagnosticsSelectorsForTests(): {
 } {
     return {
         composer: COMPOSER_SCOPE_SELECTOR,
-        sidebar: SIDEBAR_SCOPE_SELECTOR,
+        sidebar: CHATGPT_SIDEBAR_SCOPE_SELECTOR,
     };
 }
 
