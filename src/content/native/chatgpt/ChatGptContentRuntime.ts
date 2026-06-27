@@ -58,6 +58,10 @@ import {
     type ChatGptSelectorDriftSentinelSnapshot,
 } from "./ChatGptSelectorDriftSentinel";
 import {
+    inspectChatGptScopedDiagnostics,
+    type ChatGptScopedDiagnosticsSnapshot,
+} from "./ChatGptScopedDiagnostics";
+import {
     ChatGptStaticContentMeasurementCache,
     type ChatGptStaticContentMeasurementCacheSnapshot,
 } from "./ChatGptStaticContentMeasurementCache";
@@ -141,6 +145,7 @@ export interface ChatGptContentRuntimeStatus {
     readonly nativeScrollRootState: ChatGptScrollRootState | null;
     readonly nativeDataStateDelta: ChatGptDataStateDeltaSnapshot | null;
     readonly nativeSelectorDrift: ChatGptSelectorDriftSentinelSnapshot | null;
+    readonly nativeScopedDiagnostics: ChatGptScopedDiagnosticsSnapshot | null;
     readonly nativeTurnContentState: ChatGptTurnContentStateSnapshot | null;
     readonly nativeStaticContentMeasurement: ChatGptStaticContentMeasurementCacheSnapshot | null;
     readonly nativeRevealLoopCount: number;
@@ -177,6 +182,7 @@ export class ChatGptContentRuntime {
     private nativeAccessibleStatus: ChatGptAccessibleStatusPreservationSnapshot | null = null;
     private nativeScrollRootState: ChatGptScrollRootState | null = null;
     private nativeSelectorDrift: ChatGptSelectorDriftSentinelSnapshot | null = null;
+    private nativeScopedDiagnostics: ChatGptScopedDiagnosticsSnapshot | null = null;
     private nativeTurnContentState: ChatGptTurnContentStateSnapshot | null = null;
     private nativeStaticContentMeasurement: ChatGptStaticContentMeasurementCacheSnapshot | null = null;
     private nativeSnapshotHosts = 0;
@@ -228,6 +234,7 @@ export class ChatGptContentRuntime {
         this.nativeAccessibleStatus = null;
         this.nativeScrollRootState = null;
         this.nativeSelectorDrift = null;
+        this.nativeScopedDiagnostics = null;
         this.nativeTurnContentState = null;
         this.nativeStaticContentMeasurement = null;
         this.staticContentMeasurements.reset();
@@ -293,6 +300,7 @@ export class ChatGptContentRuntime {
             nativeScrollRootState: this.nativeScrollRootState,
             nativeDataStateDelta: this.dataStateDeltas.snapshot(),
             nativeSelectorDrift: this.nativeSelectorDrift,
+            nativeScopedDiagnostics: this.nativeScopedDiagnostics,
             nativeTurnContentState: this.nativeTurnContentState,
             nativeStaticContentMeasurement: this.nativeStaticContentMeasurement,
             nativeRevealLoopCount: nativeConflictSnapshot.revealLoopCount,
@@ -415,6 +423,11 @@ export class ChatGptContentRuntime {
                 return;
             }
             const conversationScope = resolveChatGptConversationScope(this.ports.document, scrollContainer);
+            this.nativeScopedDiagnostics = inspectChatGptScopedDiagnostics({
+                documentRoot: this.ports.document,
+                conversationRoot: conversationScope,
+                turns,
+            });
             this.nativeToastPortalBoundary = inspectChatGptToastPortalBoundary(this.ports.document);
             this.nativeAccessibleStatus = inspectChatGptAccessibleStatusPreservation(this.ports.document);
             this.nativeThreadCssMetrics = conversationScope instanceof Element
@@ -511,6 +524,7 @@ export class ChatGptContentRuntime {
         this.nativeAccessibleStatus = null;
         this.nativeScrollRootState = null;
         this.nativeSelectorDrift = null;
+        this.nativeScopedDiagnostics = null;
         this.nativeTurnContentState = null;
         this.nativeStaticContentMeasurement = null;
         this.staticContentMeasurements.reset();

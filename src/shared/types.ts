@@ -213,6 +213,12 @@ export interface ExtensionStatus {
     readonly nativeModeSelectorDriftKnownToolLabelCount?: number;
     readonly nativeModeAmbiguousTestIdCount?: number;
     readonly nativeModeAmbiguousTestIdValues?: readonly string[];
+    readonly nativeModeScopedDocumentNodeCount?: number;
+    readonly nativeModeScopedConversationNodeCount?: number;
+    readonly nativeModeScopedCanonicalTurnCount?: number;
+    readonly nativeModeScopedCanonicalTurnNodeCount?: number;
+    readonly nativeModeScopedComposerNodeCount?: number;
+    readonly nativeModeScopedSidebarNodeCount?: number;
     readonly nativeModePlaceholderTurnCount?: number;
     readonly nativeModeHydratedTurnCount?: number;
     readonly nativeModeActiveTurnCount?: number;
