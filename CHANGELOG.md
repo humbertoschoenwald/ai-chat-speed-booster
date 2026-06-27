@@ -27,6 +27,7 @@
 
 #### Native
 
+- cache static measurements ([26d9ab0](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/26d9ab0267c44e384edd4bfc72cac69d474ed35e)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - skip placeholder turns ([17cf21a](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/17cf21ae31ef66a77e298a17a1df7085620f797d)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - add selector drift sentinel ([2dc0a4a](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/2dc0a4a9b1269e33873784f2692de02986401b23)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - define snapshot pointer policy ([e948b69](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/e948b697e2238e05e4d4208abfe616bd2bdbe01d)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
