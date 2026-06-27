@@ -15,6 +15,10 @@ export interface ContentLifecycleStatus {
     readonly lastUiRefreshAt: number | null;
     readonly overlayPresent: boolean;
     readonly lastRecoverableErrorClass: string | null;
+    readonly contentInstanceId?: string | null;
+    readonly contentObservedInstanceId?: string | null;
+    readonly contentOwnsBootstrap?: boolean;
+    readonly contentBeatAgeMs?: number | null;
 }
 export interface ContentStatusPresenterInput {
     readonly baseStatus: ExtensionStatus;
@@ -59,6 +63,10 @@ export function createExtensionStatus(input: ContentStatusPresenterInput): Exten
         contentLastUiRefreshAt: input.lifecycle.lastUiRefreshAt,
         contentOverlayPresent: input.lifecycle.overlayPresent,
         contentLastRecoverableErrorClass: input.lifecycle.lastRecoverableErrorClass,
+        contentInstanceId: input.lifecycle.contentInstanceId,
+        contentObservedInstanceId: input.lifecycle.contentObservedInstanceId,
+        contentOwnsBootstrap: input.lifecycle.contentOwnsBootstrap,
+        contentBeatAgeMs: input.lifecycle.contentBeatAgeMs,
         editorInputActive: editor.active,
         editorInputComposing: editor.composing,
         editorInputDeferredTaskCount: editor.deferredTaskCount,

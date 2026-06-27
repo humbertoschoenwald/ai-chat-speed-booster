@@ -114,6 +114,10 @@ export interface ExtensionStatus {
     readonly contentLastUiRefreshAt?: number | null;
     readonly contentOverlayPresent?: boolean;
     readonly contentLastRecoverableErrorClass?: string | null;
+    readonly contentInstanceId?: string | null;
+    readonly contentObservedInstanceId?: string | null;
+    readonly contentOwnsBootstrap?: boolean;
+    readonly contentBeatAgeMs?: number | null;
     readonly editorInputActive?: boolean;
     readonly editorInputComposing?: boolean;
     readonly editorInputDeferredTaskCount?: number;

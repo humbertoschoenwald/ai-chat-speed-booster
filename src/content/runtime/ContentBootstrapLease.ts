@@ -54,6 +54,10 @@ export class ContentBootstrapLease {
         return this.owns;
     }
 
+    getInstanceId(): string {
+        return this.instanceId;
+    }
+
     release(): void {
         if (this.heartbeatTimer) {
             clearInterval(this.heartbeatTimer);

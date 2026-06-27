@@ -11,6 +11,7 @@ import { ChatGptStickyNoteController } from "./chatgpt/ChatGptStickyNoteControll
 import { LoadMoreButton, StatusIndicator } from "./UIComponents";
 
 import { ContentBootstrapLease } from "./runtime/ContentBootstrapLease";
+import { readContentInstanceDiagnostics } from "./runtime/ContentInstanceDiagnostics";
 import { ContentReloadCoordinator } from "./runtime/ContentReloadCoordinator";
 import { ContentTimerRegistry } from "./runtime/ContentTimerRegistry";
 import { createExtensionStatus, type ContentStatusPresenterInput } from "./status/ContentStatusPresenter";
@@ -504,6 +505,11 @@ function handleMessagesReset(): void {
 function handleExtensionMessage(message: unknown): ExtensionStatus | undefined {
     const msg = message as { type?: string; payload?: unknown };
     if (msg.type === MessageType.GET_STATUS) {
+        const instanceDiagnostics = readContentInstanceDiagnostics(
+            document,
+            bootstrapLease.ownsBootstrap(),
+            bootstrapLease.getInstanceId(),
+        );
         return createExtensionStatus({
             baseStatus: getDisplayStatus(messageManager.getStatus()),
             siteId: currentSite.id,
@@ -514,6 +520,10 @@ function handleExtensionMessage(message: unknown): ExtensionStatus | undefined {
                 lastUiRefreshAt: contentLastUiRefreshAt,
                 overlayPresent: statusIndicator.isMounted(),
                 lastRecoverableErrorClass: contentLastRecoverableErrorClass,
+                contentInstanceId: instanceDiagnostics.instanceId,
+                contentObservedInstanceId: instanceDiagnostics.observedInstanceId,
+                contentOwnsBootstrap: instanceDiagnostics.ownsBootstrap,
+                contentBeatAgeMs: instanceDiagnostics.beatAgeMs,
             },
             nativeState: nativeModeController?.snapshot(),
             editorInput: editorLatencyGuard.snapshot(),
