@@ -39,7 +39,7 @@ const EXTREME_MUTATION_BATCH_SIZE = 250;
 const MUTATION_PROCESS_BUDGET_MS = 8;
 const URL_CHANGE_DEBOUNCE_MS = 150;
 const EXTENSION_OWNED_SELECTOR = ".acsb-load-more-wrapper,.acsb-load-more-btn,.acsb-status-indicator,[data-acsb-load-older-control='true']";
-const COMPOSER_SELECTOR = "#prompt-textarea,textarea,[contenteditable]";
+const COMPOSER_SELECTOR = "#prompt-textarea,textarea,[contenteditable],[data-virtualkeyboard]";
 const TOOL_CALL_MUTATION_SELECTOR = [
     '[data-message-author-role="tool"]',
     '[data-testid*="tool" i]',

@@ -13,6 +13,7 @@ const COMPOSER_EDITABLE_SELECTOR = [
     "textarea",
     "[contenteditable='true']",
     ".ProseMirror",
+    "[data-virtualkeyboard]",
 ].join(",");
 const COMPOSER_BUTTON_SELECTOR = `${COMPOSER_ROOT_SELECTOR} button,${COMPOSER_ROOT_SELECTOR} [role='button']`;
 const COMPOSER_SVG_SELECTOR = `${COMPOSER_ROOT_SELECTOR} svg`;
