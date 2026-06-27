@@ -27,6 +27,7 @@
 
 #### Native
 
+- bound sticky chrome ([69e157d](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/69e157d5fd8f678c87b940c1dbee2dffd8c6893e)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - preserve rtl icon metadata ([6ef945a](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/6ef945a7f0c34b54be67bbbd4d0776f0eb77579e)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - batch layout changes ([46a75f6](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/46a75f62d5f8b5be220149415e9ff98fadf100e1)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - filter sidebar changes ([3d6b968](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/3d6b9682eb713aab44da0207c109b9c5d265ce6b)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
