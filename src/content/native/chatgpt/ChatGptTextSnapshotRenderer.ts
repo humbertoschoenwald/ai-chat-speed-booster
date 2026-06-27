@@ -10,6 +10,7 @@ import {
     CHATGPT_TOOL_SELECTOR,
     CHATGPT_TURN_SELECTOR,
 } from "./ChatGptSelectors";
+import { CHATGPT_ACCESSIBLE_STATUS_SELECTOR, containsChatGptAccessibleStatus } from "./ChatGptAccessibleStatusPreservation";
 import { containsChatGptComposerScope } from "./ChatGptComposerScope";
 import { readChatGptMessageIdentityKey } from "./ChatGptMessageMetadata";
 import { ChatGptSegmentMarkerDeltaCache } from "./ChatGptSegmentMarkerDeltaCache";
@@ -42,6 +43,7 @@ const TEXT_EXTRACTION_EXCLUSION_SELECTOR = [
     "[role='button']",
     "[aria-hidden='true']",
     "[data-acsb-native-copy-affordance='true']",
+    CHATGPT_ACCESSIBLE_STATUS_SELECTOR,
     "textarea",
     "[contenteditable='true']",
     ".ProseMirror",
@@ -241,6 +243,7 @@ function isSafeSnapshotCandidate(turn: HTMLElement): boolean {
     if (turn.querySelector(".loading-shimmer, .animate-spin, [data-is-streaming='true'], [aria-busy='true']")) return false;
     if (turn.querySelector(CHATGPT_ERROR_SELECTOR)) return false;
     if (turn.querySelector(CHATGPT_TOOL_SELECTOR)) return false;
+    if (containsChatGptAccessibleStatus(turn)) return false;
     if (hasNonCopyInteractiveControl(turn)) return false;
     return true;
 }

@@ -1,3 +1,4 @@
+import { containsChatGptAccessibleStatus } from "./ChatGptAccessibleStatusPreservation";
 import { CHATGPT_ERROR_SELECTOR, CHATGPT_STREAMING_SELECTOR, CHATGPT_TOOL_SELECTOR } from "./ChatGptSelectors";
 import { type NativeTurnRecord, type TurnRegistry } from "../TurnRegistry";
 
@@ -15,6 +16,7 @@ const BUSY_SELECTOR = `.loading-shimmer,.animate-spin,[aria-busy='true'],[data-i
 
 export function classifyChatGptTurnContentState(turn: HTMLElement): ChatGptTurnContentState {
     if (turn.querySelector(CHATGPT_ERROR_SELECTOR)) return "status";
+    if (containsChatGptAccessibleStatus(turn)) return "status";
     if (turn.querySelector(CHATGPT_TOOL_SELECTOR) || turn.querySelector(BUSY_SELECTOR)) return "active";
     const text = (turn.innerText || turn.textContent || "").replace(/\s+/g, " ").trim();
     if (text.length > 0) return "hydrated";

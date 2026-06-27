@@ -192,6 +192,9 @@ export interface ExtensionStatus {
     readonly nativeModeToastNodeCount?: number;
     readonly nativeModeLiveStatusNodeCount?: number;
     readonly nativeModeConversationOwnedStatusCount?: number;
+    readonly nativeModeAccessibleStatusNodeCount?: number;
+    readonly nativeModeTurnScopedAccessibleStatusCount?: number;
+    readonly nativeModeGlobalAccessibleStatusCount?: number;
     readonly nativeModeScrollRootPresent?: boolean;
     readonly nativeModeStreamActive?: boolean;
     readonly nativeModeScrollRootFromTop?: number | null;
