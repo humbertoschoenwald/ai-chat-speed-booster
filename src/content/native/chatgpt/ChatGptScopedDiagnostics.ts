@@ -3,6 +3,7 @@ import { containsChatGptComposerScope } from "./ChatGptComposerScope";
 import { dedupeChatGptTurnElements } from "./ChatGptSelectors";
 import { CHATGPT_SIDEBAR_SCOPE_SELECTOR } from "./ChatGptSidebarScope";
 import { inspectChatGptStickyChromeBoundary, type ChatGptStickyChromeBoundarySnapshot } from "./ChatGptStickyChromeBoundary";
+import { inspectChatGptTailwindLayerOrder, type ChatGptTailwindLayerOrderSnapshot } from "./ChatGptTailwindLayerOrderGuard";
 
 export interface ChatGptScopedDiagnosticsSnapshot {
     readonly documentNodeCount: number;
@@ -13,6 +14,7 @@ export interface ChatGptScopedDiagnosticsSnapshot {
     readonly sidebarNodeCount: number;
     readonly stickyChrome: ChatGptStickyChromeBoundarySnapshot;
     readonly anchoredMenus: ChatGptAnchoredMenuRelationshipSnapshot;
+    readonly tailwindLayerOrder: ChatGptTailwindLayerOrderSnapshot;
 }
 
 const COMPOSER_SCOPE_SELECTOR = "#prompt-textarea,[data-testid='prompt-textarea'],textarea,[contenteditable='true'],.ProseMirror";
@@ -35,6 +37,7 @@ export function inspectChatGptScopedDiagnostics(options: {
             documentRoot: options.documentRoot,
             turns: canonicalTurns,
         }),
+        tailwindLayerOrder: inspectChatGptTailwindLayerOrder(options.documentRoot),
     };
 }
 

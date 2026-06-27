@@ -1,5 +1,6 @@
 import type { NativeTurnRecord } from "../TurnRegistry";
 import type { ChatGptCodeNodeBucket } from "./ChatGptStaticContentMeasurementCache";
+import { markAcsbOwnedNativeStyle } from "./ChatGptTailwindLayerOrderGuard";
 
 export interface ChatGptCodeBlockContainmentSnapshot {
     readonly codeBlockCount: number;
@@ -108,6 +109,7 @@ function injectStyle(root: Document): void {
     if (root.getElementById(STYLE_ID)) return;
     const style = root.createElement("style");
     style.id = STYLE_ID;
+    markAcsbOwnedNativeStyle(style, "code-block-containment");
     style.textContent = `[${CONTAINED_ATTR}='true']{content-visibility:auto!important;contain:content!important;contain-intrinsic-size:auto 240px!important;}`;
     (root.head ?? root.documentElement).appendChild(style);
 }

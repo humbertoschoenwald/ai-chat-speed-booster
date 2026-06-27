@@ -192,6 +192,8 @@ export function createExtensionStatus(input: ContentStatusPresenterInput): Exten
         nativeModeAnchoredMenuComposerCount: chatGpt?.nativeScopedDiagnostics?.anchoredMenus.composerRelationshipCount,
         nativeModeAnchoredMenuSidebarCount: chatGpt?.nativeScopedDiagnostics?.anchoredMenus.sidebarRelationshipCount,
         nativeModeAnchoredMenuTurnCount: chatGpt?.nativeScopedDiagnostics?.anchoredMenus.turnRelationshipCount,
+        nativeModeTailwindLayerStyleCount: chatGpt?.nativeScopedDiagnostics?.tailwindLayerOrder.tailwindLayerStyleCount,
+        nativeModeAcsbOwnedStyleCount: chatGpt?.nativeScopedDiagnostics?.tailwindLayerOrder.acsbOwnedStyleCount,
         nativeModePlaceholderTurnCount: chatGpt?.nativeTurnContentState?.placeholderTurns,
         nativeModeHydratedTurnCount: chatGpt?.nativeTurnContentState?.hydratedTurns,
         nativeModeActiveTurnCount: chatGpt?.nativeTurnContentState?.activeTurns,

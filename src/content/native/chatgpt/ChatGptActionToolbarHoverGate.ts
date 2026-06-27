@@ -1,4 +1,5 @@
 import type { NativeTurnRecord } from "../TurnRegistry";
+import { markAcsbOwnedNativeStyle } from "./ChatGptTailwindLayerOrderGuard";
 
 export interface ChatGptActionToolbarHoverGateSnapshot {
     readonly gatedTurnCount: number;
@@ -73,6 +74,7 @@ function injectStyle(root: Document): void {
     if (root.getElementById(STYLE_ID)) return;
     const style = root.createElement("style");
     style.id = STYLE_ID;
+    markAcsbOwnedNativeStyle(style, "toolbar-hover-gate");
     style.textContent = [
         `[${GATED_ATTR}='true']:not(:hover):not(:focus-within) [class*='group-hover']{transition:none!important;animation:none!important;will-change:auto!important;}`,
         `[${GATED_ATTR}='true']:not(:hover):not(:focus-within) [class*='transition']{transition:none!important;will-change:auto!important;}`,

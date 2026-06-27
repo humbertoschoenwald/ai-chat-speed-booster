@@ -241,6 +241,8 @@ export interface ExtensionStatus {
     readonly nativeModeAnchoredMenuComposerCount?: number;
     readonly nativeModeAnchoredMenuSidebarCount?: number;
     readonly nativeModeAnchoredMenuTurnCount?: number;
+    readonly nativeModeTailwindLayerStyleCount?: number;
+    readonly nativeModeAcsbOwnedStyleCount?: number;
     readonly nativeModePlaceholderTurnCount?: number;
     readonly nativeModeHydratedTurnCount?: number;
     readonly nativeModeActiveTurnCount?: number;

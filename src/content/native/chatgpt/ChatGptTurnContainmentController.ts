@@ -6,6 +6,7 @@ import {
 } from "./ChatGptSelectors";
 import { containsChatGptComposerScope } from "./ChatGptComposerScope";
 import { hasChatGptAnchoredMenuRelationship } from "./ChatGptAnchoredMenuRelationships";
+import { markAcsbOwnedNativeStyle } from "./ChatGptTailwindLayerOrderGuard";
 import { containsChatGptConversationScreenshotBoundary } from "./ChatGptConversationScreenshotBoundary";
 
 export interface ChatGptTurnContentVisibilityOptions {
@@ -109,6 +110,7 @@ function injectStyle(root: Document): void {
     if (root.getElementById(STYLE_ID)) return;
     const style = root.createElement("style");
     style.id = STYLE_ID;
+    markAcsbOwnedNativeStyle(style, "turn-containment");
     style.textContent = `[${CONTAINED_ATTR}="true"]{content-visibility:auto!important;contain-intrinsic-size:auto var(--acsb-contained-turn-height,320px)!important;}[${CONTAINED_ATTR}="true"][${QUIET_ATTR}="true"] *{transition-duration:0s!important;animation-duration:0.001s!important;animation-iteration-count:1!important;}`;
     (root.head ?? root.documentElement).appendChild(style);
 }
