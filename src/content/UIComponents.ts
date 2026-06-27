@@ -187,6 +187,8 @@ export class LoadMoreButton {
         const siteMargin = this.siteConfig.ui?.loadMoreMargin ?? "4px 0";
         wrapper.className = `${CSS_PREFIX}-load-more-wrapper`;
         wrapper.setAttribute("role", "banner");
+        wrapper.setAttribute("data-acsb-load-older-control", "true");
+        wrapper.setAttribute("data-acsb-owner", "load-older");
         Object.assign(wrapper.style, {
             display: "flex",
             alignSelf: "stretch",
@@ -203,6 +205,7 @@ export class LoadMoreButton {
         button.className = `${CSS_PREFIX}-load-more-btn`;
         button.type = "button";
         button.setAttribute("aria-label", "Load older messages");
+        button.setAttribute("data-acsb-load-older-control", "true");
         const geminiTheme = this.siteConfig.ui?.loadMoreTheme === "gemini";
         Object.assign(button.style, {
             all: "unset",

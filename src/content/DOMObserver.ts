@@ -3,6 +3,7 @@ import { MUTATION_DEBOUNCE_MS } from "../shared/constants";
 import type { MutationBatchClass } from "../shared/types";
 import { logger } from "../shared/logger";
 import { filterMessageTurns } from "../shared/messageTurnFilter";
+import { isLoadOlderControlNode } from "./LoadOlderControlScope";
 import { AutoLoadScrollGate } from "./scroll/AutoLoadScrollGate";
 import { isChatGptPageAssetNode } from "./native/chatgpt/ChatGptPageAssetScope";
 import { isChatGptToastPortalNode } from "./native/chatgpt/ChatGptToastPortalBoundary";
@@ -37,7 +38,7 @@ const HEAVY_MUTATION_BATCH_SIZE = 50;
 const EXTREME_MUTATION_BATCH_SIZE = 250;
 const MUTATION_PROCESS_BUDGET_MS = 8;
 const URL_CHANGE_DEBOUNCE_MS = 150;
-const EXTENSION_OWNED_SELECTOR = ".acsb-load-more-btn,.acsb-status-indicator";
+const EXTENSION_OWNED_SELECTOR = ".acsb-load-more-wrapper,.acsb-load-more-btn,.acsb-status-indicator,[data-acsb-load-older-control='true']";
 const COMPOSER_SELECTOR = "#prompt-textarea,textarea,[contenteditable]";
 const TOOL_CALL_MUTATION_SELECTOR = [
     '[data-message-author-role="tool"]',
@@ -126,7 +127,8 @@ export class DOMObserver {
 
     queryAllMessages(): HTMLElement[] {
         return filterMessageTurns(
-            Array.from(document.querySelectorAll<HTMLElement>(this.selectors.messageTurn)),
+            Array.from(document.querySelectorAll<HTMLElement>(this.selectors.messageTurn))
+                .filter((element) => !isLoadOlderControlNode(element)),
             this.selectors,
         );
     }
