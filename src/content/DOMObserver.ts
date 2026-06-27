@@ -7,6 +7,7 @@ import { AutoLoadScrollGate } from "./scroll/AutoLoadScrollGate";
 import { isChatGptPageAssetNode } from "./native/chatgpt/ChatGptPageAssetScope";
 import { isChatGptToastPortalNode } from "./native/chatgpt/ChatGptToastPortalBoundary";
 import { isChatGptSidebarListNode } from "./native/chatgpt/ChatGptSidebarScope";
+import { isChatGptStickyChromeNode } from "./native/chatgpt/ChatGptStickyChromeBoundary";
 
 
 export interface DOMObserverCallbacks {
@@ -454,6 +455,7 @@ export class DOMObserver {
         if (this.currentSite.id === "chatgpt" && isChatGptPageAssetNode(el)) return true;
         if (this.currentSite.id === "chatgpt" && isChatGptToastPortalNode(el)) return true;
         if (this.currentSite.id === "chatgpt" && isChatGptSidebarListNode(el)) return true;
+        if (this.currentSite.id === "chatgpt" && isChatGptStickyChromeNode(el)) return true;
         return false;
     }
 

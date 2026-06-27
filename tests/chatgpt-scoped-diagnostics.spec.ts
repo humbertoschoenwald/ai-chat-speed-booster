@@ -25,6 +25,7 @@ test("ChatGPT scoped diagnostics split document and conversation counts", () => 
     expect(snapshot.canonicalTurnNodeCount).toBe(3);
     expect(snapshot.composerNodeCount).toBe(4);
     expect(snapshot.sidebarNodeCount).toBe(5);
+    expect(snapshot.stickyChrome).toMatchObject({ stickyNodeCount: 0, fixedNodeCount: 0, headerNodeCount: 0 });
 });
 
 test("ChatGPT scoped diagnostics exposes composer and sidebar selectors", () => {

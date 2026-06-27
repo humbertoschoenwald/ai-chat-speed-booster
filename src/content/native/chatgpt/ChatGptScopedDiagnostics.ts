@@ -1,6 +1,7 @@
 import { containsChatGptComposerScope } from "./ChatGptComposerScope";
 import { dedupeChatGptTurnElements } from "./ChatGptSelectors";
 import { CHATGPT_SIDEBAR_SCOPE_SELECTOR } from "./ChatGptSidebarScope";
+import { inspectChatGptStickyChromeBoundary, type ChatGptStickyChromeBoundarySnapshot } from "./ChatGptStickyChromeBoundary";
 
 export interface ChatGptScopedDiagnosticsSnapshot {
     readonly documentNodeCount: number;
@@ -9,6 +10,7 @@ export interface ChatGptScopedDiagnosticsSnapshot {
     readonly canonicalTurnNodeCount: number;
     readonly composerNodeCount: number;
     readonly sidebarNodeCount: number;
+    readonly stickyChrome: ChatGptStickyChromeBoundarySnapshot;
 }
 
 const COMPOSER_SCOPE_SELECTOR = "#prompt-textarea,[data-testid='prompt-textarea'],textarea,[contenteditable='true'],.ProseMirror";
@@ -26,6 +28,7 @@ export function inspectChatGptScopedDiagnostics(options: {
         canonicalTurnNodeCount: canonicalTurns.reduce((total, turn) => total + countNodes(turn), 0),
         composerNodeCount: countComposerNodes(options.documentRoot),
         sidebarNodeCount: countNodesInScopes(options.documentRoot, CHATGPT_SIDEBAR_SCOPE_SELECTOR),
+        stickyChrome: inspectChatGptStickyChromeBoundary(options.documentRoot),
     };
 }
 
