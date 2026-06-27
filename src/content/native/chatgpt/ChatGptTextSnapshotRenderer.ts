@@ -12,6 +12,7 @@ import {
 } from "./ChatGptSelectors";
 import { containsChatGptComposerScope } from "./ChatGptComposerScope";
 import { readChatGptMessageIdentityKey } from "./ChatGptMessageMetadata";
+import { ChatGptSegmentMarkerDeltaCache } from "./ChatGptSegmentMarkerDeltaCache";
 
 export interface ChatGptTextSnapshotRenderOptions {
     readonly enabled: boolean;
@@ -57,6 +58,7 @@ export class ChatGptTextSnapshotRenderer {
     }
 
     private readonly cache = new ChatGptTextSnapshotCache();
+    private readonly segmentMarkers = new ChatGptSegmentMarkerDeltaCache();
     private root: Document | null = null;
 
     start(root: Document = document): void {
@@ -83,6 +85,7 @@ export class ChatGptTextSnapshotRenderer {
         this.restoreAll(root);
         ChatGptTextSnapshotRenderer.cleanupNativeArtifacts(root);
         this.cache.clear();
+        this.segmentMarkers.clear();
         this.root = null;
     }
 
@@ -135,7 +138,11 @@ export class ChatGptTextSnapshotRenderer {
         if (!isSafeSnapshotCandidate(turn)) return false;
         const cached = this.cache.get(key, nowMs);
         if (cached) return this.renderSnapshot(turn, cached);
-        const text = readCompletedChatGptMarkdownProseText(turn);
+        const { text } = this.segmentMarkers.readOrExtract(
+            key,
+            turn,
+            () => readCompletedChatGptMarkdownProseText(turn),
+        );
         if (!text) return false;
         this.cache.put(key, text, nowMs);
         const snapshot = this.cache.get(key, nowMs);
