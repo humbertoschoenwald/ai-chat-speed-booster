@@ -159,6 +159,10 @@ export class ChatGptTextSnapshotRenderer {
     }
 
     private readonly restoreTarget = (event: Event): void => {
+        if (event instanceof KeyboardEvent && event.key === "Tab") {
+            this.restoreAll(this.root ?? document);
+            return;
+        }
         const eventTarget = event.target instanceof Element ? event.target : null;
         const target = eventTarget?.closest<HTMLElement>(`[${HOST_ATTR}="true"]`) ?? null;
         if (target) this.restore(target);

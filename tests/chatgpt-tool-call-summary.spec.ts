@@ -57,6 +57,9 @@ test("static tool summaries reduce icon paint without replacing original nodes",
     expect(source).toContain("transition-duration:0s!important");
     expect(source).toContain("filter:none!important");
     expect(source).toContain("will-change:auto!important");
+    expect(source).toContain("aria-hidden");
+    expect(source).toContain("presentation");
+    expect(source).toContain("tabindex");
     expect(source).not.toContain("querySelectorAll<SVGElement>");
 });
 

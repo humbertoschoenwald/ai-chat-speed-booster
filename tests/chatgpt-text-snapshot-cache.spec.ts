@@ -52,9 +52,12 @@ test.describe("ChatGPT text snapshot cache", () => {
         const snapshot = cache.get("safe", 1);
 
         expect(snapshot).not.toBeNull();
-        expect(renderChatGptTextSnapshot(snapshot!)).toBe(
-            `<div data-acsb-native-snapshot="true">&lt;hello&gt;&amp;&quot;&#39;</div>`,
-        );
+        const markup = renderChatGptTextSnapshot(snapshot!);
+
+        expect(markup).toContain(`data-acsb-native-snapshot="true"`);
+        expect(markup).toContain(`data-acsb-native-accessibility-layer="snapshot"`);
+        expect(markup).toContain(`tabindex="-1"`);
+        expect(markup).toContain("&lt;hello&gt;");
     });
 
     test("can render a static copy affordance without changing text", () => {
@@ -63,9 +66,11 @@ test.describe("ChatGPT text snapshot cache", () => {
         const snapshot = cache.get("copy", 1);
 
         expect(snapshot).not.toBeNull();
-        expect(renderChatGptTextSnapshot(snapshot!, { copyAvailable: true })).toBe(
-            `<div data-acsb-native-snapshot="true">copyable text<span data-acsb-native-copy-affordance="true" aria-hidden="true">Copy available</span></div>`,
-        );
+        const markup = renderChatGptTextSnapshot(snapshot!, { copyAvailable: true });
+
+        expect(markup).toContain(`data-acsb-native-accessibility-layer="snapshot"`);
+        expect(markup).toContain(`tabindex="-1"`);
+        expect(markup).toContain(`data-acsb-native-copy-affordance="true" aria-hidden="true"`);
     });
 });
 

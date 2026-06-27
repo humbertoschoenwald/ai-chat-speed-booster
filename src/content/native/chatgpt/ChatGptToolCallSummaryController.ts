@@ -101,6 +101,8 @@ function ensureSummary(host: HTMLElement): boolean {
     const summary = host.ownerDocument.createElement("div");
     summary.setAttribute(SUMMARY_ATTR, "true");
     summary.setAttribute("aria-hidden", "true");
+    summary.setAttribute("role", "presentation");
+    summary.setAttribute("tabindex", "-1");
     summary.textContent = "Completed tool call";
     host.insertBefore(summary, host.firstChild);
     return true;

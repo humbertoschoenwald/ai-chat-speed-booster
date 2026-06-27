@@ -351,6 +351,8 @@ test("Native text snapshots avoid controls and restore before interaction", () =
     expect(source).toContain("contextmenu");
     expect(source).toContain("keydown");
     expect(source).toContain("focusin");
+    expect(source).toContain('event instanceof KeyboardEvent && event.key === "Tab"');
+    expect(source).toContain("this.restoreAll(this.root ?? document)");
     expect(source).toContain("SNAPSHOT_SELECTOR");
     expect(source).toContain("button,[role='button'],a[href],[aria-haspopup='menu']");
     expect(source).toContain("containsChatGptComposerScope(turn)");
@@ -360,6 +362,7 @@ test("Native text snapshots avoid controls and restore before interaction", () =
     expect(source).toContain("const cached = this.cache.get(key, nowMs)");
     expect(source).toContain("eventTarget?.closest");
     expect(source).toContain("if (target) this.restore(target)");
+    expect(readFileSync(path.resolve("src/content/native/chatgpt/ChatGptTextSnapshotCache.ts"), "utf8")).toContain("data-acsb-native-accessibility-layer");
 });
 
 
