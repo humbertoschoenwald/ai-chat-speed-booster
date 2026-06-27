@@ -188,6 +188,10 @@ export interface ExtensionStatus {
     readonly nativeModeActionToolbarGatedTurnCount?: number;
     readonly nativeModeActionToolbarRestoredTurnCount?: number;
     readonly nativeModeActionToolbarProtectedTailSize?: number;
+    readonly nativeModeToastPortalNodeCount?: number;
+    readonly nativeModeToastNodeCount?: number;
+    readonly nativeModeLiveStatusNodeCount?: number;
+    readonly nativeModeConversationOwnedStatusCount?: number;
     readonly nativeModeScrollRootPresent?: boolean;
     readonly nativeModeStreamActive?: boolean;
     readonly nativeModeScrollRootFromTop?: number | null;

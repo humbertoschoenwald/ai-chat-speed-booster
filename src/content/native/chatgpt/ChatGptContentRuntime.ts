@@ -87,6 +87,10 @@ import {
     type ChatGptThreadStatusSnapshot,
 } from "./ChatGptThreadStatusClassifier";
 import {
+    inspectChatGptToastPortalBoundary,
+    type ChatGptToastPortalBoundarySnapshot,
+} from "./ChatGptToastPortalBoundary";
+import {
     summarizeChatGptTurnContentStates,
     updateChatGptTurnContentState,
     type ChatGptTurnContentStateSnapshot,
@@ -128,6 +132,7 @@ export interface ChatGptContentRuntimeStatus {
     readonly nativeThreadCssMetrics: ChatGptThreadCssMetrics | null;
     readonly nativeCodeBlockContainment: ChatGptCodeBlockContainmentSnapshot | null;
     readonly nativeActionToolbarHoverGate: ChatGptActionToolbarHoverGateSnapshot | null;
+    readonly nativeToastPortalBoundary: ChatGptToastPortalBoundarySnapshot | null;
     readonly nativeScrollRootState: ChatGptScrollRootState | null;
     readonly nativeDataStateDelta: ChatGptDataStateDeltaSnapshot | null;
     readonly nativeSelectorDrift: ChatGptSelectorDriftSentinelSnapshot | null;
@@ -163,6 +168,7 @@ export class ChatGptContentRuntime {
     private nativeThreadCssMetrics: ChatGptThreadCssMetrics | null = null;
     private nativeCodeBlockContainment: ChatGptCodeBlockContainmentSnapshot | null = null;
     private nativeActionToolbarHoverGate: ChatGptActionToolbarHoverGateSnapshot | null = null;
+    private nativeToastPortalBoundary: ChatGptToastPortalBoundarySnapshot | null = null;
     private nativeScrollRootState: ChatGptScrollRootState | null = null;
     private nativeSelectorDrift: ChatGptSelectorDriftSentinelSnapshot | null = null;
     private nativeTurnContentState: ChatGptTurnContentStateSnapshot | null = null;
@@ -212,6 +218,7 @@ export class ChatGptContentRuntime {
         this.nativeThreadCssMetrics = null;
         this.nativeCodeBlockContainment = null;
         this.nativeActionToolbarHoverGate = null;
+        this.nativeToastPortalBoundary = null;
         this.nativeScrollRootState = null;
         this.nativeSelectorDrift = null;
         this.nativeTurnContentState = null;
@@ -274,6 +281,7 @@ export class ChatGptContentRuntime {
             nativeThreadCssMetrics: this.nativeThreadCssMetrics,
             nativeCodeBlockContainment: this.nativeCodeBlockContainment,
             nativeActionToolbarHoverGate: this.nativeActionToolbarHoverGate,
+            nativeToastPortalBoundary: this.nativeToastPortalBoundary,
             nativeScrollRootState: this.nativeScrollRootState,
             nativeDataStateDelta: this.dataStateDeltas.snapshot(),
             nativeSelectorDrift: this.nativeSelectorDrift,
@@ -399,6 +407,7 @@ export class ChatGptContentRuntime {
                 return;
             }
             const conversationScope = resolveChatGptConversationScope(this.ports.document, scrollContainer);
+            this.nativeToastPortalBoundary = inspectChatGptToastPortalBoundary(this.ports.document);
             this.nativeThreadCssMetrics = conversationScope instanceof Element
                 ? readChatGptThreadCssMetrics(conversationScope, this.ports.window)
                 : null;
@@ -489,6 +498,7 @@ export class ChatGptContentRuntime {
         this.nativeThreadCssMetrics = null;
         this.nativeCodeBlockContainment = null;
         this.nativeActionToolbarHoverGate = null;
+        this.nativeToastPortalBoundary = null;
         this.nativeScrollRootState = null;
         this.nativeSelectorDrift = null;
         this.nativeTurnContentState = null;

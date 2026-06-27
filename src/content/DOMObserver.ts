@@ -5,6 +5,7 @@ import { logger } from "../shared/logger";
 import { filterMessageTurns } from "../shared/messageTurnFilter";
 import { AutoLoadScrollGate } from "./scroll/AutoLoadScrollGate";
 import { isChatGptPageAssetNode } from "./native/chatgpt/ChatGptPageAssetScope";
+import { isChatGptToastPortalNode } from "./native/chatgpt/ChatGptToastPortalBoundary";
 
 
 export interface DOMObserverCallbacks {
@@ -450,6 +451,7 @@ export class DOMObserver {
     private isIgnoredMutationRoot(el: HTMLElement): boolean {
         if (this.isComposerOwned(el)) return true;
         if (this.currentSite.id === "chatgpt" && isChatGptPageAssetNode(el)) return true;
+        if (this.currentSite.id === "chatgpt" && isChatGptToastPortalNode(el)) return true;
         if (this.currentSite.id === "chatgpt" && el.closest(CHATGPT_PAGE_CHROME_SELECTOR)) return true;
         return false;
     }
