@@ -27,6 +27,7 @@
 
 #### Native
 
+- classify tool labels ([502a47d](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/502a47d1bb8018021347c4ec850933d1243cf80f)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - narrow asset scope ([e366a4e](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/e366a4e1bb4c3da239e98cbf4c5a3379ae4dd3f8)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - classify thread status ([639d0ce](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/639d0ce24033af3d3e4d94d51195704f85bb9bab)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - scope status errors ([81e3019](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/81e301980710253dd1df11c97dcdd4f326b84a3c)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
