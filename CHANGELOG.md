@@ -382,6 +382,7 @@
 
 #### Native
 
+- prove scoped count decisions ([ef87cb1](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/ef87cb156f2c426aa82fd847389ea82f93c76145)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - cover max length readonly status ([5026143](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/5026143ce0a01ba98f19c2de389cc89aa00c3c1f)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - lock CSS cleanup ownership ([caa0c53](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/caa0c532b38230ddf0a4d515956cf21d801c7519)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - cover chat change reset ([4202380](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/42023807b3be120a2c6f264b1e4b93da1bd74ffe)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
