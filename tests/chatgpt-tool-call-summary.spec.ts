@@ -2,6 +2,7 @@ import { test, expect } from "@playwright/test";
 import { readFileSync } from "node:fs";
 import { readCachedCollapsedToolCallLabel } from "../src/content/native/chatgpt/ChatGptToolCallLabelCache";
 import { isStaticSummaryCandidate } from "../src/content/native/chatgpt/ChatGptToolCallSummaryController";
+import { classifyChatGptToolCardLabel } from "../src/content/native/chatgpt/ChatGptToolCardLabelTaxonomy";
 import type { ToolCallGroupRecord } from "../src/content/native/ToolCallGroupController";
 import { classifyChatGptToolCallState, hasNestedToolCallButtons } from "../src/content/native/chatgpt/ChatGptToolCallStateGuard";
 
@@ -108,3 +109,32 @@ function element(options: { readonly state?: string; readonly text?: string; rea
         closest: (selector: string) => selector.includes("data-message-author-role") && options.userOwned === true ? {} : null,
     } as unknown as HTMLElement;
 }
+
+test("ChatGPT tool card label taxonomy classifies known label families", () => {
+    expect(classifyChatGptToolCardLabel("Called tool")).toMatchObject({
+        kind: "completed",
+        staticSummaryEligible: true,
+    });
+    expect(classifyChatGptToolCardLabel("Looked for available tools")).toMatchObject({
+        kind: "lookup-status",
+        staticSummaryEligible: false,
+    });
+    expect(classifyChatGptToolCardLabel("Calling tool")).toMatchObject({
+        kind: "active",
+        staticSummaryEligible: false,
+    });
+    expect(classifyChatGptToolCardLabel("Open tool call list")).toMatchObject({
+        kind: "collapsed-control",
+        staticSummaryEligible: false,
+    });
+    expect(classifyChatGptToolCardLabel("Custom unknown provider status")).toMatchObject({
+        kind: "unknown",
+        staticSummaryEligible: false,
+    });
+});
+
+test("ChatGPT tool summary preserves lookup and control labels", () => {
+    expect(isStaticSummaryCandidate(group("completed", element({ state: "closed", label: "Looked for available tools" })))).toBe(false);
+    expect(isStaticSummaryCandidate(group("completed", element({ state: "closed", label: "Open tool call list" })))).toBe(false);
+    expect(isStaticSummaryCandidate(group("completed", element({ state: "closed", label: "Custom unknown provider status" })))).toBe(false);
+});
