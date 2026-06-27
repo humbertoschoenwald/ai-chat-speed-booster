@@ -27,6 +27,7 @@
 
 #### Native
 
+- classify thread status ([639d0ce](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/639d0ce24033af3d3e4d94d51195704f85bb9bab)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - scope status errors ([81e3019](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/81e301980710253dd1df11c97dcdd4f326b84a3c)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - gate initial modal boot ([66d8967](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/66d8967eaceae04e8ea210371c6498ea92d28197)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - budget snapshot hosts ([be8361d](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/be8361d3ee63cf3d48f0619f271fe3014af679c8)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
