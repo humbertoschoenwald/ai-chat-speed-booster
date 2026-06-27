@@ -190,6 +190,15 @@ export interface ExtensionStatus {
     readonly nativeModeShouldDeferOldTurnWork?: boolean;
     readonly nativeModeDataStateOpenCount?: number;
     readonly nativeModeDataStateChangedCount?: number;
+    readonly nativeModeSelectorDriftConfidence?: string;
+    readonly nativeModeSelectorDriftFailedContracts?: readonly string[];
+    readonly nativeModeSelectorDriftRiskyOptimizationAllowed?: boolean;
+    readonly nativeModeSelectorDriftTurnCount?: number;
+    readonly nativeModeSelectorDriftDedupedTurnCount?: number;
+    readonly nativeModeSelectorDriftComposerPresent?: boolean;
+    readonly nativeModeSelectorDriftScrollRootPresent?: boolean;
+    readonly nativeModeSelectorDriftToolCardCount?: number;
+    readonly nativeModeSelectorDriftKnownToolLabelCount?: number;
     readonly nativeModeLiveWindowSize?: number;
     readonly nativeModeRevealLoopCount?: number;
     readonly nativeModeScrollOscillationCount?: number;

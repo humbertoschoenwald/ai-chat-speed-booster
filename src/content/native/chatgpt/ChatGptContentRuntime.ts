@@ -45,6 +45,10 @@ import {
     readChatGptScrollRootState,
     type ChatGptScrollRootState,
 } from "./ChatGptScrollRootState";
+import {
+    inspectChatGptSelectorDrift,
+    type ChatGptSelectorDriftSentinelSnapshot,
+} from "./ChatGptSelectorDriftSentinel";
 import { ChatGptTextSnapshotRenderer } from "./ChatGptTextSnapshotRenderer";
 import {
     readChatGptThreadCssMetrics,
@@ -112,6 +116,7 @@ export interface ChatGptContentRuntimeStatus {
     readonly nativeCodeBlockContainment: ChatGptCodeBlockContainmentSnapshot | null;
     readonly nativeScrollRootState: ChatGptScrollRootState | null;
     readonly nativeDataStateDelta: ChatGptDataStateDeltaSnapshot | null;
+    readonly nativeSelectorDrift: ChatGptSelectorDriftSentinelSnapshot | null;
     readonly nativeRevealLoopCount: number;
     readonly nativeScrollOscillationCount: number;
     readonly nativeVirtualizationDisabled: boolean;
@@ -140,6 +145,7 @@ export class ChatGptContentRuntime {
     private nativeThreadCssMetrics: ChatGptThreadCssMetrics | null = null;
     private nativeCodeBlockContainment: ChatGptCodeBlockContainmentSnapshot | null = null;
     private nativeScrollRootState: ChatGptScrollRootState | null = null;
+    private nativeSelectorDrift: ChatGptSelectorDriftSentinelSnapshot | null = null;
     private nativeSnapshotHosts = 0;
     private nativeSnapshotCacheBytes = 0;
     private nativeSnapshotHostBudget: ChatGptTurnContentVisibilityResult | null = null;
@@ -185,6 +191,7 @@ export class ChatGptContentRuntime {
         this.nativeThreadCssMetrics = null;
         this.nativeCodeBlockContainment = null;
         this.nativeScrollRootState = null;
+        this.nativeSelectorDrift = null;
         this.dataStateDeltas.disconnect();
         this.nativeSnapshotHosts = 0;
         this.nativeSnapshotCacheBytes = 0;
@@ -243,6 +250,7 @@ export class ChatGptContentRuntime {
             nativeCodeBlockContainment: this.nativeCodeBlockContainment,
             nativeScrollRootState: this.nativeScrollRootState,
             nativeDataStateDelta: this.dataStateDeltas.snapshot(),
+            nativeSelectorDrift: this.nativeSelectorDrift,
             nativeRevealLoopCount: nativeConflictSnapshot.revealLoopCount,
             nativeScrollOscillationCount: nativeConflictSnapshot.scrollOscillationCount,
             nativeVirtualizationDisabled: nativeConflictSnapshot.shouldDisableNativeVirtualization,
@@ -332,6 +340,19 @@ export class ChatGptContentRuntime {
 
             const turns = dedupeChatGptTurnElements(this.ports.queryTurns());
             const scrollContainer = this.ports.findScrollContainer();
+            this.nativeSelectorDrift = inspectChatGptSelectorDrift({
+                root: this.ports.document,
+                scrollRoot: scrollContainer,
+                turns,
+            });
+            if (!this.nativeSelectorDrift.riskyOptimizationAllowed) {
+                renderer.restoreAll(this.ports.document);
+                this.chatGptTurnContentVisibilityController?.restoreAll(this.ports.document);
+                this.nativeSnapshotHosts = 0;
+                this.nativeSnapshotCacheBytes = 0;
+                this.nativeSnapshotHostBudget = null;
+                return;
+            }
             this.dataStateDeltas.setRoot(scrollContainer);
             const dataStateSnapshot = this.dataStateDeltas.snapshot();
             for (const turn of this.dataStateDeltas.consumeChangedTurns()) {
@@ -425,6 +446,7 @@ export class ChatGptContentRuntime {
         this.nativeThreadCssMetrics = null;
         this.nativeCodeBlockContainment = null;
         this.nativeScrollRootState = null;
+        this.nativeSelectorDrift = null;
         this.dataStateDeltas.disconnect();
         this.nativeSnapshotHosts = 0;
         this.nativeSnapshotCacheBytes = 0;
