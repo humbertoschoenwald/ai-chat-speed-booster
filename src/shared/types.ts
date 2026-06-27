@@ -199,6 +199,10 @@ export interface ExtensionStatus {
     readonly nativeModeSelectorDriftScrollRootPresent?: boolean;
     readonly nativeModeSelectorDriftToolCardCount?: number;
     readonly nativeModeSelectorDriftKnownToolLabelCount?: number;
+    readonly nativeModePlaceholderTurnCount?: number;
+    readonly nativeModeHydratedTurnCount?: number;
+    readonly nativeModeActiveTurnCount?: number;
+    readonly nativeModeStatusTurnCount?: number;
     readonly nativeModeLiveWindowSize?: number;
     readonly nativeModeRevealLoopCount?: number;
     readonly nativeModeScrollOscillationCount?: number;
