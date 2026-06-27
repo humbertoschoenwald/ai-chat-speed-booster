@@ -1,6 +1,7 @@
 import type { ToolCallGroupRecord } from "../ToolCallGroupController";
 import { readCachedCollapsedToolCallLabel } from "./ChatGptToolCallLabelCache";
 import { classifyChatGptToolCardLabel } from "./ChatGptToolCardLabelTaxonomy";
+import { annotateGeneratedSummaryWithRtlMetadata } from "./ChatGptRtlIconPreservation";
 import { canApplyStaticToolCallSummary } from "./ChatGptToolCallStateGuard";
 
 const HOST_ATTR = "data-acsb-tool-call-summary-host";
@@ -103,6 +104,7 @@ function ensureSummary(host: HTMLElement): boolean {
     summary.setAttribute("aria-hidden", "true");
     summary.setAttribute("role", "presentation");
     summary.setAttribute("tabindex", "-1");
+    annotateGeneratedSummaryWithRtlMetadata(summary, host);
     summary.textContent = "Completed tool call";
     host.insertBefore(summary, host.firstChild);
     return true;

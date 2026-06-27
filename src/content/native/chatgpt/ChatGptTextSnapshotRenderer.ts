@@ -44,6 +44,7 @@ const TEXT_EXTRACTION_EXCLUSION_SELECTOR = [
     "[aria-hidden='true']",
     "[data-acsb-native-copy-affordance='true']",
     CHATGPT_ACCESSIBLE_STATUS_SELECTOR,
+    "[data-rtl-flip]",
     "textarea",
     "[contenteditable='true']",
     ".ProseMirror",
