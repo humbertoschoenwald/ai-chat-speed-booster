@@ -65,3 +65,15 @@ function rootWith(options: {
         },
     } as unknown as ParentNode;
 }
+
+test("ChatGPT Native scheduler decisions avoid full-page totals", async () => {
+    const source = await import("node:fs/promises").then((fs) =>
+        fs.readFile("src/content/native/chatgpt/ChatGptContentRuntime.ts", "utf8"),
+    );
+
+    expect(source).toContain("createRenderUnitBudgetSnapshotFromCost");
+    expect(source).toContain("hydratedTurns.length");
+    expect(source).toContain("this.nativeStaticContentMeasurement.estimatedTurnNodeCost");
+    expect(source).toContain("nativeScopedDiagnostics");
+    expect(source).not.toContain("nativeScopedDiagnostics.documentNodeCount");
+});
