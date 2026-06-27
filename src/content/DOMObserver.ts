@@ -10,6 +10,7 @@ import { isChatGptToastPortalNode } from "./native/chatgpt/ChatGptToastPortalBou
 import { isChatGptSidebarListNode } from "./native/chatgpt/ChatGptSidebarScope";
 import { isChatGptStickyChromeNode } from "./native/chatgpt/ChatGptStickyChromeBoundary";
 import { isChatGptComposerLayoutBoundary } from "./native/chatgpt/ChatGptComposerLayoutBoundary";
+import { isChatGptProtectedAccessibilityNavNode } from "./native/chatgpt/ChatGptSkipToContentPreservation";
 
 
 export interface DOMObserverCallbacks {
@@ -456,6 +457,7 @@ export class DOMObserver {
     private isIgnoredMutationRoot(el: HTMLElement): boolean {
         if (this.isComposerOwned(el)) return true;
         if (this.currentSite.id === "chatgpt" && isChatGptComposerLayoutBoundary(el)) return true;
+        if (this.currentSite.id === "chatgpt" && isChatGptProtectedAccessibilityNavNode(el)) return true;
         if (this.currentSite.id === "chatgpt" && isChatGptPageAssetNode(el)) return true;
         if (this.currentSite.id === "chatgpt" && isChatGptToastPortalNode(el)) return true;
         if (this.currentSite.id === "chatgpt" && isChatGptSidebarListNode(el)) return true;
