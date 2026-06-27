@@ -6,7 +6,7 @@
  */
 import type { ExtensionConfig, ExtensionStatus } from "../../../shared/types";
 import { NativeDiagnosticsSampler } from "../NativeDiagnosticsSampler";
-import { createRenderUnitBudgetSnapshot, type RenderUnitBudgetSnapshot } from "../RenderUnitBudget";
+import { createRenderUnitBudgetSnapshotFromCost, type RenderUnitBudgetSnapshot } from "../RenderUnitBudget";
 import type { NativeModeController } from "../NativeModeController";
 import { ToolCallGroupController } from "../ToolCallGroupController";
 import { TurnRegistry } from "../TurnRegistry";
@@ -49,6 +49,10 @@ import {
     inspectChatGptSelectorDrift,
     type ChatGptSelectorDriftSentinelSnapshot,
 } from "./ChatGptSelectorDriftSentinel";
+import {
+    ChatGptStaticContentMeasurementCache,
+    type ChatGptStaticContentMeasurementCacheSnapshot,
+} from "./ChatGptStaticContentMeasurementCache";
 import { ChatGptTextSnapshotRenderer } from "./ChatGptTextSnapshotRenderer";
 import {
     readChatGptThreadCssMetrics,
@@ -123,6 +127,7 @@ export interface ChatGptContentRuntimeStatus {
     readonly nativeDataStateDelta: ChatGptDataStateDeltaSnapshot | null;
     readonly nativeSelectorDrift: ChatGptSelectorDriftSentinelSnapshot | null;
     readonly nativeTurnContentState: ChatGptTurnContentStateSnapshot | null;
+    readonly nativeStaticContentMeasurement: ChatGptStaticContentMeasurementCacheSnapshot | null;
     readonly nativeRevealLoopCount: number;
     readonly nativeScrollOscillationCount: number;
     readonly nativeVirtualizationDisabled: boolean;
@@ -139,6 +144,7 @@ export class ChatGptContentRuntime {
     private readonly visibleTurnPriorities = new ChatGptVisibleTurnPriorityController();
     private readonly dataStateDeltas = new ChatGptDataStateDeltaObserver();
     private readonly initialModalBootGate = new ChatGptInitialModalBootGate();
+    private readonly staticContentMeasurements = new ChatGptStaticContentMeasurementCache();
     private readonly ports: ChatGptContentRuntimePorts;
     private chatGptTextSnapshotRenderer: ChatGptTextSnapshotRenderer | null = null;
     private chatGptTurnContentVisibilityController: ChatGptTurnContentVisibilityController | null = null;
@@ -153,6 +159,7 @@ export class ChatGptContentRuntime {
     private nativeScrollRootState: ChatGptScrollRootState | null = null;
     private nativeSelectorDrift: ChatGptSelectorDriftSentinelSnapshot | null = null;
     private nativeTurnContentState: ChatGptTurnContentStateSnapshot | null = null;
+    private nativeStaticContentMeasurement: ChatGptStaticContentMeasurementCacheSnapshot | null = null;
     private nativeSnapshotHosts = 0;
     private nativeSnapshotCacheBytes = 0;
     private nativeSnapshotHostBudget: ChatGptTurnContentVisibilityResult | null = null;
@@ -200,6 +207,8 @@ export class ChatGptContentRuntime {
         this.nativeScrollRootState = null;
         this.nativeSelectorDrift = null;
         this.nativeTurnContentState = null;
+        this.nativeStaticContentMeasurement = null;
+        this.staticContentMeasurements.reset();
         this.dataStateDeltas.disconnect();
         this.nativeSnapshotHosts = 0;
         this.nativeSnapshotCacheBytes = 0;
@@ -260,6 +269,7 @@ export class ChatGptContentRuntime {
             nativeDataStateDelta: this.dataStateDeltas.snapshot(),
             nativeSelectorDrift: this.nativeSelectorDrift,
             nativeTurnContentState: this.nativeTurnContentState,
+            nativeStaticContentMeasurement: this.nativeStaticContentMeasurement,
             nativeRevealLoopCount: nativeConflictSnapshot.revealLoopCount,
             nativeScrollOscillationCount: nativeConflictSnapshot.scrollOscillationCount,
             nativeVirtualizationDisabled: nativeConflictSnapshot.shouldDisableNativeVirtualization,
@@ -389,6 +399,8 @@ export class ChatGptContentRuntime {
             this.nativeTurnContentState = summarizeChatGptTurnContentStates(turnContentStates);
             const hydratedRecords = records.filter((record) => record.hydrationState !== "placeholder");
             const hydratedTurns = hydratedRecords.map((record) => record.element);
+            const dirtyKeys = this.nativeTurnRegistry.dirtyTurnKeys();
+            this.nativeStaticContentMeasurement = this.staticContentMeasurements.measure(hydratedRecords, dirtyKeys);
             const dirtyRecords = this.nativeTurnRegistry.consumeDirtyRecords(hydratedRecords);
             const toolSourceRecords = dirtyRecords.length > 0 ? dirtyRecords : hydratedRecords;
             const costPrioritizedRecords = prioritizeChatGptTurnRecordsByCost(toolSourceRecords);
@@ -401,8 +413,9 @@ export class ChatGptContentRuntime {
                 toolGroups,
                 false,
             );
-            this.nativeRenderBudget = createRenderUnitBudgetSnapshot(
-                hydratedTurns,
+            this.nativeRenderBudget = createRenderUnitBudgetSnapshotFromCost(
+                hydratedTurns.length,
+                this.nativeStaticContentMeasurement.estimatedTurnNodeCost,
                 this.nativeToolCallGroups.snapshot(),
                 config.visibleMessageLimit,
             );
@@ -461,6 +474,8 @@ export class ChatGptContentRuntime {
         this.nativeScrollRootState = null;
         this.nativeSelectorDrift = null;
         this.nativeTurnContentState = null;
+        this.nativeStaticContentMeasurement = null;
+        this.staticContentMeasurements.reset();
         this.dataStateDeltas.disconnect();
         this.nativeSnapshotHosts = 0;
         this.nativeSnapshotCacheBytes = 0;

@@ -22,10 +22,23 @@ export function createRenderUnitBudgetSnapshot(
     toolCalls: ToolCallGroupSnapshot,
     configuredVisibleLimit: number,
 ): RenderUnitBudgetSnapshot {
-    const estimatedTurnNodeCost = estimateTurnNodeCost(turns);
+    return createRenderUnitBudgetSnapshotFromCost(
+        turns.length,
+        estimateTurnNodeCost(turns),
+        toolCalls,
+        configuredVisibleLimit,
+    );
+}
+
+export function createRenderUnitBudgetSnapshotFromCost(
+    turnCount: number,
+    estimatedTurnNodeCost: number,
+    toolCalls: ToolCallGroupSnapshot,
+    configuredVisibleLimit: number,
+): RenderUnitBudgetSnapshot {
     const estimatedRenderUnitCost = estimatedTurnNodeCost + toolCalls.estimatedNodeCost;
     return {
-        turnCount: turns.length,
+        turnCount,
         estimatedTurnNodeCost,
         estimatedToolNodeCost: toolCalls.estimatedNodeCost,
         estimatedRenderUnitCost,

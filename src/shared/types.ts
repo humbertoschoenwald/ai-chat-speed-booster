@@ -203,6 +203,11 @@ export interface ExtensionStatus {
     readonly nativeModeHydratedTurnCount?: number;
     readonly nativeModeActiveTurnCount?: number;
     readonly nativeModeStatusTurnCount?: number;
+    readonly nativeModeStaticMeasurementEntries?: number;
+    readonly nativeModeStaticMeasurementCacheHits?: number;
+    readonly nativeModeStaticMeasurementMeasuredTurns?: number;
+    readonly nativeModeStaticMeasurementCodeNodeCount?: number;
+    readonly nativeModeStaticMeasurementInteractiveTurns?: number;
     readonly nativeModeLiveWindowSize?: number;
     readonly nativeModeRevealLoopCount?: number;
     readonly nativeModeScrollOscillationCount?: number;
