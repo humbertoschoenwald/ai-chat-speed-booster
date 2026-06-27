@@ -1,6 +1,7 @@
 import { test, expect } from "@playwright/test";
 import { detectChatGptMaxLengthReadonly } from "../src/content/native/chatgpt/ChatGptMaxLengthReadonlyDetector";
 import { detectChatGptDeliveryTimeout } from "../src/content/native/chatgpt/ChatGptDeliveryTimeoutDetector";
+import { classifyChatGptThreadStatus } from "../src/content/native/chatgpt/ChatGptThreadStatusClassifier";
 
 test("ChatGPT max-length UI is status-only and has no progress fields", () => {
     const snapshot = detectChatGptMaxLengthReadonly(textRoot(
@@ -31,3 +32,26 @@ test("normal ChatGPT text is not a max-length readonly state", () => {
 function textRoot(textContent: string): ParentNode {
     return { textContent } as unknown as ParentNode;
 }
+
+test("ChatGPT thread status classifier preserves readonly status without progress", () => {
+    const snapshot = classifyChatGptThreadStatus(textRoot(
+        "This conversation has reached the maximum conversation length. Please start a new chat.",
+    ));
+
+    expect(snapshot).toEqual({
+        detected: true,
+        kind: "readonly",
+        reason: "maximum conversation length",
+        controlCount: 0,
+    });
+    expect(Object.keys(snapshot)).toEqual(["detected", "kind", "reason", "controlCount"]);
+});
+
+test("ChatGPT thread status classifier ignores normal completed threads", () => {
+    expect(classifyChatGptThreadStatus(textRoot("Here is a normal completed answer."))).toEqual({
+        detected: false,
+        kind: "none",
+        reason: null,
+        controlCount: 0,
+    });
+});

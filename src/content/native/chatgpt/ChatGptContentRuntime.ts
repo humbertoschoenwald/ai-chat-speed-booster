@@ -70,6 +70,10 @@ import {
     readChatGptComposerText,
     type ChatGptTokenEstimate,
 } from "./ChatGptTokenEstimator";
+import {
+    classifyChatGptThreadStatus,
+    type ChatGptThreadStatusSnapshot,
+} from "./ChatGptThreadStatusClassifier";
 import { logger } from "../../../shared/logger";
 import { CHATGPT_STREAMING_SELECTOR, dedupeChatGptTurnElements } from "./ChatGptSelectors";
 
@@ -90,6 +94,7 @@ export interface ChatGptContentRuntimePorts {
 export interface ChatGptPageInspection {
     readonly deliveryTimeout: ChatGptDeliveryTimeoutSnapshot;
     readonly maxLengthReadonly: ChatGptMaxLengthReadonlySnapshot;
+    readonly threadStatus: ChatGptThreadStatusSnapshot;
     readonly tokenEstimate: ChatGptTokenEstimate;
 }
 
@@ -203,6 +208,7 @@ export class ChatGptContentRuntime {
         return {
             deliveryTimeout: detectChatGptDeliveryTimeout(this.ports.document),
             maxLengthReadonly: detectChatGptMaxLengthReadonly(this.ports.document),
+            threadStatus: classifyChatGptThreadStatus(this.ports.document),
             tokenEstimate: estimateChatGptPromptTokens(
                 readChatGptComposerText(this.ports.document),
             ),
@@ -454,6 +460,7 @@ function createNeutralPageInspection(): ChatGptPageInspection {
     return {
         deliveryTimeout: { detected: false, confidence: "none", scope: "none", retryButtonCount: 0, assistantErrorCount: 0, firstMessageId: null, affectedMessageIds: [], reason: null },
         maxLengthReadonly: { detected: false, reason: null },
+        threadStatus: { detected: false, kind: "none", reason: null, controlCount: 0 },
         tokenEstimate: estimateChatGptPromptTokens(""),
     };
 }

@@ -149,6 +149,10 @@ export interface ExtensionStatus {
     readonly chatGptDeliveryTimeoutReason?: string | null;
     readonly chatGptMaxLengthReadonlyDetected?: boolean;
     readonly chatGptMaxLengthReadonlyReason?: string | null;
+    readonly chatGptThreadStatusDetected?: boolean;
+    readonly chatGptThreadStatusKind?: string;
+    readonly chatGptThreadStatusReason?: string | null;
+    readonly chatGptThreadStatusControlCount?: number;
     readonly nativeModeRenderUnitCost?: number;
     readonly nativeModeTurnNodeCost?: number;
     readonly nativeModeToolNodeCost?: number;
