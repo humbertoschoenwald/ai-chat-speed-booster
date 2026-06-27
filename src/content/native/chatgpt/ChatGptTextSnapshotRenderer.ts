@@ -29,6 +29,7 @@ export interface ChatGptTextSnapshotRenderResult {
 
 const HOST_ATTR = "data-acsb-native-snapshot-host";
 const SNAPSHOT_SELECTOR = '[data-acsb-native-snapshot="true"]';
+const SNAPSHOT_POINTER_POLICY_SELECTOR = '[data-acsb-native-pointer-policy="restore-only"]';
 const STYLE_ID = "acsb-native-text-snapshot-style";
 const MAX_SNAPSHOT_WRITES_PER_SYNC = 8;
 const COPY_CONTROL_SELECTOR = "[data-testid='copy-turn-action-button'],[aria-label*='copy' i]";
@@ -175,6 +176,8 @@ function injectSnapshotStyle(root: Document): void {
     style.id = STYLE_ID;
     style.textContent = `[${HOST_ATTR}="true"]>:not(${SNAPSHOT_SELECTOR}){display:none!important}` +
         `${SNAPSHOT_SELECTOR}{white-space:pre-wrap;contain:content;content-visibility:auto;}` +
+        `${SNAPSHOT_POINTER_POLICY_SELECTOR}{pointer-events:auto;cursor:text;}` +
+        `${SNAPSHOT_POINTER_POLICY_SELECTOR} *{pointer-events:none!important;}` +
         `${SNAPSHOT_SELECTOR} [data-acsb-native-copy-affordance="true"]{display:inline-block;margin-inline-start:0.5rem;font-size:0.75em;opacity:0.7;pointer-events:none;}`;
     (root.head ?? root.documentElement).appendChild(style);
 }

@@ -111,7 +111,7 @@ export function renderChatGptTextSnapshot(snapshot: ChatGptTextSnapshot, options
     const copyAffordance = options.copyAvailable
         ? `<span data-acsb-native-copy-affordance="true" aria-hidden="true">Copy available</span>`
         : "";
-    return `<div data-acsb-native-snapshot="true" data-acsb-native-accessibility-layer="snapshot" tabindex="-1">${escapeText(snapshot.text)}${copyAffordance}</div>`;
+    return `<div data-acsb-native-snapshot="true" data-acsb-native-accessibility-layer="snapshot" data-acsb-native-pointer-policy="restore-only" tabindex="-1">${escapeText(snapshot.text)}${copyAffordance}</div>`;
 }
 
 function measureUtf8Bytes(value: string): number {

@@ -56,6 +56,7 @@ test.describe("ChatGPT text snapshot cache", () => {
 
         expect(markup).toContain(`data-acsb-native-snapshot="true"`);
         expect(markup).toContain(`data-acsb-native-accessibility-layer="snapshot"`);
+        expect(markup).toContain(`data-acsb-native-pointer-policy="restore-only"`);
         expect(markup).toContain(`tabindex="-1"`);
         expect(markup).toContain("&lt;hello&gt;");
     });
@@ -69,6 +70,7 @@ test.describe("ChatGPT text snapshot cache", () => {
         const markup = renderChatGptTextSnapshot(snapshot!, { copyAvailable: true });
 
         expect(markup).toContain(`data-acsb-native-accessibility-layer="snapshot"`);
+        expect(markup).toContain(`data-acsb-native-pointer-policy="restore-only"`);
         expect(markup).toContain(`tabindex="-1"`);
         expect(markup).toContain(`data-acsb-native-copy-affordance="true" aria-hidden="true"`);
     });

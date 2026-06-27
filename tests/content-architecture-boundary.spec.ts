@@ -354,6 +354,9 @@ test("Native text snapshots avoid controls and restore before interaction", () =
     expect(source).toContain('event instanceof KeyboardEvent && event.key === "Tab"');
     expect(source).toContain("this.restoreAll(this.root ?? document)");
     expect(source).toContain("SNAPSHOT_SELECTOR");
+    expect(source).toContain("SNAPSHOT_POINTER_POLICY_SELECTOR");
+    expect(source).toContain("pointer-events:auto");
+    expect(source).toContain("pointer-events:none!important");
     expect(source).toContain("button,[role='button'],a[href],[aria-haspopup='menu']");
     expect(source).toContain("containsChatGptComposerScope(turn)");
     expect(source).toContain("readCompletedChatGptMarkdownProseText");
