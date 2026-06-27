@@ -172,6 +172,9 @@ test("ChatGPT metadata summary reports repeated ids and current assistant metada
         messageIdCount: 2,
         missingMessageIdCount: 1,
         repeatedMessageIdCount: 2,
+        roleSourceCounts: { unknown: 3 },
+        roleConfidenceCounts: { low: 3 },
+        unknownRoleCount: 0,
         currentAssistant: {
             messageId: null,
             authorRole: "assistant",

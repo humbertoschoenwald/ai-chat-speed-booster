@@ -1,4 +1,5 @@
 import { readChatGptMessageIdentityKey, readChatGptMessageMetadata, type ChatGptMessageMetadata } from "./chatgpt/ChatGptMessageMetadata";
+import { resolveChatGptMessageRole, type ChatGptMessageRoleConfidence, type ChatGptMessageRoleSource } from "./chatgpt/ChatGptMessageRoleResolver";
 
 export type NativeTurnRole = "user" | "assistant" | "system" | "unknown";
 export type NativeTurnHydrationState = "hydrated" | "frozen" | "placeholder";
@@ -15,6 +16,8 @@ export interface NativeTurnRecord {
     readonly key: string;
     element: HTMLElement;
     role: NativeTurnRole;
+    roleSource?: ChatGptMessageRoleSource;
+    roleConfidence?: ChatGptMessageRoleConfidence;
     metadata?: ChatGptMessageMetadata;
     hydrationState: NativeTurnHydrationState;
     measuredHeight: number | null;
@@ -50,11 +53,19 @@ export class TurnRegistry {
         const key = this.deriveKey(element, structuralIndex);
         const existing = this.keyToRecord.get(key);
         if (existing) {
-            const role = this.deriveRole(element);
             const metadata = readChatGptMessageMetadata(element);
-            if (existing.element !== element || existing.role !== role || !metadataEquals(existing.metadata, metadata)) {
+            const roleResolution = resolveChatGptMessageRole(element, metadata, existing.role);
+            if (
+                existing.element !== element
+                || existing.role !== roleResolution.role
+                || existing.roleSource !== roleResolution.source
+                || existing.roleConfidence !== roleResolution.confidence
+                || !metadataEquals(existing.metadata, metadata)
+            ) {
                 existing.element = element;
-                existing.role = role;
+                existing.role = roleResolution.role;
+                existing.roleSource = roleResolution.source;
+                existing.roleConfidence = roleResolution.confidence;
                 existing.metadata = metadata;
                 this.elementToRecord.set(element, existing);
                 this.markTurnDirty(existing);
@@ -62,11 +73,15 @@ export class TurnRegistry {
             return existing;
         }
 
+        const metadata = readChatGptMessageMetadata(element);
+        const roleResolution = resolveChatGptMessageRole(element, metadata);
         const record: NativeTurnRecord = {
             key,
             element,
-            role: this.deriveRole(element),
-            metadata: readChatGptMessageMetadata(element),
+            role: roleResolution.role,
+            roleSource: roleResolution.source,
+            roleConfidence: roleResolution.confidence,
+            metadata,
             hydrationState: "hydrated",
             measuredHeight: null,
             pinReasons: new Set(),
@@ -194,18 +209,6 @@ export class TurnRegistry {
         return `unstable:${location.pathname}:${structuralIndex}`;
     }
 
-    private deriveRole(element: HTMLElement): NativeTurnRole {
-        const text = [
-            element.getAttribute("data-message-author-role"),
-            element.getAttribute("data-author"),
-            element.getAttribute("aria-label"),
-        ].join(" ").toLowerCase();
-
-        if (text.includes("user")) return "user";
-        if (text.includes("assistant")) return "assistant";
-        if (text.includes("system")) return "system";
-        return "unknown";
-    }
 }
 
 function metadataEquals(left: ChatGptMessageMetadata | undefined, right: ChatGptMessageMetadata): boolean {

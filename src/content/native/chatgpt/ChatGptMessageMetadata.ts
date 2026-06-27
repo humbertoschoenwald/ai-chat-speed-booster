@@ -14,6 +14,9 @@ export interface ChatGptMessageMetadataSummary {
     readonly missingMessageIdCount: number;
     readonly repeatedMessageIdCount: number;
     readonly currentAssistant: ChatGptMessageMetadata | null;
+    readonly roleSourceCounts: Record<string, number>;
+    readonly roleConfidenceCounts: Record<string, number>;
+    readonly unknownRoleCount: number;
 }
 
 const MESSAGE_ID_ATTRS = ["data-message-id", "data-testid", "data-turn-id", "data-turn-id-container"] as const;
@@ -44,6 +47,9 @@ export function createChatGptMessageMetadataSummary(records: readonly NativeTurn
     const countsByMessageId = new Map<string, number>();
     let messageIdCount = 0;
     let currentAssistant: ChatGptMessageMetadata | null = null;
+    let unknownRoleCount = 0;
+    const roleSourceCounts: Record<string, number> = {};
+    const roleConfidenceCounts: Record<string, number> = {};
 
     for (const record of records) {
         const metadata = record.metadata;
@@ -51,6 +57,11 @@ export function createChatGptMessageMetadataSummary(records: readonly NativeTurn
             messageIdCount += 1;
             countsByMessageId.set(metadata.messageId, (countsByMessageId.get(metadata.messageId) ?? 0) + 1);
         }
+        const roleSource = record.roleSource ?? "unknown";
+        const roleConfidence = record.roleConfidence ?? "low";
+        roleSourceCounts[roleSource] = (roleSourceCounts[roleSource] ?? 0) + 1;
+        roleConfidenceCounts[roleConfidence] = (roleConfidenceCounts[roleConfidence] ?? 0) + 1;
+        if (record.role === "unknown") unknownRoleCount += 1;
         if (metadata?.authorRole === "assistant") currentAssistant = metadata;
     }
 
@@ -65,6 +76,9 @@ export function createChatGptMessageMetadataSummary(records: readonly NativeTurn
         missingMessageIdCount: Math.max(0, records.length - messageIdCount),
         repeatedMessageIdCount,
         currentAssistant,
+        roleSourceCounts,
+        roleConfidenceCounts,
+        unknownRoleCount,
     };
 }
 

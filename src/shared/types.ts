@@ -174,6 +174,9 @@ export interface ExtensionStatus {
     readonly nativeModeMessageIdCount?: number;
     readonly nativeModeMissingMessageIdCount?: number;
     readonly nativeModeRepeatedMessageIdCount?: number;
+    readonly nativeModeRoleSourceCounts?: Record<string, number>;
+    readonly nativeModeRoleConfidenceCounts?: Record<string, number>;
+    readonly nativeModeUnknownRoleCount?: number;
     readonly nativeModeCurrentAssistantMessageId?: string | null;
     readonly nativeModeCurrentAssistantModelLabel?: string | null;
     readonly nativeModeThreadResponseHeightPx?: number | null;
