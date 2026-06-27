@@ -27,6 +27,7 @@
 
 #### Native
 
+- add selector drift sentinel ([2dc0a4a](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/2dc0a4a9b1269e33873784f2692de02986401b23)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - define snapshot pointer policy ([e948b69](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/e948b697e2238e05e4d4208abfe616bd2bdbe01d)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - audit snapshot accessibility ([ec4ac89](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/ec4ac89c6c94bbccc469db939c976bd2731f2667)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - classify tool labels ([502a47d](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/502a47d1bb8018021347c4ec850933d1243cf80f)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
