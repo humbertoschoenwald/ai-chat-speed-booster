@@ -185,6 +185,8 @@ export function createExtensionStatus(input: ContentStatusPresenterInput): Exten
         nativeModeScopedCanonicalTurnNodeCount: chatGpt?.nativeScopedDiagnostics?.canonicalTurnNodeCount,
         nativeModeScopedComposerNodeCount: chatGpt?.nativeScopedDiagnostics?.composerNodeCount,
         nativeModeScopedSidebarNodeCount: chatGpt?.nativeScopedDiagnostics?.sidebarNodeCount,
+        nativeModeSidebarActiveLinkCount: chatGpt?.nativeScopedDiagnostics?.sidebarActiveMarkers.activeSidebarLinkCount,
+        nativeModeSidebarActiveMarkerCount: chatGpt?.nativeScopedDiagnostics?.sidebarActiveMarkers.activeMarkerCount,
         nativeModeStickyChromeNodeCount: chatGpt?.nativeScopedDiagnostics?.stickyChrome.stickyNodeCount,
         nativeModeFixedChromeNodeCount: chatGpt?.nativeScopedDiagnostics?.stickyChrome.fixedNodeCount,
         nativeModeHeaderChromeNodeCount: chatGpt?.nativeScopedDiagnostics?.stickyChrome.headerNodeCount,

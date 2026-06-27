@@ -1,7 +1,11 @@
 import { inspectChatGptAnchoredMenuRelationships, type ChatGptAnchoredMenuRelationshipSnapshot } from "./ChatGptAnchoredMenuRelationships";
 import { containsChatGptComposerScope } from "./ChatGptComposerScope";
 import { dedupeChatGptTurnElements } from "./ChatGptSelectors";
-import { CHATGPT_SIDEBAR_SCOPE_SELECTOR } from "./ChatGptSidebarScope";
+import {
+    CHATGPT_SIDEBAR_SCOPE_SELECTOR,
+    inspectChatGptSidebarActiveMarkers,
+    type ChatGptSidebarActiveMarkerSnapshot,
+} from "./ChatGptSidebarScope";
 import { inspectChatGptStickyChromeBoundary, type ChatGptStickyChromeBoundarySnapshot } from "./ChatGptStickyChromeBoundary";
 import { inspectChatGptTailwindLayerOrder, type ChatGptTailwindLayerOrderSnapshot } from "./ChatGptTailwindLayerOrderGuard";
 
@@ -12,6 +16,7 @@ export interface ChatGptScopedDiagnosticsSnapshot {
     readonly canonicalTurnNodeCount: number;
     readonly composerNodeCount: number;
     readonly sidebarNodeCount: number;
+    readonly sidebarActiveMarkers: ChatGptSidebarActiveMarkerSnapshot;
     readonly stickyChrome: ChatGptStickyChromeBoundarySnapshot;
     readonly anchoredMenus: ChatGptAnchoredMenuRelationshipSnapshot;
     readonly tailwindLayerOrder: ChatGptTailwindLayerOrderSnapshot;
@@ -32,6 +37,7 @@ export function inspectChatGptScopedDiagnostics(options: {
         canonicalTurnNodeCount: canonicalTurns.reduce((total, turn) => total + countNodes(turn), 0),
         composerNodeCount: countComposerNodes(options.documentRoot),
         sidebarNodeCount: countNodesInScopes(options.documentRoot, CHATGPT_SIDEBAR_SCOPE_SELECTOR),
+        sidebarActiveMarkers: inspectChatGptSidebarActiveMarkers(options.documentRoot),
         stickyChrome: inspectChatGptStickyChromeBoundary(options.documentRoot),
         anchoredMenus: inspectChatGptAnchoredMenuRelationships({
             documentRoot: options.documentRoot,

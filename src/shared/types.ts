@@ -234,6 +234,8 @@ export interface ExtensionStatus {
     readonly nativeModeScopedCanonicalTurnNodeCount?: number;
     readonly nativeModeScopedComposerNodeCount?: number;
     readonly nativeModeScopedSidebarNodeCount?: number;
+    readonly nativeModeSidebarActiveLinkCount?: number;
+    readonly nativeModeSidebarActiveMarkerCount?: number;
     readonly nativeModeStickyChromeNodeCount?: number;
     readonly nativeModeFixedChromeNodeCount?: number;
     readonly nativeModeHeaderChromeNodeCount?: number;
