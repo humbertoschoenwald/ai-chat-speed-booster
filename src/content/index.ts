@@ -58,10 +58,13 @@ const DEFAULT_STABLE_DOM_REVEAL_ANCHOR_MAX_MS = 420;
 const EXTREME_FAVICON_LINK_SELECTOR = "link[rel~='icon'],link[rel='shortcut icon'],link[rel='apple-touch-icon']";
 const EXTREME_BUSY_SELECTOR = "[aria-busy='true'],[data-is-streaming='true'],[data-testid*='stop' i],[aria-label*='stop' i]";
 const EXTREME_FAVICON_REAPPLY_DELAYS_MS = [250, 1_000, 2_500, 5_000, 10_000] as const;
+const UI_REFRESH_MIN_INTERVAL_MS = 250;
+const UI_REFRESH_HIDDEN_MIN_INTERVAL_MS = 1_000;
 let stableAppendRebalanceTimer: ReturnType<typeof setTimeout> | null = null;
 let extremeFaviconState: "inactive" | "busy" | "complete" = "inactive";
 let extremeFaviconPulseGeneration = 0;
 let extremeFaviconRevision = 0;
+let refreshUiTimer: ReturnType<typeof setTimeout> | null = null;
 
 type EditorLatencyGuardPort = {
     start(): void;
@@ -568,7 +571,10 @@ function getDisplayStatus(status: ExtensionStatus): ExtensionStatus {
 }
 
 function refreshUI(): void {
-    syncExtremeModeChrome();
+    if (shouldThrottleUiRefresh()) {
+        scheduleThrottledUiRefresh();
+        return;
+    }
     if (rafPending) return;
     rafPending = true;
     requestAnimationFrame(() => {
@@ -623,6 +629,27 @@ function refreshUI(): void {
             chatGptRuntime?.scheduleNativeScrollWork(nativeModeController);
         }
     });
+}
+
+function shouldThrottleUiRefresh(now = Date.now()): boolean {
+    if (contentLastUiRefreshAt === null) return false;
+    return now - contentLastUiRefreshAt < readUiRefreshMinIntervalMs();
+}
+
+function scheduleThrottledUiRefresh(): void {
+    if (refreshUiTimer !== null) return;
+    const lastRefreshAt = contentLastUiRefreshAt ?? Date.now();
+    const delayMs = Math.max(0, readUiRefreshMinIntervalMs() - (Date.now() - lastRefreshAt));
+    refreshUiTimer = setTimeout(() => {
+        refreshUiTimer = null;
+        refreshUI();
+    }, delayMs);
+}
+
+function readUiRefreshMinIntervalMs(): number {
+    return document.visibilityState === "hidden"
+        ? UI_REFRESH_HIDDEN_MIN_INTERVAL_MS
+        : UI_REFRESH_MIN_INTERVAL_MS;
 }
 
 function scheduleDeliveryTimeoutRefresh(reason: string | null): void {
@@ -722,6 +749,8 @@ window.addEventListener("beforeunload", () => {
     timers.clearAll();
     if (stableAppendRebalanceTimer) clearTimeout(stableAppendRebalanceTimer);
     stableAppendRebalanceTimer = null;
+    if (refreshUiTimer) clearTimeout(refreshUiTimer);
+    refreshUiTimer = null;
     reloadCoordinator.dispose();
     window.removeEventListener("pageshow", handlePageResume);
     window.removeEventListener("focus", handleWindowFocus);

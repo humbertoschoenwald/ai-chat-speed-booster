@@ -111,6 +111,7 @@ import { logger } from "../../../shared/logger";
 import { CHATGPT_STREAMING_SELECTOR, dedupeChatGptTurnElements } from "./ChatGptSelectors";
 
 const NATIVE_SNAPSHOT_SYNC_FAILURE_COOLDOWN_MS = 1_500;
+const NATIVE_SNAPSHOT_MIN_INTERVAL_MS = 500;
 const NATIVE_PAGE_INSPECTION_SAMPLE_TTL_MS = 1_000;
 const NATIVE_SNAPSHOT_HOST_BUDGET_FLOOR = 2;
 const NATIVE_SNAPSHOT_HOST_BUDGET_CEILING = 10;
@@ -198,6 +199,7 @@ export class ChatGptContentRuntime {
     private nativeInitialModalBootGate: ChatGptInitialModalBootGateSnapshot | null = null;
     private nativeSnapshotSyncCooldownUntilMs = 0;
     private nativeScrollWorkRaf: number | null = null;
+    private lastNativeSnapshotSyncAt = 0;
     private config: ExtensionConfig | null = null;
 
     constructor(ports: ChatGptContentRuntimePorts) {
@@ -383,10 +385,16 @@ export class ChatGptContentRuntime {
             controller.deferBackgroundWork();
             return;
         }
-        if (Date.now() < this.nativeSnapshotSyncCooldownUntilMs) {
+        const now = Date.now();
+        if (now < this.nativeSnapshotSyncCooldownUntilMs) {
             controller.deferBackgroundWork();
             return;
         }
+        if (now - this.lastNativeSnapshotSyncAt < NATIVE_SNAPSHOT_MIN_INTERVAL_MS && !this.layoutChangeBatch.snapshot().pending) {
+            controller.deferBackgroundWork();
+            return;
+        }
+        this.lastNativeSnapshotSyncAt = now;
         const bootGate = this.readInitialModalBootGate();
         if (!bootGate.ready) {
             renderer.restoreAll(this.ports.document);

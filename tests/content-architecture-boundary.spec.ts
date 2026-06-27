@@ -464,7 +464,9 @@ test("Extreme runtime loads native optimizers without hiding tool calls", () => 
     expect(contentSource).toContain("EXTREME_FAVICON_REAPPLY_DELAYS_MS");
     expect(contentSource).toContain("hasVisibleExtremeBusyIndicator");
     expect(contentSource).toContain("scheduleExtremeCompletionFaviconPulses");
-    expect(contentSource).toContain("syncExtremeModeChrome();\n    if (rafPending) return;");
+    expect(contentSource).toContain("shouldThrottleUiRefresh");
+    expect(contentSource).toContain("scheduleThrottledUiRefresh");
+    expect(contentSource).toContain("syncExtremeModeChrome();\n        const status = messageManager.getStatus();");
     expect(managerSource).not.toContain("data-acsb-extreme-hidden-tool");
     expect(managerSource).not.toContain("data-acsb-extreme-provider='chatgpt'");
     expect(managerSource).not.toContain("[data-testid*='tool' i]");
