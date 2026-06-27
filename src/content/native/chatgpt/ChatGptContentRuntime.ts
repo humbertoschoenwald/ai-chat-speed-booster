@@ -16,6 +16,10 @@ import {
     type ChatGptCodeBlockContainmentSnapshot,
 } from "./ChatGptCodeBlockContainmentController";
 import {
+    ChatGptLayoutChangeBatch,
+    type ChatGptLayoutChangeBatchSnapshot,
+} from "./ChatGptLayoutChangeBatch";
+import {
     ChatGptActionToolbarHoverGate,
     type ChatGptActionToolbarHoverGateSnapshot,
 } from "./ChatGptActionToolbarHoverGate";
@@ -139,6 +143,7 @@ export interface ChatGptContentRuntimeStatus {
     readonly nativeMessageMetadata: ChatGptMessageMetadataSummary | null;
     readonly nativeThreadCssMetrics: ChatGptThreadCssMetrics | null;
     readonly nativeCodeBlockContainment: ChatGptCodeBlockContainmentSnapshot | null;
+    readonly nativeLayoutChangeBatch: ChatGptLayoutChangeBatchSnapshot | null;
     readonly nativeActionToolbarHoverGate: ChatGptActionToolbarHoverGateSnapshot | null;
     readonly nativeToastPortalBoundary: ChatGptToastPortalBoundarySnapshot | null;
     readonly nativeAccessibleStatus: ChatGptAccessibleStatusPreservationSnapshot | null;
@@ -159,6 +164,7 @@ export class ChatGptContentRuntime {
     private readonly nativeTurnRegistry = new TurnRegistry();
     private readonly nativeToolCallGroups = new ToolCallGroupController();
     private readonly codeBlockContainment = new ChatGptCodeBlockContainmentController();
+    private readonly layoutChangeBatch = new ChatGptLayoutChangeBatch();
     private readonly actionToolbarHoverGate = new ChatGptActionToolbarHoverGate();
     private readonly pageInspectionSampler: NativeDiagnosticsSampler<ChatGptPageInspection>;
     private readonly toolCallSummaries = new ChatGptToolCallSummaryController();
@@ -177,6 +183,7 @@ export class ChatGptContentRuntime {
     private nativeMessageMetadata: ChatGptMessageMetadataSummary | null = null;
     private nativeThreadCssMetrics: ChatGptThreadCssMetrics | null = null;
     private nativeCodeBlockContainment: ChatGptCodeBlockContainmentSnapshot | null = null;
+    private nativeLayoutChangeBatch: ChatGptLayoutChangeBatchSnapshot | null = null;
     private nativeActionToolbarHoverGate: ChatGptActionToolbarHoverGateSnapshot | null = null;
     private nativeToastPortalBoundary: ChatGptToastPortalBoundarySnapshot | null = null;
     private nativeAccessibleStatus: ChatGptAccessibleStatusPreservationSnapshot | null = null;
@@ -229,6 +236,7 @@ export class ChatGptContentRuntime {
         this.nativeMessageMetadata = null;
         this.nativeThreadCssMetrics = null;
         this.nativeCodeBlockContainment = null;
+        this.nativeLayoutChangeBatch = null;
         this.nativeActionToolbarHoverGate = null;
         this.nativeToastPortalBoundary = null;
         this.nativeAccessibleStatus = null;
@@ -238,6 +246,7 @@ export class ChatGptContentRuntime {
         this.nativeTurnContentState = null;
         this.nativeStaticContentMeasurement = null;
         this.staticContentMeasurements.reset();
+        this.layoutChangeBatch.reset();
         this.dataStateDeltas.disconnect();
         this.nativeSnapshotHosts = 0;
         this.nativeSnapshotCacheBytes = 0;
@@ -272,6 +281,11 @@ export class ChatGptContentRuntime {
         return createChatGptLogicalDisplayStatus(this.ports.queryTurns(), status);
     }
 
+    scheduleNativeLayoutWork(controller: NativeModeController | null, reason = "layout-change"): void {
+        this.layoutChangeBatch.markDirty(reason);
+        this.scheduleNativeScrollWork(controller);
+    }
+
     scheduleNativeScrollWork(controller: NativeModeController | null): void {
         if (this.nativeScrollWorkRaf !== null) return;
         this.nativeScrollWorkRaf = this.ports.window.requestAnimationFrame(() => {
@@ -294,6 +308,7 @@ export class ChatGptContentRuntime {
             nativeMessageMetadata: this.nativeMessageMetadata,
             nativeThreadCssMetrics: this.nativeThreadCssMetrics,
             nativeCodeBlockContainment: this.nativeCodeBlockContainment,
+            nativeLayoutChangeBatch: this.nativeLayoutChangeBatch,
             nativeActionToolbarHoverGate: this.nativeActionToolbarHoverGate,
             nativeToastPortalBoundary: this.nativeToastPortalBoundary,
             nativeAccessibleStatus: this.nativeAccessibleStatus,
@@ -462,6 +477,16 @@ export class ChatGptContentRuntime {
                 this.nativeToolCallGroups.snapshot(),
                 config.visibleMessageLimit,
             );
+            this.nativeLayoutChangeBatch = this.layoutChangeBatch.consume(
+                hydratedRecords,
+                this.nativeRenderBudget.liveWindowSize + 2,
+                this.nativeTurnRegistry,
+            );
+            if (this.nativeLayoutChangeBatch.pending) {
+                this.scheduleNativeScrollWork(controller);
+                controller.deferBackgroundWork();
+                return;
+            }
             this.nativeTurnCostProfile = createChatGptTurnCostProfile(
                 hydratedRecords,
                 toolGroups,
@@ -519,6 +544,7 @@ export class ChatGptContentRuntime {
         this.nativeMessageMetadata = null;
         this.nativeThreadCssMetrics = null;
         this.nativeCodeBlockContainment = null;
+        this.nativeLayoutChangeBatch = null;
         this.nativeActionToolbarHoverGate = null;
         this.nativeToastPortalBoundary = null;
         this.nativeAccessibleStatus = null;
@@ -528,6 +554,7 @@ export class ChatGptContentRuntime {
         this.nativeTurnContentState = null;
         this.nativeStaticContentMeasurement = null;
         this.staticContentMeasurements.reset();
+        this.layoutChangeBatch.reset();
         this.dataStateDeltas.disconnect();
         this.nativeSnapshotHosts = 0;
         this.nativeSnapshotCacheBytes = 0;

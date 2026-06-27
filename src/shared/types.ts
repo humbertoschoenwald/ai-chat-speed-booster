@@ -185,6 +185,12 @@ export interface ExtensionStatus {
     readonly nativeModeSkippedEditableCodeBlockCount?: number;
     readonly nativeModeSkippedNoCodeBucketCount?: number;
     readonly nativeModeHeavyCodeContainmentTurnCount?: number;
+    readonly nativeModeLayoutBatchPending?: boolean;
+    readonly nativeModeLayoutBatchChangeCount?: number;
+    readonly nativeModeLayoutBatchMeasuredTurnCount?: number;
+    readonly nativeModeLayoutBatchSkippedCachedOldTurnCount?: number;
+    readonly nativeModeLayoutBatchProtectedTailSize?: number;
+    readonly nativeModeLayoutBatchLastReason?: string | null;
     readonly nativeModeActionToolbarGatedTurnCount?: number;
     readonly nativeModeActionToolbarRestoredTurnCount?: number;
     readonly nativeModeActionToolbarProtectedTailSize?: number;

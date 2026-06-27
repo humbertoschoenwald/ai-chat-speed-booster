@@ -86,6 +86,7 @@ type ChatGptRuntimePort = {
     resetNativeTracking(): void;
     inspectPage(): NonNullable<ContentStatusPresenterInput["chatGptInspection"]>;
     getDisplayStatus(status: ExtensionStatus): ExtensionStatus;
+    scheduleNativeLayoutWork(controller: NativeModeControllerPort | null, reason?: string): void;
     scheduleNativeScrollWork(controller: NativeModeControllerPort | null): void;
     snapshot(): NonNullable<ContentStatusPresenterInput["chatGptStatus"]>;
     dispose(): void;
@@ -427,6 +428,7 @@ function handleVisibilityResume(): void {
 
 function handleViewportResize(): void {
     nativeModeController?.protectBackgroundWork("viewport-resize", 250);
+    chatGptRuntime?.scheduleNativeLayoutWork(nativeModeController, "viewport-resize");
     chatGptRuntime?.invalidateTurnVisibility();
     timers.set("viewport-resize", () => {
         refreshUI();
