@@ -183,6 +183,8 @@ export interface ExtensionStatus {
     readonly nativeModeCodeBlockCount?: number;
     readonly nativeModeContainedCodeBlockCount?: number;
     readonly nativeModeSkippedEditableCodeBlockCount?: number;
+    readonly nativeModeSkippedNoCodeBucketCount?: number;
+    readonly nativeModeHeavyCodeContainmentTurnCount?: number;
     readonly nativeModeScrollRootPresent?: boolean;
     readonly nativeModeStreamActive?: boolean;
     readonly nativeModeScrollRootFromTop?: number | null;
@@ -207,6 +209,11 @@ export interface ExtensionStatus {
     readonly nativeModeStaticMeasurementCacheHits?: number;
     readonly nativeModeStaticMeasurementMeasuredTurns?: number;
     readonly nativeModeStaticMeasurementCodeNodeCount?: number;
+    readonly nativeModeCodeBucketNoneTurns?: number;
+    readonly nativeModeCodeBucketSmallTurns?: number;
+    readonly nativeModeCodeBucketMediumTurns?: number;
+    readonly nativeModeCodeBucketHeavyTurns?: number;
+    readonly nativeModeStaticMeasurementHeavyCodeTurns?: number;
     readonly nativeModeStaticMeasurementInteractiveTurns?: number;
     readonly nativeModeLiveWindowSize?: number;
     readonly nativeModeRevealLoopCount?: number;

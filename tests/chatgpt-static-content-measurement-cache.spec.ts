@@ -67,3 +67,17 @@ function measuredElement(options: {
         getBoundingClientRect: () => ({ height: 320 }),
     } as unknown as HTMLElement;
 }
+
+test("ChatGPT static measurement cache buckets code-heavy turns", () => {
+    const cache = new ChatGptStaticContentMeasurementCache();
+    const none = recordFor("none", measuredElement({ nodeCount: 1, codeCount: 0, text: "plain" }));
+    const small = recordFor("small", measuredElement({ nodeCount: 6, codeCount: 3, text: "small code" }));
+    const heavy = recordFor("heavy", measuredElement({ nodeCount: 40, codeCount: 28, text: "heavy code" }));
+    const snapshot = cache.measure([none, small, heavy], []);
+
+    expect(snapshot.codeBucketCounts).toEqual({ none: 1, small: 1, medium: 0, heavy: 1 });
+    expect(snapshot.heavyCodeTurnCount).toBe(1);
+    expect(snapshot.codeBucketByTurnKey.get("none")).toBe("none");
+    expect(snapshot.codeBucketByTurnKey.get("small")).toBe("small");
+    expect(snapshot.codeBucketByTurnKey.get("heavy")).toBe("heavy");
+});

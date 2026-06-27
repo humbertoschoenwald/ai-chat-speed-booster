@@ -57,10 +57,26 @@ test.describe("native model guards", () => {
             codeBlockCount: 3,
             containedCodeBlockCount: 1,
             skippedEditableCount: 1,
+            skippedNoCodeBucketCount: 0,
+            heavyCodeTurnCount: 0,
         });
         expect(oldStatic.blocks[0].contained).toBe(true);
         expect(editable.blocks[0].contained).toBe(false);
         expect(nearStatic.blocks[0].contained).toBe(false);
+    });
+
+    test("skips code block queries for no-code buckets", () => {
+        const controller = new ChatGptCodeBlockContainmentController();
+        const plain = fakeCodeTurn([fakeCodeBlock()]);
+        const heavy = fakeCodeTurn([fakeCodeBlock(), fakeCodeBlock()]);
+        const snapshot = controller.sync([plain, heavy], 0, new Map([
+            [plain.key, "none"],
+            [heavy.key, "heavy"],
+        ]));
+
+        expect(snapshot.skippedNoCodeBucketCount).toBe(1);
+        expect(snapshot.heavyCodeTurnCount).toBe(1);
+        expect(snapshot.codeBlockCount).toBe(2);
     });
 
 

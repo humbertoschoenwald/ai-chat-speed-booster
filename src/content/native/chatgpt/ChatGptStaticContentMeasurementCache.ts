@@ -1,10 +1,13 @@
 import type { NativeTurnRecord } from "../TurnRegistry";
 
+export type ChatGptCodeNodeBucket = "none" | "small" | "medium" | "heavy";
+
 export interface ChatGptStaticContentMeasurement {
     readonly key: string;
     readonly height: number | null;
     readonly nodeCost: number;
     readonly codeNodeCount: number;
+    readonly codeNodeBucket: ChatGptCodeNodeBucket;
     readonly textLengthBucket: string;
     readonly hasInteractiveControls: boolean;
 }
@@ -15,11 +18,18 @@ export interface ChatGptStaticContentMeasurementCacheSnapshot {
     readonly measuredTurns: number;
     readonly estimatedTurnNodeCost: number;
     readonly codeNodeCount: number;
+    readonly codeBucketCounts: Record<ChatGptCodeNodeBucket, number>;
+    readonly codeBucketByTurnKey: ReadonlyMap<string, ChatGptCodeNodeBucket>;
+    readonly heavyCodeTurnCount: number;
     readonly interactiveControlTurns: number;
 }
 
 const CODE_SELECTOR = "pre,code,[class*='code' i]";
 const INTERACTIVE_SELECTOR = "button,[role='button'],a[href],[aria-haspopup='menu']";
+
+function createEmptyCodeBucketCounts(): Record<ChatGptCodeNodeBucket, number> {
+    return { none: 0, small: 0, medium: 0, heavy: 0 };
+}
 
 export class ChatGptStaticContentMeasurementCache {
     private readonly entries = new Map<string, ChatGptStaticContentMeasurement>();
@@ -37,7 +47,10 @@ export class ChatGptStaticContentMeasurementCache {
         let measuredTurns = 0;
         let estimatedTurnNodeCost = 0;
         let codeNodeCount = 0;
+        let heavyCodeTurnCount = 0;
         let interactiveControlTurns = 0;
+        const codeBucketCounts = createEmptyCodeBucketCounts();
+        const codeBucketByTurnKey = new Map<string, ChatGptCodeNodeBucket>();
 
         for (const key of dirty) this.entries.delete(key);
         for (const record of records) {
@@ -51,6 +64,9 @@ export class ChatGptStaticContentMeasurementCache {
             }
             estimatedTurnNodeCost += measurement.nodeCost;
             codeNodeCount += measurement.codeNodeCount;
+            codeBucketCounts[measurement.codeNodeBucket] += 1;
+            codeBucketByTurnKey.set(record.key, measurement.codeNodeBucket);
+            if (measurement.codeNodeBucket === "heavy") heavyCodeTurnCount += 1;
             if (measurement.hasInteractiveControls) interactiveControlTurns += 1;
         }
 
@@ -60,6 +76,9 @@ export class ChatGptStaticContentMeasurementCache {
             measuredTurns,
             estimatedTurnNodeCost,
             codeNodeCount,
+            codeBucketCounts,
+            codeBucketByTurnKey,
+            heavyCodeTurnCount,
             interactiveControlTurns,
         };
     }
@@ -75,9 +94,17 @@ function measureRecord(record: NativeTurnRecord): ChatGptStaticContentMeasuremen
         height: readHeight(element),
         nodeCost: 1 + element.querySelectorAll("*").length,
         codeNodeCount,
+        codeNodeBucket: bucketCodeNodeCount(codeNodeCount),
         textLengthBucket: bucketTextLength(text.length),
         hasInteractiveControls,
     };
+}
+
+export function bucketCodeNodeCount(codeNodeCount: number): ChatGptCodeNodeBucket {
+    if (codeNodeCount <= 0) return "none";
+    if (codeNodeCount <= 4) return "small";
+    if (codeNodeCount <= 16) return "medium";
+    return "heavy";
 }
 
 function readHeight(element: HTMLElement): number | null {

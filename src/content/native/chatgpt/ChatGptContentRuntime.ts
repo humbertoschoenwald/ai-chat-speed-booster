@@ -429,6 +429,7 @@ export class ChatGptContentRuntime {
                 : this.codeBlockContainment.sync(
                     hydratedRecords,
                     this.nativeRenderBudget.liveWindowSize + 2,
+                    this.nativeStaticContentMeasurement.codeBucketByTurnKey,
                 );
 
             renderer.restoreAll(this.ports.document);

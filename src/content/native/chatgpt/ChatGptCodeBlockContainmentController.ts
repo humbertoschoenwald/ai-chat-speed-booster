@@ -1,9 +1,12 @@
 import type { NativeTurnRecord } from "../TurnRegistry";
+import type { ChatGptCodeNodeBucket } from "./ChatGptStaticContentMeasurementCache";
 
 export interface ChatGptCodeBlockContainmentSnapshot {
     readonly codeBlockCount: number;
     readonly containedCodeBlockCount: number;
     readonly skippedEditableCount: number;
+    readonly skippedNoCodeBucketCount: number;
+    readonly heavyCodeTurnCount: number;
 }
 
 const CONTAINED_ATTR = "data-acsb-native-contained-code-block";
@@ -38,13 +41,25 @@ export class ChatGptCodeBlockContainmentController {
         if (root instanceof Document) root.getElementById(STYLE_ID)?.remove();
     }
 
-    sync(records: readonly NativeTurnRecord[], protectedTailSize: number): ChatGptCodeBlockContainmentSnapshot {
+    sync(
+        records: readonly NativeTurnRecord[],
+        protectedTailSize: number,
+        codeBuckets: ReadonlyMap<string, ChatGptCodeNodeBucket> = new Map(),
+    ): ChatGptCodeBlockContainmentSnapshot {
         let codeBlockCount = 0;
         let containedCodeBlockCount = 0;
         let skippedEditableCount = 0;
+        let skippedNoCodeBucketCount = 0;
+        let heavyCodeTurnCount = 0;
         const protectFrom = Math.max(0, records.length - protectedTailSize);
 
         records.forEach((record, index) => {
+            const bucket = codeBuckets.get(record.key) ?? "medium";
+            if (bucket === "none") {
+                skippedNoCodeBucketCount += 1;
+                return;
+            }
+            if (bucket === "heavy") heavyCodeTurnCount += 1;
             const protect = index >= protectFrom || record.pinReasons.size > 0;
             for (const block of readCodeBlocks(record.element)) {
                 codeBlockCount += 1;
@@ -62,7 +77,13 @@ export class ChatGptCodeBlockContainmentController {
             }
         });
 
-        return { codeBlockCount, containedCodeBlockCount, skippedEditableCount };
+        return {
+            codeBlockCount,
+            containedCodeBlockCount,
+            skippedEditableCount,
+            skippedNoCodeBucketCount,
+            heavyCodeTurnCount,
+        };
     }
 
     restoreAll(root: ParentNode = document): void {
