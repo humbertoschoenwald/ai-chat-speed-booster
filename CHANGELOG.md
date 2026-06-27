@@ -27,6 +27,7 @@
 
 #### Native
 
+- avoid ambiguous test ids ([96e53aa](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/96e53aa35f359551b715f1923a78f8a8c79a3f01)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - preserve accessible status ([9428ea6](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/9428ea6060fe9322f9f344e0e0a7be0e872e9076)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - bound toast portals ([4f30728](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/4f307285a05a293cee999a79bed783aa05a03935)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
 - gate action toolbar hover cost ([a8f14a5](https://github.com/humbertoschoenwald/ai-chat-speed-booster/commit/a8f14a598e3ee2e6697f2dc68231366fe8c411a6)) by **[Humberto Schoenwald (@humbertoschoenwald)](https://github.com/humbertoschoenwald)**
